@@ -10,10 +10,13 @@ ULuaState::ULuaState()
 	bDisabled = false;
 }
 
-ULuaState* ULuaState::GetLuaState()
+ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 {
 	if (L != nullptr)
+	{
+		CurrentWorld = InWorld;
 		return this;
+	}
 
 	if (bDisabled)
 		return nullptr;

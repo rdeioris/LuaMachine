@@ -37,7 +37,7 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	LuaStates.Empty();
 }
 
-ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass)
+ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld)
 {
 
 	if (!LuaStates.Contains(LuaStateClass))
@@ -45,7 +45,7 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass)
 		LuaStates.Add(LuaStateClass, NewObject<ULuaState>(GetTransientPackage(), LuaStateClass));
 		LuaStates[LuaStateClass]->AddToRoot();
 	}
-	return LuaStates[LuaStateClass]->GetLuaState();
+	return LuaStates[LuaStateClass]->GetLuaState(InWorld);
 }
 
 FLuaMachineModule& FLuaMachineModule::Get()

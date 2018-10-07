@@ -38,7 +38,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString Function, TArray<FLuaValue> Arg
 {
 	FLuaValue ReturnValue;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState);
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 	if (!L)
 		return ReturnValue;
 

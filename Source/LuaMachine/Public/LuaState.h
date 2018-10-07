@@ -21,6 +21,8 @@ public:
 	ULuaState();
 	~ULuaState();
 
+	virtual UWorld* GetWorld() const override { return CurrentWorld; }
+
 	UPROPERTY(EditAnywhere)
 	ULuaCode* LuaCodeAsset;
 
@@ -59,7 +61,7 @@ public:
 
 	void PushCFunction(lua_CFunction Function);
 	
-	ULuaState* GetLuaState();
+	ULuaState* GetLuaState(UWorld* InWorld);
 
 	static int MetaTableFunctionActor__index(lua_State *L);
 	static int MetaTableFunctionActor__call(lua_State *L);
@@ -72,4 +74,6 @@ protected:
 
 	static void Internal_FromLuaValue(lua_State *L, FLuaValue& LuaValue);
 	static FLuaValue Internal_ToLuaValue(lua_State *L, int Index);
+
+	UWorld* CurrentWorld;
 };
