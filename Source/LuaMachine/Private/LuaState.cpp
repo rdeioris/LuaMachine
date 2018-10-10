@@ -29,51 +29,28 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	if (bLuaOpenLibs)
 		luaL_openlibs(L);
 
-	FString LuaFunctionPrefix = FString(TEXT("lua_"));
-
-	// assign global functions
-	for (TFieldIterator<UFunction> Funcs(GetClass()); Funcs; ++Funcs)
+	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
+	*LuaExtraSpacePtr = this;
+	// get the global table
+	lua_pushglobaltable(L);
+	// assign global symbols to nil, this will allow to override global functions/symbols
+	for (TPair<FString, FLuaValue>& Pair : Table)
 	{
-		UFunction *Function = *Funcs;
-		if (Function->GetName().StartsWith(LuaFunctionPrefix, ESearchCase::CaseSensitive))
-		{
-			UFunction ** FunctionPtr = (UFunction **)lua_newuserdata(L, sizeof(UFunction **));
-			*FunctionPtr = Function;
-			NewTable();
-			ULuaState **LuaStatePtr = (ULuaState **)lua_newuserdata(L, sizeof(ULuaState **));
-			*LuaStatePtr = this;
-			SetField(-2, "__unreal_state");
-			PushCFunction(MetaTableFunctionState__call);
-			SetField(-2, "__call");
-			SetMetaTable(-2);
-			FString FunctionName = Function->GetName();
-			FunctionName.RemoveFromStart(LuaFunctionPrefix, ESearchCase::CaseSensitive);
-			SetGlobal(TCHAR_TO_UTF8(*FunctionName));
-		}
+		PushNil();
+		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
 	}
 
-	// assign global properties
-	for (TFieldIterator<UProperty> Props(GetClass()); Props; ++Props)
-	{
-		UProperty* Prop = *Props;
-		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
-		if (!LuaProp)
-			continue;
-		if (LuaProp->Struct != FLuaValue::StaticStruct())
-			continue;
-		if (LuaProp->HasAnyPropertyFlags(CPF_DisableEditOnInstance))
-			continue;
-		FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(this);
-		FromLuaValue(*LuaValue);
-		SetGlobal(TCHAR_TO_UTF8(*LuaProp->GetName()));
-	}
 
-	// assign global table
-	for (TPair<FString, FLuaValue> Pair : Table)
-	{
-		FromLuaValue(Pair.Value);
-		SetGlobal(TCHAR_TO_UTF8(*Pair.Key));
-	}
+	// metatable
+	NewTable();
+	PushCFunction(MetaTableFunctionState__index);
+	SetField(-2, "__index");
+	PushCFunction(MetaTableFunctionState__newindex);
+	SetField(-2, "__newindex");
+	SetMetaTable(-2);
+
+	
+	Pop();
 
 	UE_LOG(LogTemp, Warning, TEXT("Lua Machine initialized at %p"), L);
 	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code)))
@@ -158,25 +135,85 @@ FLuaValue ULuaState::Internal_ToLuaValue(lua_State* L, int Index)
 	return LuaValue;
 }
 
-int ULuaState::MetaTableFunctionActor__index(lua_State *L)
+int ULuaState::MetaTableFunctionState__index(lua_State *L)
 {
-	lua_getfield(L, 1, "__unreal_actor");
-	if (!lua_isuserdata(L, -1))
+
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+	
+	const char *key = lua_tostring(L, 2);
+	UE_LOG(LogTemp, Warning, TEXT("ASKING FOR %s"), UTF8_TO_TCHAR(key));
+
+	FString Key = UTF8_TO_TCHAR(key);
+
+	if (LuaState->Table.Contains(Key))
 	{
-		return luaL_error(L, "invalid state for __unreal_actor internal field");
+		FLuaValue& LuaValue = LuaState->Table[Key];
+		// first check for UFunction
+		if (LuaValue.Type == ELuaValueType::Function)
+		{
+			UFunction* Function = LuaState->FindFunction(FName(*LuaValue.FunctionName));
+			if (Function)
+			{
+				FLuaCallContext* LuaCallContext = (FLuaCallContext*) lua_newuserdata(L, sizeof(FLuaCallContext));
+				LuaCallContext->Context = LuaState;
+				LuaCallContext->Function = Function;
+				LuaState->NewTable();
+				LuaState->PushCFunction(ULuaState::MetaTableFunction__call);
+				LuaState->SetField(-2, "__call");
+				LuaState->SetMetaTable(-2);
+				return 1;
+			}
+		}
+		else {
+			LuaState->FromLuaValue(LuaState->Table[Key]);
+			return 1;
+		}
 	}
-	AActor** unreal_actor_ptr = (AActor **)lua_touserdata(L, -1);
-	AActor* Actor = *unreal_actor_ptr;
+	
+	LuaState->PushNil();
+	return 1;
+}
+
+int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
+{
+	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
+	ULuaState* LuaState = *LuaExtraSpacePtr;
+
+	const char *key = lua_tostring(L, 2);
+	UE_LOG(LogTemp, Warning, TEXT("Setting FOR %s"), UTF8_TO_TCHAR(key));
+
+	FString Key = UTF8_TO_TCHAR(key);
+
+	if (LuaState->Table.Contains(Key))
+	{
+		LuaState->Table[Key] = LuaState->ToLuaValue(3);
+	}
+	else
+	{
+		lua_rawset(L, 1);
+	}
+
+	return 0;
+}
+
+int ULuaState::MetaTableFunctionUObject__index(lua_State *L)
+{
+	if (!lua_isuserdata(L, 1))
+	{
+		return luaL_error(L, "invalid state for lua UObject");
+	}
+	UObject** ObjectPtr = (UObject **)lua_touserdata(L, 1);
+	UObject* Object = *ObjectPtr;
 	const char *key = lua_tostring(L, 2);
 	UE_LOG(LogTemp, Warning, TEXT("ASKING FOR %s"), UTF8_TO_TCHAR(key));
 	// first find for a property
-	UProperty* Prop = Actor->GetClass()->FindPropertyByName(FName(UTF8_TO_TCHAR(key)));
+	UProperty* Prop = Object->GetClass()->FindPropertyByName(FName(UTF8_TO_TCHAR(key)));
 	if (Prop)
 	{
 		UStructProperty* StructProp = Cast<UStructProperty>(Prop);
 		if (StructProp && StructProp->Struct == FLuaValue::StaticStruct() && !StructProp->HasAnyPropertyFlags(CPF_DisableEditOnInstance))
 		{
-			FLuaValue* LuaValue = StructProp->ContainerPtrToValuePtr<FLuaValue>(Actor);
+			FLuaValue* LuaValue = StructProp->ContainerPtrToValuePtr<FLuaValue>(Object);
 			Internal_FromLuaValue(L, *LuaValue);
 			return 1;
 		}
@@ -184,16 +221,15 @@ int ULuaState::MetaTableFunctionActor__index(lua_State *L)
 	else
 	{
 		FString FullKey = FString("lua_") + FString(UTF8_TO_TCHAR(key));
-		UFunction* Function = Actor->GetClass()->FindFunctionByName(FName(*FullKey));
+		UFunction* Function = Object->GetClass()->FindFunctionByName(FName(*FullKey));
 		if (Function && Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
 		{
 			UFunction **unreal_function_ptr = (UFunction **)lua_newuserdata(L, sizeof(UFunction **));
 			*unreal_function_ptr = Function;
 			lua_newtable(L);
-			AActor **unreal_actor_ptr = (AActor **)lua_newuserdata(L, sizeof(AActor **));
-			*unreal_actor_ptr = Actor;
-			lua_setfield(L, -2, "__unreal_actor");
-			lua_pushcfunction(L, MetaTableFunctionActor__call);
+			UObject** ObjectPtr = (UObject **)lua_newuserdata(L, sizeof(UObject **));
+			*ObjectPtr = Object;
+			lua_pushcfunction(L, MetaTableFunction__call);
 			lua_setfield(L, -2, "__call");
 			lua_setmetatable(L, -2);
 			return 1;
@@ -204,85 +240,25 @@ int ULuaState::MetaTableFunctionActor__index(lua_State *L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunctionActor__call(lua_State *L)
+
+
+int ULuaState::MetaTableFunction__call(lua_State *L)
 {
 	if (!lua_isuserdata(L, 1))
 	{
 		return luaL_error(L, "invalid state for lua UFunction");
 	}
-	UFunction** unreal_function_ptr = (UFunction **)lua_touserdata(L, 1);
-	UFunction* Function = *unreal_function_ptr;
+	FLuaCallContext* LuaCallContext = (FLuaCallContext*)lua_touserdata(L, 1);
 
-	lua_getmetatable(L, 1);
-	lua_getfield(L, -1, "__unreal_actor");
-	if (!lua_isuserdata(L, -1))
-	{
-		return luaL_error(L, "invalid state for __unreal_actor internal field");
-	}
-	AActor** unreal_actor_ptr = (AActor **)lua_touserdata(L, -1);
-	AActor* Actor = *unreal_actor_ptr;
+	FScopeCycleCounterUObject ObjectScope(LuaCallContext->Context);
+	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function);
 
-	UE_LOG(LogTemp, Warning, TEXT("Ready to CALL function %s on actor %s !!!"), *Function->GetName(), *Actor->GetName());
-
-	FScopeCycleCounterUObject ObjectScope(Actor);
-	FScopeCycleCounterUObject FunctionScope(Function);
-
-	void* Parameters = FMemory_Alloca(Function->ParmsSize);
-	FMemory::Memzero(Parameters, Function->ParmsSize);
+	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
+	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
 	int StackPointer = 2;
 	// arguments
-	for (TFieldIterator<UProperty> FArgs(Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
-	{
-		UProperty *Prop = *FArgs;
-		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
-		if (!LuaProp)
-			continue;
-		if (LuaProp->Struct != FLuaValue::StaticStruct())
-			continue;
-		UE_LOG(LogTemp, Warning, TEXT("Argument: %d %s"), StackPointer, *LuaProp->GetName());
-
-
-		FLuaValue LuaValue = Internal_ToLuaValue(L, StackPointer++);
-
-		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
-	}
-
-	Actor->ProcessEvent(Function, Parameters);
-
-
-	lua_pushnil(L);
-	return 1;
-}
-
-
-int ULuaState::MetaTableFunctionState__call(lua_State *L)
-{
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for lua UFunction");
-	}
-	UFunction** unreal_function_ptr = (UFunction **)lua_touserdata(L, 1);
-	UFunction* Function = *unreal_function_ptr;
-
-	lua_getmetatable(L, 1);
-	lua_getfield(L, -1, "__unreal_state");
-	if (!lua_isuserdata(L, -1))
-	{
-		return luaL_error(L, "invalid state for __unreal_actor internal field");
-	}
-	ULuaState** LuaStatePtr = (ULuaState **)lua_touserdata(L, -1);
-	ULuaState* LuaState = *LuaStatePtr;
-
-	FScopeCycleCounterUObject ObjectScope(LuaState);
-	FScopeCycleCounterUObject FunctionScope(Function);
-
-	void* Parameters = FMemory_Alloca(Function->ParmsSize);
-	FMemory::Memzero(Parameters, Function->ParmsSize);
-
-	int StackPointer = 2;
-	// arguments
-	for (TFieldIterator<UProperty> FArgs(Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
@@ -295,7 +271,9 @@ int ULuaState::MetaTableFunctionState__call(lua_State *L)
 		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
 	}
 
-	LuaState->ProcessEvent(Function, Parameters);
+	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function, Parameters);
+
+	// TODO get return value
 
 	lua_pushnil(L);
 	return 1;
@@ -321,10 +299,10 @@ void ULuaState::GetField(int Index, const char* FieldName)
 	lua_getfield(L, Index, FieldName);
 }
 
-void ULuaState::NewActor(AActor* Actor)
+void ULuaState::NewUObject(UObject* Object)
 {
-	AActor **ActorPtr = (AActor **)lua_newuserdata(L, sizeof(AActor **));
-	*ActorPtr = Actor;
+	UObject **ObjectPtr = (UObject **)lua_newuserdata(L, sizeof(UObject **));
+	*ObjectPtr = Object;
 }
 
 void ULuaState::GetGlobal(const char* Name)

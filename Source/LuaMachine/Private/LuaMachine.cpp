@@ -3,6 +3,7 @@
 #include "LuaMachine.h"
 #if WITH_EDITOR
 #include "Editor/UnrealEd/Public/Editor.h"
+#include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #endif
 
 #define LOCTEXT_NAMESPACE "FLuaMachineModule"
@@ -10,6 +11,10 @@
 void FLuaMachineModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
+	PropertyModule.RegisterCustomPropertyTypeLayout(TEXT("LuaValue"), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FLuaValueCustomization::MakeInstance));
+	PropertyModule.NotifyCustomizationModuleChanged();
 
 #if WITH_EDITOR
 	FEditorDelegates::BeginPIE.AddRaw(this, &FLuaMachineModule::CleanupLuaStates);

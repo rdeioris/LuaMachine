@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "LuaState.h"
 #include "LuaValue.h"
 #include "LuaBlueprintFunctionLibrary.generated.h"
 
@@ -20,7 +21,19 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaCreateString(FString String);
 
+	UFUNCTION(BlueprintCallable, meta=(WorldContext="WorldContextObject"))
+	static FLuaValue LuaGetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void LuaSetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key, FLuaValue Value);
+
 	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
 	static FString Conv_LuaValueToString(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static int32 Conv_LuaValueToInt(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_IntToLuaValue(int32 Value);
 	
 };

@@ -43,12 +43,10 @@ FLuaValue ULuaComponent::LuaCallFunction(FString Function, TArray<FLuaValue> Arg
 		return ReturnValue;
 
 	// push actor data
-	L->NewTable();
-	L->NewActor(GetOwner());
-	L->SetField(-2, "__unreal_actor");
+	L->NewUObject(GetOwner());;
 	// prepare the metatable
 	L->NewTable();
-	L->PushCFunction(ULuaState::MetaTableFunctionActor__index);
+	L->PushCFunction(ULuaState::MetaTableFunctionUObject__index);
 	L->SetField(-2, "__index");
 	L->SetMetaTable(-2);
 

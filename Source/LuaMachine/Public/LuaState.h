@@ -12,6 +12,15 @@
 /**
  *
  */
+
+
+struct FLuaCallContext
+{
+	UObject* Context;
+	UFunction* Function;
+};
+
+
 UCLASS(Abstract, BlueprintType, Blueprintable)
 class LUAMACHINE_API ULuaState : public UObject
 {
@@ -43,7 +52,7 @@ public:
 
 	void GetField(int Index, const char* FieldName);
 
-	void NewActor(AActor* Actor);
+	void NewUObject(UObject* Object);
 
 	void GetGlobal(const char* Name);
 
@@ -63,10 +72,25 @@ public:
 	
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	static int MetaTableFunctionActor__index(lua_State *L);
-	static int MetaTableFunctionActor__call(lua_State *L);
+	static int MetaTableFunctionUObject__index(lua_State *L);
+	static int MetaTableFunctionUObject__call(lua_State *L);
 
-	static int MetaTableFunctionState__call(lua_State *L);
+	static int MetaTableFunctionState__index(lua_State *L);
+	static int MetaTableFunctionState__newindex(lua_State *L);
+
+
+	static int MetaTableFunction__call(lua_State *L);
+
+	static ULuaState* GetFromExtraSpace(lua_State *L)
+	{
+		ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
+		return *LuaExtraSpacePtr;
+	}
+
+	void RegisterLuaKey(FString Name, int32 Value)
+	{
+		Table.Add(Name, FLuaValue(Value));
+	}
 
 protected:
 	lua_State* L;
