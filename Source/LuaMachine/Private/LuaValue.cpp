@@ -1,12 +1,14 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LuaValue.h"
+#include "LuaComponent.h"
 #include "Editor/PropertyEditor/Public/PropertyHandle.h"
 #include "Editor/PropertyEditor/Public/DetailLayoutBuilder.h"
 #include "Editor/PropertyEditor/Public/IDetailChildrenBuilder.h"
 #include "Editor/PropertyEditor/Public/DetailWidgetRow.h"
 #include "Runtime/Slate/Public/Widgets/Text/STextBlock.h"
 #include "Runtime/Slate/Public/Widgets/Input/STextComboBox.h"
+#include "Runtime/Engine/Classes/Engine/BlueprintGeneratedClass.h"
 #include "Modules/ModuleManager.h"
 
 
@@ -48,7 +50,22 @@ void FLuaValueCustomization::LuaFunctionChanged(TSharedPtr<FString> Value, ESele
 	if (Objects.Num() != 1)
 		return;
 
-	UFunction* FoundFunction = Objects[0]->FindFunction(FName(*(*Value.Get())));
+	UClass* ObjectClass = Objects[0]->GetClass();
+
+	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
+	if (LuaComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Outer %s %s"), *LuaComponent->GetOuter()->GetName(), *LuaComponent->GetOuter()->GetClass()->GetName());
+		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
+		if (BlueprintClass)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Outer %s"), *BlueprintClass->GetName());
+			ObjectClass = BlueprintClass;
+		}
+	}
+
+
+	UFunction* FoundFunction = ObjectClass->FindFunctionByName(FName(*(*Value.Get())));
 	if (FoundFunction)
 	{
 		PropertyHandle->SetValue(FoundFunction->GetName());
@@ -90,12 +107,26 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 
 	TSharedPtr<FString> CurrentSelectedFunction;
 
-	for (TFieldIterator<UFunction> Funcs(Objects[0]->GetClass()); Funcs; ++Funcs)
+	UClass* ObjectClass = Objects[0]->GetClass();
+
+	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
+	if (LuaComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Outer %s %s"), *LuaComponent->GetOuter()->GetName(), *LuaComponent->GetOuter()->GetClass()->GetName());
+		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
+		if (BlueprintClass)
+		{
+			UE_LOG(LogTemp, Error, TEXT("Outer %s"), *BlueprintClass->GetName());
+			ObjectClass = BlueprintClass;
+		}
+	}
+
+	for (TFieldIterator<UFunction> Funcs(ObjectClass); Funcs; ++Funcs)
 	{
 		UFunction *Function = *Funcs;
 
-		if (!Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
-			continue;
+		/*if (!Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
+			continue;*/
 
 		bool bIsValid = true;
 		for (TFieldIterator<UProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
@@ -128,7 +159,23 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 	}
 
 
-	Builder.AddChildContent(FText::FromString(TEXT("Function"))).ValueContent()[
+	Builder.AddCustomRow(FText::FromString(TEXT("Function"))).ValueContent()[
 		SNew(STextComboBox).OptionsSource(&ValidLuaFunctions).OnSelectionChanged_Raw(this, &FLuaValueCustomization::LuaFunctionChanged, LuaValueFunctionProperty.ToSharedRef()).InitiallySelectedItem(CurrentSelectedFunction)
 	].Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::Function)));
+}
+
+FString FLuaValue::ToString()
+{
+	switch (Type)
+	{
+	case ELuaValueType::Bool:
+		return Bool ? FString(TEXT("true")) : FString(TEXT("false"));
+	case ELuaValueType::Integer:
+		return FString::FromInt(Integer);
+	case ELuaValueType::Number:
+		return FString::SanitizeFloat(Number);
+	case ELuaValueType::String:
+		return String;
+	}
+	return FString(TEXT("None"));
 }

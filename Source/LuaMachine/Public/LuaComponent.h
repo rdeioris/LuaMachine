@@ -26,11 +26,21 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	virtual void InitializeComponent() override;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ULuaState> LuaState;
 
+	UPROPERTY(EditAnywhere)
+	TMap<FString, FLuaValue> Table;
+
+	UPROPERTY(EditAnywhere)
+	TMap<FString, FLuaValue> Metatable;
+
+	UPROPERTY(EditAnywhere)
+	bool bLazy;
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString Function, TArray<FLuaValue> Args);
+	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args);
 	
 };

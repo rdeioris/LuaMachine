@@ -31,6 +31,9 @@ public:
 	static FString Conv_LuaValueToString(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static UObject* Conv_LuaValueToObject(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static int32 Conv_LuaValueToInt(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))

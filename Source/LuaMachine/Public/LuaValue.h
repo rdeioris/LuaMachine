@@ -5,11 +5,12 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Editor/PropertyEditor/Public/IPropertyTypeCustomization.h"
+#include "Runtime/SlateCore/Public/Layout/Visibility.h"
 #include "LuaValue.generated.h"
 
 
 /**
- * 
+ *
  */
 
 UENUM(BlueprintType)
@@ -20,7 +21,6 @@ enum class ELuaValueType : uint8
 	Integer,
 	Number,
 	String,
-	Table,
 	UserData,
 	Function,
 	Thread,
@@ -38,9 +38,9 @@ struct LUAMACHINE_API FLuaValue
 		Type = ELuaValueType::Nil;
 	}
 
-	FLuaValue(ELuaValueType InType, FString InString)
+	FLuaValue(FString InString)
 	{
-		Type = InType;
+		Type = ELuaValueType::String;
 		String = InString;
 	}
 
@@ -49,6 +49,30 @@ struct LUAMACHINE_API FLuaValue
 		Type = ELuaValueType::Integer;
 		Integer = Value;
 	}
+
+	FLuaValue(UObject* Object)
+	{
+		Type = ELuaValueType::Object;
+		ObjectPath = FSoftObjectPath(Object);
+	}
+
+	static FLuaValue Error(FString Message)
+	{
+		FLuaValue LuaValue;
+		LuaValue.Type = ELuaValueType::Error;
+		LuaValue.ErrorMessage = Message;
+		return LuaValue;
+	}
+
+	static FLuaValue Function(FName FunctionName)
+	{
+		FLuaValue LuaValue;
+		LuaValue.Type = ELuaValueType::Function;
+		LuaValue.FunctionName = FunctionName;
+		return LuaValue;
+	}
+
+	FString ToString();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	ELuaValueType Type;
@@ -69,9 +93,12 @@ struct LUAMACHINE_API FLuaValue
 	FSoftObjectPath ObjectPath;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString FunctionName;
-};
+	FName FunctionName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FString ErrorMessage;
+
+};
 
 class FLuaValueCustomization : public IPropertyTypeCustomization
 {

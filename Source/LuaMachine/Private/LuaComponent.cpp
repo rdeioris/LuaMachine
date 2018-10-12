@@ -4,6 +4,8 @@
 #include "LuaMachine.h"
 #include "GameFramework/Actor.h"
 
+DEFINE_LOG_CATEGORY(LogLuaMachine);
+
 
 // Sets default values for this component's properties
 ULuaComponent::ULuaComponent()
@@ -11,10 +13,11 @@ ULuaComponent::ULuaComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
+	bWantsInitializeComponent = true;
 
 	// ...
 
-
+	bLazy = false;
 }
 
 // Called when the game starts
@@ -34,7 +37,13 @@ void ULuaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	// ...
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString Function, TArray<FLuaValue> Args)
+void ULuaComponent::InitializeComponent()
+{
+	if (!bLazy)
+		FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+}
+
+FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 
@@ -42,15 +51,47 @@ FLuaValue ULuaComponent::LuaCallFunction(FString Function, TArray<FLuaValue> Arg
 	if (!L)
 		return ReturnValue;
 
-	// push actor data
-	L->NewUObject(GetOwner());;
+	// push component pointer as userdata
+	L->NewUObject(this);;
 	// prepare the metatable
 	L->NewTable();
-	L->PushCFunction(ULuaState::MetaTableFunctionUObject__index);
+	L->PushCFunction(ULuaState::MetaTableFunctionLuaComponent__index);
 	L->SetField(-2, "__index");
+	L->PushCFunction(ULuaState::MetaTableFunctionLuaComponent__newindex);
+	L->SetField(-2, "__newindex");
+	
+
+	for (TPair<FString, FLuaValue>& Pair : Metatable)
+	{
+		// first check for UFunction
+		if (Pair.Value.Type == ELuaValueType::Function)
+		{
+			UFunction* Function = GetOwner()->FindFunction(Pair.Value.FunctionName);
+			if (Function)
+			{
+				FLuaUserData* LuaCallContext = (FLuaUserData*)L->NewUserData(sizeof(FLuaUserData));
+				LuaCallContext->Type = ELuaValueType::Function;
+				LuaCallContext->Context = GetOwner();
+				LuaCallContext->Function = Function;
+				L->NewTable();
+				L->PushCFunction(ULuaState::MetaTableFunction__call);
+				L->SetField(-2, "__call");
+				L->SetMetaTable(-2);
+			}
+			else
+			{
+				L->PushNil();
+			}
+		}
+		else {
+			L->FromLuaValue(Pair.Value);
+		}
+		L->SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
+	}
+
 	L->SetMetaTable(-2);
 
-	int32 ItemsToPop = L->GetFunctionFromTree(Function);
+	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
 	if (ItemsToPop <= 0)
 	{
 		L->Pop(FMath::Abs(ItemsToPop));
@@ -68,7 +109,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString Function, TArray<FLuaValue> Arg
 	ReturnValue = L->PCall(NArgs);
 	if (ReturnValue.Type == ELuaValueType::Error)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Lua execution error: %s"), *ReturnValue.String);
+		L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.String));
 		ReturnValue.Type = ELuaValueType::Nil;
 	}
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop

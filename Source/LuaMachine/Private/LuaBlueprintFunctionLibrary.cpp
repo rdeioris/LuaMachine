@@ -15,18 +15,16 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateString(FString String)
 
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 {
-	switch (Value.Type)
+	return Value.ToString();
+}
+
+UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
+{
+	if (Value.Type == ELuaValueType::Object)
 	{
-	case ELuaValueType::Bool:
-		return Value.Bool ? FString(TEXT("true")) : FString(TEXT("false"));
-	case ELuaValueType::Integer:
-		return FString::FromInt(Value.Integer);
-	case ELuaValueType::Number:
-		return FString::SanitizeFloat(Value.Number);
-	case ELuaValueType::String:
-		return Value.String;
+		return Value.ObjectPath.ResolveObject();
 	}
-	return FString(TEXT("None"));
+	return nullptr;
 }
 
 int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)

@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "LuaState.h"
+#include "LuaComponent.h"
 #include "GameFramework/Actor.h"
 
 ULuaState::ULuaState()
@@ -33,6 +34,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	*LuaExtraSpacePtr = this;
 	// get the global table
 	lua_pushglobaltable(L);
+	// override print
+	PushCFunction(ULuaState::TableFunction_print);
+	SetField(-2, "print");
+
 	// assign global symbols to nil, this will allow to override global functions/symbols
 	for (TPair<FString, FLuaValue>& Pair : Table)
 	{
@@ -49,13 +54,13 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	SetField(-2, "__newindex");
 	SetMetaTable(-2);
 
-	
+
 	Pop();
 
 	UE_LOG(LogTemp, Warning, TEXT("Lua Machine initialized at %p"), L);
 	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code)))
 	{
-		UE_LOG(LogTemp, Error, TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		LogError(FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
 		bDisabled = true;
 		lua_close(L);
 		L = nullptr;
@@ -65,7 +70,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		if (lua_pcall(L, 0, 0, 0))
 		{
-			UE_LOG(LogTemp, Error, TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+			LogError(FString::Printf(TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
 			bDisabled = true;
 			lua_close(L);
 			L = nullptr;
@@ -83,6 +88,9 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 
 void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 {
+	UObject* Object = nullptr;
+	FLuaUserData* UserData = nullptr;
+
 	switch (LuaValue.Type)
 	{
 	case ELuaValueType::Bool:
@@ -97,6 +105,19 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 	case ELuaValueType::String:
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
+	case ELuaValueType::Object:
+		Object = LuaValue.ObjectPath.ResolveObject();
+		if (!Object)
+		{
+			lua_pushnil(L);
+			break;
+		}
+
+		UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+		UserData->Type = ELuaValueType::Object;
+		UserData->Context = Object;
+		UserData->Function = nullptr;
+		break;
 	default:
 		lua_pushnil(L);
 	}
@@ -104,57 +125,68 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 
 FLuaValue ULuaState::ToLuaValue(int Index)
 {
-	return Internal_ToLuaValue(L, Index);
+	FLuaValue LuaValue;
+	Internal_ToLuaValue(L, &LuaValue, Index);
+	return LuaValue;
 }
 
-FLuaValue ULuaState::Internal_ToLuaValue(lua_State* L, int Index)
+void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index)
 {
-	FLuaValue LuaValue;
 
 	if (lua_isboolean(L, Index))
 	{
-		LuaValue.Type = ELuaValueType::Bool;
-		LuaValue.Bool = lua_toboolean(L, Index) != 0;
+		LuaValue->Type = ELuaValueType::Bool;
+		LuaValue->Bool = lua_toboolean(L, Index) != 0;
 	}
 	else if (lua_isinteger(L, Index))
 	{
-		LuaValue.Type = ELuaValueType::Integer;
-		LuaValue.Integer = lua_tointeger(L, Index);
+		LuaValue->Type = ELuaValueType::Integer;
+		LuaValue->Integer = lua_tointeger(L, Index);
 	}
 	else if (lua_isnumber(L, Index))
 	{
-		LuaValue.Type = ELuaValueType::Number;
-		LuaValue.Number = lua_tonumber(L, Index);
+		LuaValue->Type = ELuaValueType::Number;
+		LuaValue->Number = lua_tonumber(L, Index);
 	}
 	else if (lua_isstring(L, Index))
 	{
-		LuaValue.Type = ELuaValueType::String;
-		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+		LuaValue->Type = ELuaValueType::String;
+		LuaValue->String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
 	}
-
-	return LuaValue;
+	else if (lua_isstring(L, Index))
+	{
+		LuaValue->Type = ELuaValueType::String;
+		LuaValue->String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+	}
+	else if (lua_isuserdata(L, Index))
+	{
+		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
+		LuaValue->Type = UserData->Type;
+		if (UserData->Type == ELuaValueType::Object)
+		{
+			LuaValue->ObjectPath = FSoftObjectPath(UserData->Context);
+		}
+	}
 }
 
 int ULuaState::MetaTableFunctionState__index(lua_State *L)
 {
 
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-	
-	const char *key = lua_tostring(L, 2);
-	UE_LOG(LogTemp, Warning, TEXT("ASKING FOR %s"), UTF8_TO_TCHAR(key));
 
-	FString Key = UTF8_TO_TCHAR(key);
+	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
-	if (LuaState->Table.Contains(Key))
+	FLuaValue* LuaValue = LuaState->Table.Find(Key);
+	if (LuaValue)
 	{
-		FLuaValue& LuaValue = LuaState->Table[Key];
 		// first check for UFunction
-		if (LuaValue.Type == ELuaValueType::Function)
+		if (LuaValue->Type == ELuaValueType::Function)
 		{
-			UFunction* Function = LuaState->FindFunction(FName(*LuaValue.FunctionName));
+			UFunction* Function = LuaState->FindFunction(LuaValue->FunctionName);
 			if (Function)
 			{
-				FLuaCallContext* LuaCallContext = (FLuaCallContext*) lua_newuserdata(L, sizeof(FLuaCallContext));
+				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+				LuaCallContext->Type = ELuaValueType::Function;
 				LuaCallContext->Context = LuaState;
 				LuaCallContext->Function = Function;
 				LuaState->NewTable();
@@ -165,28 +197,25 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 			}
 		}
 		else {
-			LuaState->FromLuaValue(LuaState->Table[Key]);
+			LuaState->FromLuaValue(*LuaValue);
 			return 1;
 		}
 	}
-	
+
 	LuaState->PushNil();
 	return 1;
 }
 
 int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 {
-	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
-	ULuaState* LuaState = *LuaExtraSpacePtr;
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	const char *key = lua_tostring(L, 2);
-	UE_LOG(LogTemp, Warning, TEXT("Setting FOR %s"), UTF8_TO_TCHAR(key));
+	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
-	FString Key = UTF8_TO_TCHAR(key);
-
-	if (LuaState->Table.Contains(Key))
+	FLuaValue* LuaValue = LuaState->Table.Find(Key);
+	if (LuaValue)
 	{
-		LuaState->Table[Key] = LuaState->ToLuaValue(3);
+		LuaState->Internal_ToLuaValue(L, LuaValue, 3);
 	}
 	else
 	{
@@ -196,59 +225,84 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 	return 0;
 }
 
-int ULuaState::MetaTableFunctionUObject__index(lua_State *L)
+int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 {
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+
 	if (!lua_isuserdata(L, 1))
 	{
-		return luaL_error(L, "invalid state for lua UObject");
+		return luaL_error(L, "invalid state for ULuaComponent");
 	}
-	UObject** ObjectPtr = (UObject **)lua_touserdata(L, 1);
-	UObject* Object = *ObjectPtr;
-	const char *key = lua_tostring(L, 2);
-	UE_LOG(LogTemp, Warning, TEXT("ASKING FOR %s"), UTF8_TO_TCHAR(key));
-	// first find for a property
-	UProperty* Prop = Object->GetClass()->FindPropertyByName(FName(UTF8_TO_TCHAR(key)));
-	if (Prop)
+	ULuaComponent** LuaComponentPtr = (ULuaComponent **)lua_touserdata(L, 1);
+	ULuaComponent* LuaComponent = *LuaComponentPtr;
+
+	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+
+	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
+	if (LuaValue)
 	{
-		UStructProperty* StructProp = Cast<UStructProperty>(Prop);
-		if (StructProp && StructProp->Struct == FLuaValue::StaticStruct() && !StructProp->HasAnyPropertyFlags(CPF_DisableEditOnInstance))
+		// first check for UFunction
+		if (LuaValue->Type == ELuaValueType::Function)
 		{
-			FLuaValue* LuaValue = StructProp->ContainerPtrToValuePtr<FLuaValue>(Object);
-			Internal_FromLuaValue(L, *LuaValue);
-			return 1;
+			UFunction* Function = LuaComponent->GetOwner()->FindFunction(LuaValue->FunctionName);
+			if (Function)
+			{
+				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+				LuaCallContext->Type = ELuaValueType::Function;
+				LuaCallContext->Context = LuaComponent->GetOwner();
+				LuaCallContext->Function = Function;
+				LuaState->NewTable();
+				LuaState->PushCFunction(ULuaState::MetaTableFunction__call);
+				LuaState->SetField(-2, "__call");
+				LuaState->SetMetaTable(-2);
+				return 1;
+			}
 		}
-	}
-	else
-	{
-		FString FullKey = FString("lua_") + FString(UTF8_TO_TCHAR(key));
-		UFunction* Function = Object->GetClass()->FindFunctionByName(FName(*FullKey));
-		if (Function && Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
-		{
-			UFunction **unreal_function_ptr = (UFunction **)lua_newuserdata(L, sizeof(UFunction **));
-			*unreal_function_ptr = Function;
-			lua_newtable(L);
-			UObject** ObjectPtr = (UObject **)lua_newuserdata(L, sizeof(UObject **));
-			*ObjectPtr = Object;
-			lua_pushcfunction(L, MetaTableFunction__call);
-			lua_setfield(L, -2, "__call");
-			lua_setmetatable(L, -2);
+		else {
+			LuaState->FromLuaValue(*LuaValue);
 			return 1;
 		}
 	}
 
-	lua_pushnil(L);
+	LuaState->PushNil();
 	return 1;
 }
 
+int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
+	if (!lua_isuserdata(L, 1))
+	{
+		return luaL_error(L, "invalid state for ULuaComponent");
+	}
+	ULuaComponent** LuaComponentPtr = (ULuaComponent **)lua_touserdata(L, 1);
+	ULuaComponent* LuaComponent = *LuaComponentPtr;
+
+	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+
+	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
+	if (LuaValue)
+	{
+		LuaState->Internal_ToLuaValue(L, LuaValue, 3);
+	}
+	else
+	{
+		lua_rawset(L, 1);
+	}
+
+	return 0;
+}
 
 int ULuaState::MetaTableFunction__call(lua_State *L)
 {
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+
 	if (!lua_isuserdata(L, 1))
 	{
 		return luaL_error(L, "invalid state for lua UFunction");
 	}
-	FLuaCallContext* LuaCallContext = (FLuaCallContext*)lua_touserdata(L, 1);
+	FLuaUserData* LuaCallContext = (FLuaUserData*)lua_touserdata(L, 1);
 
 	FScopeCycleCounterUObject ObjectScope(LuaCallContext->Context);
 	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function);
@@ -267,16 +321,56 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			continue;
 
-		FLuaValue LuaValue = Internal_ToLuaValue(L, StackPointer++);
+		FLuaValue LuaValue = LuaState->ToLuaValue(StackPointer++);
 		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
 	}
 
 	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function, Parameters);
 
-	// TODO get return value
+	// get return value
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs && (FArgs->PropertyFlags & CPF_ReturnParm); ++FArgs)
+	{
+		UProperty *Prop = *FArgs;
+		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
+		if (!LuaProp)
+			continue;
+		if (LuaProp->Struct != FLuaValue::StaticStruct())
+			continue;
 
-	lua_pushnil(L);
+		FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters);
+		if (LuaValue)
+		{
+			LuaState->FromLuaValue(*LuaValue);
+			return 1;
+		}
+	}
+
+	LuaState->PushNil();
 	return 1;
+}
+
+int ULuaState::TableFunction_print(lua_State *L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+	TArray<FString> Messages;
+
+	int n = lua_gettop(L);
+	lua_getglobal(L, "tostring");
+	for (int i = 1; i <= n; i++)
+	{
+		lua_pushvalue(L, -1);
+		lua_pushvalue(L, i);
+		FLuaValue Value = LuaState->PCall(1);
+		LuaState->Pop();
+		if (Value.Type == ELuaValueType::Error)
+		{
+			LuaState->LogError(Value.ErrorMessage);
+			return 0;
+		}
+		Messages.Add(Value.ToString());
+	}
+	LuaState->Log(FString::Join(Messages, TEXT("\t")));
+	return 0;
 }
 
 void ULuaState::NewTable()
@@ -350,7 +444,7 @@ FLuaValue ULuaState::PCall(int NArgs)
 {
 	if (lua_pcall(L, NArgs, 1, 0))
 	{
-		return FLuaValue(ELuaValueType::Error, UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		return FLuaValue::Error(UTF8_TO_TCHAR(lua_tostring(L, -1)));
 	}
 	return ToLuaValue(-1);
 }
@@ -370,6 +464,10 @@ void ULuaState::PushCFunction(lua_CFunction Function)
 	lua_pushcfunction(L, Function);
 }
 
+void* ULuaState::NewUserData(size_t DataSize)
+{
+	return lua_newuserdata(L, DataSize);
+}
 
 ULuaState::~ULuaState()
 {

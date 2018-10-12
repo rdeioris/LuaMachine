@@ -9,15 +9,31 @@
 #include "LuaCode.h"
 #include "LuaState.generated.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
+
 /**
  *
  */
 
 
-struct FLuaCallContext
+struct FLuaUserData
 {
+	ELuaValueType Type;
 	UObject* Context;
 	UFunction* Function;
+
+	FLuaUserData(UObject* InObject)
+	{
+		Type = ELuaValueType::Object;
+		Context = InObject;
+	}
+
+	FLuaUserData(UObject* InObject, UFunction* InFunction)
+	{
+		Type = ELuaValueType::Function;
+		Context = InObject;
+		Function = InFunction;
+	}
 };
 
 
@@ -54,6 +70,8 @@ public:
 
 	void NewUObject(UObject* Object);
 
+	void* NewUserData(size_t DataSize);
+
 	void GetGlobal(const char* Name);
 
 	int32 GetFunctionFromTree(FString Tree);
@@ -72,12 +90,13 @@ public:
 	
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	static int MetaTableFunctionUObject__index(lua_State *L);
-	static int MetaTableFunctionUObject__call(lua_State *L);
+	static int MetaTableFunctionLuaComponent__index(lua_State *L);
+	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
 
 	static int MetaTableFunctionState__index(lua_State *L);
 	static int MetaTableFunctionState__newindex(lua_State *L);
 
+	static int TableFunction_print(lua_State *L);
 
 	static int MetaTableFunction__call(lua_State *L);
 
@@ -87,9 +106,19 @@ public:
 		return *LuaExtraSpacePtr;
 	}
 
-	void RegisterLuaKey(FString Name, int32 Value)
+	void Log(FString Message)
 	{
-		Table.Add(Name, FLuaValue(Value));
+		UE_LOG(LogLuaMachine, Log, TEXT("%s"), *Message);
+	}
+
+	void LogWarning(FString Message)
+	{
+		UE_LOG(LogLuaMachine, Warning, TEXT("%s"), *Message);
+	}
+
+	void LogError(FString Message)
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("%s"), *Message);
 	}
 
 protected:
@@ -97,7 +126,7 @@ protected:
 	bool bDisabled;
 
 	static void Internal_FromLuaValue(lua_State *L, FLuaValue& LuaValue);
-	static FLuaValue Internal_ToLuaValue(lua_State *L, int Index);
+	static void Internal_ToLuaValue(lua_State *L, FLuaValue* LuaValue, int Index);
 
 	UWorld* CurrentWorld;
 };
