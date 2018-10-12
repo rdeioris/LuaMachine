@@ -58,7 +58,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	Pop();
 
 	UE_LOG(LogTemp, Warning, TEXT("Lua Machine initialized at %p"), L);
-	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code)))
+	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString())))
 	{
 		LogError(FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
 		bDisabled = true;
@@ -364,8 +364,7 @@ int ULuaState::TableFunction_print(lua_State *L)
 		LuaState->Pop();
 		if (Value.Type == ELuaValueType::Error)
 		{
-			LuaState->LogError(Value.ErrorMessage);
-			return 0;
+			return luaL_error(L, "%s", TCHAR_TO_UTF8(*Value.ErrorMessage));
 		}
 		Messages.Add(Value.ToString());
 	}

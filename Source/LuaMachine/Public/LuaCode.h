@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Editor/PropertyEditor/Public/IDetailCustomization.h"
 #include "LuaCode.generated.h"
 
 /**
@@ -16,8 +17,21 @@ class LUAMACHINE_API ULuaCode : public UDataAsset
 	
 public:
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, meta = (MultiLine = "true"))
-	FString Code;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	FText Code;
 	
 	
 };
+
+class FLuaCodeCustomization : public IDetailCustomization
+{
+public:
+	// IDetailCustomization interface
+	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
+
+	static TSharedRef<IDetailCustomization> MakeInstance()
+	{
+		return MakeShareable(new FLuaCodeCustomization());
+	}
+};
+

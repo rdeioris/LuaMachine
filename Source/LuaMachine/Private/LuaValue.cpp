@@ -14,9 +14,6 @@
 
 void FLuaValueCustomization::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	uint32 NumChildren = 0;
-	PropertyHandle->GetNumChildren(NumChildren);
-
 	TSharedPtr<IPropertyHandle> LuaValueTypeProperty = PropertyHandle->GetChildHandle(FName(TEXT("Type")));
 
 	HeaderRow.NameContent()
@@ -112,11 +109,9 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
 	if (LuaComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Outer %s %s"), *LuaComponent->GetOuter()->GetName(), *LuaComponent->GetOuter()->GetClass()->GetName());
 		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
 		if (BlueprintClass)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Outer %s"), *BlueprintClass->GetName());
 			ObjectClass = BlueprintClass;
 		}
 	}

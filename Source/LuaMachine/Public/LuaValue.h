@@ -103,7 +103,7 @@ struct LUAMACHINE_API FLuaValue
 class FLuaValueCustomization : public IPropertyTypeCustomization
 {
 public:
-	// IDetailCustomization interface
+	// IPropertyTypeCustomization interface
 	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
 
 	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& Builder, IPropertyTypeCustomizationUtils& CustomizationUtils) override;
