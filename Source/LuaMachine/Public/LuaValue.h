@@ -24,7 +24,6 @@ enum class ELuaValueType : uint8
 	UserData,
 	Function,
 	Thread,
-	Error,
 	Table,
 	Object,
 };
@@ -57,14 +56,6 @@ struct LUAMACHINE_API FLuaValue
 		ObjectPath = FSoftObjectPath(Object);
 	}
 
-	static FLuaValue Error(FString Message)
-	{
-		FLuaValue LuaValue;
-		LuaValue.Type = ELuaValueType::Error;
-		LuaValue.ErrorMessage = Message;
-		return LuaValue;
-	}
-
 	static FLuaValue Function(FName FunctionName)
 	{
 		FLuaValue LuaValue;
@@ -95,10 +86,6 @@ struct LUAMACHINE_API FLuaValue
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName FunctionName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FString ErrorMessage;
-
 };
 
 class FLuaValueCustomization : public IPropertyTypeCustomization

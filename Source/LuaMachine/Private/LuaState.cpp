@@ -9,6 +9,7 @@ ULuaState::ULuaState()
 	L = nullptr;
 	bLuaOpenLibs = true;
 	bDisabled = false;
+	bLogError = true;
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -387,12 +388,12 @@ int ULuaState::TableFunction_print(lua_State *L)
 	{
 		lua_pushvalue(L, -1);
 		lua_pushvalue(L, i);
-		FLuaValue Value = LuaState->PCall(1);
-		LuaState->Pop();
-		if (Value.Type == ELuaValueType::Error)
+		FLuaValue Value;
+		if (!LuaState->Call(1, Value))
 		{
-			return luaL_error(L, "%s", TCHAR_TO_UTF8(*Value.ErrorMessage));
+			return luaL_error(L, "%s", TCHAR_TO_UTF8(*LuaState->LastError));
 		}
+		LuaState->Pop();
 		Messages.Add(Value.ToString());
 	}
 	LuaState->Log(FString::Join(Messages, TEXT("\t")));
@@ -468,13 +469,28 @@ void ULuaState::PushValue(int Index)
 	lua_pushvalue(L, Index);
 }
 
-FLuaValue ULuaState::PCall(int NArgs)
+bool ULuaState::PCall(int NArgs, FLuaValue& Value, int NRet)
 {
-	if (lua_pcall(L, NArgs, 1, 0))
+	bool bSuccess = Call(NArgs, Value, NRet);
+	if (!bSuccess)
 	{
-		return FLuaValue::Error(UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
 	}
-	return ToLuaValue(-1);
+	return bSuccess;
+}
+
+bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
+{
+	if (lua_pcall(L, NArgs, NRet, 0))
+	{
+		LastError = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		return false;
+	}
+	if (NRet > 0)
+		Value = ToLuaValue(-1);
+	return true;
 }
 
 void ULuaState::Pop(int32 Amount)

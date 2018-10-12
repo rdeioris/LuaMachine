@@ -98,12 +98,8 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldCont
 		NArgs++;
 	}
 
-	ReturnValue = L->PCall(NArgs);
-	if (ReturnValue.Type == ELuaValueType::Error)
-	{
-		L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.ErrorMessage));
-		ReturnValue.Type = ELuaValueType::Nil;
-	}
+	L->PCall(NArgs, ReturnValue);
+
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop);
 

@@ -8,7 +8,7 @@
 #include "LuaValue.h"
 #include "LuaComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLuaComponentError, ELuaErrorType, Type, FString, Message);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLuaComponentError, FString, Message);
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )

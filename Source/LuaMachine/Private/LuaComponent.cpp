@@ -18,7 +18,7 @@ ULuaComponent::ULuaComponent()
 	// ...
 
 	bLazy = false;
-	bLogError = true;
+	bLogError = false;
 }
 
 // Called when the game starts
@@ -115,13 +115,11 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 		NArgs++;
 	}
 
-	ReturnValue = L->PCall(NArgs);
-	if (ReturnValue.Type == ELuaValueType::Error)
+	if (!L->PCall(NArgs, ReturnValue))
 	{
-		OnLuaError.Broadcast(ELuaErrorType::Execution, ReturnValue.ErrorMessage);
 		if (bLogError)
-			L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.ErrorMessage));
-		ReturnValue.Type = ELuaValueType::Nil;
+			L->LogError(L->LastError);
+		OnLuaError.Broadcast(L->LastError);
 	}
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop);
