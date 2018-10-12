@@ -56,7 +56,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	Pop();
 
-	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString())))
+	const TCHAR* CodeRaw = *(LuaCodeAsset->Code.ToString());
+	FString CodePath = FString("@") + LuaCodeAsset->GetPathName();
+
+	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*CodePath)))
 	{
 		LogError(FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
 		bDisabled = true;

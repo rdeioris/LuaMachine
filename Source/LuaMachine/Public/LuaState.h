@@ -15,6 +15,15 @@ DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
  *
  */
 
+UENUM(BlueprintType)
+enum class ELuaErrorType : uint8
+{
+	Compilation,
+	Execution,
+};
+
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLuaStateError, ELuaErrorType, Type, FString, Message);
 
 struct FLuaUserData
 {
@@ -56,6 +65,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bLuaOpenLibs;
+
+	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
+	FLuaStateError OnLuaError;
 
 	void FromLuaValue(FLuaValue& LuaValue);
 	FLuaValue ToLuaValue(int Index);

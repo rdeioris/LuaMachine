@@ -8,6 +8,8 @@
 #include "LuaValue.h"
 #include "LuaComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FLuaComponentError, ELuaErrorType, Type, FString, Message);
+
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class LUAMACHINE_API ULuaComponent : public UActorComponent
@@ -40,8 +42,14 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bLazy;
 
+	UPROPERTY(EditAnywhere)
+	bool bLogError;
+
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args);
+
+	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
+	FLuaComponentError OnLuaError;
 
 	void SetupMetatable();
 	
