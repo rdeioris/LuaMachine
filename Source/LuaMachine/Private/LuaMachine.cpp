@@ -47,6 +47,8 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 
 ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld)
 {
+	if (!LuaStateClass)
+		return nullptr;
 
 	if (!LuaStates.Contains(LuaStateClass))
 	{

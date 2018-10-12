@@ -25,6 +25,7 @@ enum class ELuaValueType : uint8
 	Function,
 	Thread,
 	Error,
+	Table,
 	Object,
 };
 

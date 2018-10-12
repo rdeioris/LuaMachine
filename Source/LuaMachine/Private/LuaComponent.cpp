@@ -43,23 +43,18 @@ void ULuaComponent::InitializeComponent()
 		FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args)
+void ULuaComponent::SetupMetatable()
 {
-	FLuaValue ReturnValue;
-
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 	if (!L)
-		return ReturnValue;
+		return;
 
-	// push component pointer as userdata
-	L->NewUObject(this);;
-	// prepare the metatable
 	L->NewTable();
 	L->PushCFunction(ULuaState::MetaTableFunctionLuaComponent__index);
 	L->SetField(-2, "__index");
 	L->PushCFunction(ULuaState::MetaTableFunctionLuaComponent__newindex);
 	L->SetField(-2, "__newindex");
-	
+
 
 	for (TPair<FString, FLuaValue>& Pair : Metatable)
 	{
@@ -90,6 +85,19 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	}
 
 	L->SetMetaTable(-2);
+}
+
+FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	// push component pointer as userdata
+	L->NewUObject(this);
+	SetupMetatable();
 
 	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
 	if (ItemsToPop <= 0)
@@ -98,9 +106,9 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 		return ReturnValue;
 	}
 
-	L->PushValue(-(ItemsToPop + 1));
+	L->PushValue(-(ItemsToPop+1));
 	int NArgs = 1;
-	for (FLuaValue Arg : Args)
+	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
 		NArgs++;
@@ -109,7 +117,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	ReturnValue = L->PCall(NArgs);
 	if (ReturnValue.Type == ELuaValueType::Error)
 	{
-		L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.String));
+		L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.ErrorMessage));
 		ReturnValue.Type = ELuaValueType::Nil;
 	}
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop

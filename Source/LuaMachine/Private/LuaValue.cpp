@@ -2,6 +2,7 @@
 
 #include "LuaValue.h"
 #include "LuaComponent.h"
+#include "GameFramework/Actor.h"
 #include "Editor/PropertyEditor/Public/PropertyHandle.h"
 #include "Editor/PropertyEditor/Public/DetailLayoutBuilder.h"
 #include "Editor/PropertyEditor/Public/IDetailChildrenBuilder.h"
@@ -52,10 +53,18 @@ void FLuaValueCustomization::LuaFunctionChanged(TSharedPtr<FString> Value, ESele
 	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
 	if (LuaComponent)
 	{
-		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
-		if (BlueprintClass)
+		AActor* Actor = LuaComponent->GetOwner();
+		if (Actor)
 		{
-			ObjectClass = BlueprintClass;
+			ObjectClass = Actor->GetClass();
+		}
+		else
+		{
+			UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
+			if (BlueprintClass)
+			{
+				ObjectClass = BlueprintClass;
+			}
 		}
 	}
 
@@ -107,10 +116,18 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
 	if (LuaComponent)
 	{
-		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
-		if (BlueprintClass)
+		AActor* Actor = LuaComponent->GetOwner();
+		if (Actor)
 		{
-			ObjectClass = BlueprintClass;
+			ObjectClass = Actor->GetClass();
+		}
+		else
+		{
+			UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
+			if (BlueprintClass)
+			{
+				ObjectClass = BlueprintClass;
+			}
 		}
 	}
 
@@ -169,6 +186,8 @@ FString FLuaValue::ToString()
 		return FString::SanitizeFloat(Number);
 	case ELuaValueType::String:
 		return String;
+	case ELuaValueType::Object:
+		return ObjectPath.ToString();
 	}
 	return FString(TEXT("None"));
 }

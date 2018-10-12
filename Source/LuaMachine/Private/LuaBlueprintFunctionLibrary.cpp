@@ -27,6 +27,14 @@ UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 	return nullptr;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
+{
+	FLuaValue LuaValue;
+	LuaValue.Type = ELuaValueType::Object;
+	LuaValue.ObjectPath = FSoftObjectPath(Object);
+	return LuaValue;
+}
+
 int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 {
 	switch (Value.Type)
@@ -67,4 +75,37 @@ void ULuaBlueprintFunctionLibrary::LuaSetGlobalTableValue(UObject* WorldContextO
 	{
 		LuaState->Table[Key] = Value;
 	}
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, (UWorld*)WorldContextObject);
+	if (!L)
+		return ReturnValue;
+
+	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
+	if (ItemsToPop <= 0)
+	{
+		L->Pop(FMath::Abs(ItemsToPop));
+		return ReturnValue;
+	}
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	ReturnValue = L->PCall(NArgs);
+	if (ReturnValue.Type == ELuaValueType::Error)
+	{
+		L->LogError(FString::Printf(TEXT("Lua execution error: %s"), *ReturnValue.ErrorMessage));
+		ReturnValue.Type = ELuaValueType::Nil;
+	}
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop(ItemsToPop);
+
+	return ReturnValue;
 }

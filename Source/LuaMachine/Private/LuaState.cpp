@@ -87,7 +87,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 {
 	UObject* Object = nullptr;
-	FLuaUserData* UserData = nullptr;
 
 	switch (LuaValue.Type)
 	{
@@ -105,16 +104,40 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 		break;
 	case ELuaValueType::Object:
 		Object = LuaValue.ObjectPath.ResolveObject();
-		if (!Object)
+		if (Object)
 		{
-			lua_pushnil(L);
-			break;
+			ULuaState* InLuaState = ULuaState::GetFromExtraSpace(L);
+			ULuaComponent* LuaComponent = Cast<ULuaComponent>(Object);
+			if (LuaComponent)
+			{
+				InLuaState->NewUObject(LuaComponent);
+				if (LuaComponent->LuaState == InLuaState->GetClass())
+				{
+					LuaComponent->SetupMetatable();
+					return;
+				}
+			}
+			else {
+				AActor* Actor = Cast<AActor>(Object);
+				if (Actor)
+				{
+					TArray<UActorComponent*> LuaComponents = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+					for (UActorComponent* Component : LuaComponents)
+					{
+						ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+						if (LuaComponent->LuaState == InLuaState->GetClass())
+						{
+							InLuaState->NewUObject(LuaComponent);
+							LuaComponent->SetupMetatable();
+							return;
+						}
+					}
+				}
+			}
+			InLuaState->NewUObject(Object);
+			return;
 		}
-
-		UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-		UserData->Type = ELuaValueType::Object;
-		UserData->Context = Object;
-		UserData->Function = nullptr;
+		lua_pushnil(L);
 		break;
 	default:
 		lua_pushnil(L);
@@ -130,7 +153,6 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 
 void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index)
 {
-
 	if (lua_isboolean(L, Index))
 	{
 		LuaValue->Type = ELuaValueType::Bool;
@@ -151,18 +173,22 @@ void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index
 		LuaValue->Type = ELuaValueType::String;
 		LuaValue->String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
 	}
-	else if (lua_isstring(L, Index))
+	else if (lua_istable(L, Index))
 	{
-		LuaValue->Type = ELuaValueType::String;
-		LuaValue->String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+		LuaValue->Type = ELuaValueType::Table;
 	}
 	else if (lua_isuserdata(L, Index))
 	{
 		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
 		LuaValue->Type = UserData->Type;
-		if (UserData->Type == ELuaValueType::Object)
+		switch (UserData->Type)
 		{
+		case(ELuaValueType::Object):
 			LuaValue->ObjectPath = FSoftObjectPath(UserData->Context);
+			break;
+		case(ELuaValueType::Function):
+			LuaValue->FunctionName = UserData->Function->GetFName();
+			break;
 		}
 	}
 }
@@ -231,8 +257,8 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 	{
 		return luaL_error(L, "invalid state for ULuaComponent");
 	}
-	ULuaComponent** LuaComponentPtr = (ULuaComponent **)lua_touserdata(L, 1);
-	ULuaComponent* LuaComponent = *LuaComponentPtr;
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+	ULuaComponent* LuaComponent = (ULuaComponent*)UserData->Context;
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
@@ -274,8 +300,8 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	{
 		return luaL_error(L, "invalid state for ULuaComponent");
 	}
-	ULuaComponent** LuaComponentPtr = (ULuaComponent **)lua_touserdata(L, 1);
-	ULuaComponent* LuaComponent = *LuaComponentPtr;
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+	ULuaComponent* LuaComponent = (ULuaComponent*)UserData->Context;
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
@@ -392,8 +418,10 @@ void ULuaState::GetField(int Index, const char* FieldName)
 
 void ULuaState::NewUObject(UObject* Object)
 {
-	UObject **ObjectPtr = (UObject **)lua_newuserdata(L, sizeof(UObject **));
-	*ObjectPtr = Object;
+	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+	UserData->Type = ELuaValueType::Object;
+	UserData->Context = Object;
+	UserData->Function = nullptr;
 }
 
 void ULuaState::GetGlobal(const char* Name)

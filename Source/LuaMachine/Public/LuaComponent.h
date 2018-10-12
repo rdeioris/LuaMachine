@@ -42,5 +42,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args);
+
+	void SetupMetatable();
 	
 };
