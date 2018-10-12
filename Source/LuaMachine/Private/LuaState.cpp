@@ -54,10 +54,8 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	SetField(-2, "__newindex");
 	SetMetaTable(-2);
 
-
 	Pop();
 
-	UE_LOG(LogTemp, Warning, TEXT("Lua Machine initialized at %p"), L);
 	if (luaL_loadstring(L, TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString())))
 	{
 		LogError(FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));

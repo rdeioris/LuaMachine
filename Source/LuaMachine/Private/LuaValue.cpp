@@ -52,11 +52,9 @@ void FLuaValueCustomization::LuaFunctionChanged(TSharedPtr<FString> Value, ESele
 	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
 	if (LuaComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Outer %s %s"), *LuaComponent->GetOuter()->GetName(), *LuaComponent->GetOuter()->GetClass()->GetName());
 		UBlueprintGeneratedClass* BlueprintClass = Cast<UBlueprintGeneratedClass>(LuaComponent->GetOuter());
 		if (BlueprintClass)
 		{
-			UE_LOG(LogTemp, Error, TEXT("Outer %s"), *BlueprintClass->GetName());
 			ObjectClass = BlueprintClass;
 		}
 	}
