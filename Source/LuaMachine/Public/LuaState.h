@@ -36,7 +36,7 @@ struct FLuaUserData
 };
 
 
-UCLASS(Abstract, BlueprintType, Blueprintable)
+UCLASS(Abstract, EditInlineNew, BlueprintType, Blueprintable)
 class LUAMACHINE_API ULuaState : public UObject
 {
 	GENERATED_BODY()
@@ -52,6 +52,9 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	TMap<FString, FLuaValue> Table;
+
+	UPROPERTY(EditAnywhere)
+	TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere)
 	bool bLuaOpenLibs;
@@ -98,6 +101,8 @@ public:
 	
 	ULuaState* GetLuaState(UWorld* InWorld);
 
+	bool RunCode(FString Code, FString CodePath, int NRet=0, bool SpitErrors=true);
+
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);
 	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
 
@@ -105,6 +110,7 @@ public:
 	static int MetaTableFunctionState__newindex(lua_State *L);
 
 	static int TableFunction_print(lua_State *L);
+	static int TableFunction_package_preload(lua_State *L);
 
 	static int MetaTableFunction__call(lua_State *L);
 
