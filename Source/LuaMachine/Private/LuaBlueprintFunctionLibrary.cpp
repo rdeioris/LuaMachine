@@ -73,7 +73,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
 FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key)
 {
 	FLuaValue ReturnValue;
-	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, (UWorld *)WorldContextObject);
+	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (LuaState && LuaState->Table.Contains(Key))
 	{
 		ReturnValue = LuaState->Table[Key];
@@ -84,7 +84,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobalTableValue(UObject* WorldCon
 
 void ULuaBlueprintFunctionLibrary::LuaSetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key, FLuaValue Value)
 {
-	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, (UWorld *)WorldContextObject);
+	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (LuaState && LuaState->Table.Contains(Key))
 	{
 		LuaState->Table[Key] = Value;
