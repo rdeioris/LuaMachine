@@ -90,8 +90,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 
 void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 {
-	UObject* Object = nullptr;
-
 	switch (LuaValue.Type)
 	{
 	case ELuaValueType::Bool:
@@ -107,42 +105,38 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
 	case ELuaValueType::Object:
-		Object = LuaValue.ObjectPath.TryLoad();
-		if (Object)
+	{
+		ULuaState* InLuaState = ULuaState::GetFromExtraSpace(L);
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
+		if (LuaComponent)
 		{
-			ULuaState* InLuaState = ULuaState::GetFromExtraSpace(L);
-			ULuaComponent* LuaComponent = Cast<ULuaComponent>(Object);
-			if (LuaComponent)
+			InLuaState->NewUObject(LuaComponent);
+			if (LuaComponent->LuaState == InLuaState->GetClass())
 			{
-				InLuaState->NewUObject(LuaComponent);
-				if (LuaComponent->LuaState == InLuaState->GetClass())
-				{
-					LuaComponent->SetupMetatable();
-					return;
-				}
+				LuaComponent->SetupMetatable();
+				return;
 			}
-			else {
-				AActor* Actor = Cast<AActor>(Object);
-				if (Actor)
+		}
+		else {
+			AActor* Actor = Cast<AActor>(LuaValue.Object);
+			if (Actor)
+			{
+				TArray<UActorComponent*> LuaComponents = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+				for (UActorComponent* Component : LuaComponents)
 				{
-					TArray<UActorComponent*> LuaComponents = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
-					for (UActorComponent* Component : LuaComponents)
+					ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+					if (LuaComponent->LuaState == InLuaState->GetClass())
 					{
-						ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
-						if (LuaComponent->LuaState == InLuaState->GetClass())
-						{
-							InLuaState->NewUObject(LuaComponent);
-							LuaComponent->SetupMetatable();
-							return;
-						}
+						InLuaState->NewUObject(LuaComponent);
+						LuaComponent->SetupMetatable();
+						return;
 					}
 				}
 			}
-			InLuaState->NewUObject(Object);
-			return;
 		}
-		lua_pushnil(L);
+		InLuaState->NewUObject(LuaValue.Object);
 		break;
+	}
 	default:
 		lua_pushnil(L);
 	}
@@ -188,7 +182,7 @@ void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index
 		switch (UserData->Type)
 		{
 		case(ELuaValueType::Object):
-			LuaValue->ObjectPath = FSoftObjectPath(UserData->Context);
+			LuaValue->Object = UserData->Context;
 			break;
 		case(ELuaValueType::Function):
 			LuaValue->FunctionName = UserData->Function->GetFName();

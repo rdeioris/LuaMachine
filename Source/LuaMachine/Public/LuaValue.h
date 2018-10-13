@@ -36,24 +36,25 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue()
 	{
 		Type = ELuaValueType::Nil;
+		Object = nullptr;
 	}
 
-	FLuaValue(FString InString)
+	FLuaValue(FString InString) : Object(nullptr)
 	{
 		Type = ELuaValueType::String;
 		String = InString;
 	}
 
-	FLuaValue(int32 Value)
+	FLuaValue(int32 Value) : Object(nullptr)
 	{
 		Type = ELuaValueType::Integer;
 		Integer = Value;
 	}
 
-	FLuaValue(UObject* Object)
+	FLuaValue(UObject* InObject)
 	{
 		Type = ELuaValueType::Object;
-		ObjectPath = FSoftObjectPath(Object);
+		Object = InObject;
 	}
 
 	static FLuaValue Function(FName FunctionName)
@@ -61,6 +62,7 @@ struct LUAMACHINE_API FLuaValue
 		FLuaValue LuaValue;
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.FunctionName = FunctionName;
+		LuaValue.Object = nullptr;
 		return LuaValue;
 	}
 
@@ -82,7 +84,7 @@ struct LUAMACHINE_API FLuaValue
 	FString String;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FSoftObjectPath ObjectPath;
+	UObject* Object;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName FunctionName;

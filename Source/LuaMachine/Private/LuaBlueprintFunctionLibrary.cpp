@@ -22,7 +22,21 @@ UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 {
 	if (Value.Type == ELuaValueType::Object)
 	{
-		return Value.ObjectPath.TryLoad();
+		return Value.Object;
+	}
+	return nullptr;
+}
+
+UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(FLuaValue Value)
+{
+	if (Value.Type == ELuaValueType::Object)
+	{
+		UClass* Class = Cast<UClass>(Value.Object);
+		if (Class)
+			return Class;
+		UBlueprint* Blueprint = Cast<UBlueprint>(Value.Object);
+		if (Blueprint)
+			return Blueprint->GeneratedClass;
 	}
 	return nullptr;
 }
@@ -31,7 +45,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
 {
 	FLuaValue LuaValue;
 	LuaValue.Type = ELuaValueType::Object;
-	LuaValue.ObjectPath = FSoftObjectPath(Object);
+	LuaValue.Object = Object;
 	return LuaValue;
 }
 
@@ -80,7 +94,7 @@ void ULuaBlueprintFunctionLibrary::LuaSetGlobalTableValue(UObject* WorldContextO
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, (UWorld*)WorldContextObject);
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, WorldContextObject->GetWorld());
 	if (!L)
 		return ReturnValue;
 

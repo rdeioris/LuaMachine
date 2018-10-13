@@ -37,6 +37,9 @@ public:
 	static UObject* Conv_LuaValueToObject(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static UClass* Conv_LuaValueToClass(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))

@@ -39,7 +39,6 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
 		LuaStates[LuaStateClass]->RemoveFromRoot();
-		LuaStates[LuaStateClass]->ConditionalBeginDestroy();
 	}
 
 	LuaStates.Empty();

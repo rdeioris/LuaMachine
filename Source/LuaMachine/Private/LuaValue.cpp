@@ -100,7 +100,7 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 	IDetailPropertyRow& PropertyNumberRow = Builder.AddProperty(LuaValueNumberProperty.ToSharedRef());
 	PropertyNumberRow.Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::Number)));
 
-	TSharedPtr<IPropertyHandle> LuaValueObjectProperty = PropertyHandle->GetChildHandle(FName(TEXT("ObjectPath")));
+	TSharedPtr<IPropertyHandle> LuaValueObjectProperty = PropertyHandle->GetChildHandle(FName(TEXT("Object")));
 	IDetailPropertyRow& PropertyObjectRow = Builder.AddProperty(LuaValueObjectProperty.ToSharedRef());
 	PropertyObjectRow.Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::Object)));
 
@@ -187,7 +187,7 @@ FString FLuaValue::ToString()
 	case ELuaValueType::String:
 		return String;
 	case ELuaValueType::Object:
-		return ObjectPath.ToString();
+		return Object->GetFullName();
 	}
 	return FString(TEXT("None"));
 }
