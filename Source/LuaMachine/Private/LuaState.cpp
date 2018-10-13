@@ -107,7 +107,7 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
 	case ELuaValueType::Object:
-		Object = LuaValue.ObjectPath.ResolveObject();
+		Object = LuaValue.ObjectPath.TryLoad();
 		if (Object)
 		{
 			ULuaState* InLuaState = ULuaState::GetFromExtraSpace(L);

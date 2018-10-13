@@ -101,12 +101,8 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	SetupMetatable();
 
 	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
-	if (ItemsToPop <= 0)
-	{
-		L->Pop(FMath::Abs(ItemsToPop));
-		return ReturnValue;
-	}
-
+	
+	// first argument (self/actor)
 	L->PushValue(-(ItemsToPop + 1));
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)

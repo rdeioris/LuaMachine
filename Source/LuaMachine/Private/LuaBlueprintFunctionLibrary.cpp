@@ -22,7 +22,7 @@ UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 {
 	if (Value.Type == ELuaValueType::Object)
 	{
-		return Value.ObjectPath.ResolveObject();
+		return Value.ObjectPath.TryLoad();
 	}
 	return nullptr;
 }
@@ -85,11 +85,6 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldCont
 		return ReturnValue;
 
 	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
-	if (ItemsToPop <= 0)
-	{
-		L->Pop(FMath::Abs(ItemsToPop));
-		return ReturnValue;
-	}
 
 	int NArgs = 0;
 	for (FLuaValue& Arg : Args)
