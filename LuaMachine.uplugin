@@ -1,23 +1,23 @@
 {
-	"FileVersion": 3,
-	"Version": 1,
-	"VersionName": "1.0",
-	"FriendlyName": "LuaMachine",
-	"Description": "Expose a Lua api for your project",
-	"Category": "Other",
-	"CreatedBy": "Roberto De Ioris",
-	"CreatedByURL": "",
-	"DocsURL": "",
-	"MarketplaceURL": "",
-	"SupportURL": "",
-	"CanContainContent": true,
-	"IsBetaVersion": true,
-	"Installed": false,
-	"Modules": [
-		{
-			"Name": "LuaMachine",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
-	]
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "1.0",
+  "FriendlyName": "LuaMachine",
+  "Description": "Expose a Lua api for your project",
+  "Category": "Scripting",
+  "CreatedBy": "Roberto De Ioris",
+  "CreatedByURL": "https://github.com/rdeioris",
+  "DocsURL": "https://github.com/rdeioris/LuaMachine",
+  "MarketplaceURL": "",
+  "SupportURL": "https://github.com/rdeioris/LuaMachine",
+  "CanContainContent": true,
+  "IsBetaVersion": true,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "LuaMachine",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ]
 }

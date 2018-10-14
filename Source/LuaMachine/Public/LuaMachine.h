@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
+#include "SlateCore/Public/Styling/SlateStyle.h"
 
 class FLuaMachineModule : public IModuleInterface
 {
@@ -22,4 +23,5 @@ public:
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
+	TSharedPtr<FSlateStyleSet> StyleSet;
 };

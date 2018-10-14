@@ -54,6 +54,7 @@ public class LuaMachine : ModuleRules
         {
             PrivateDependencyModuleNames.AddRange(new string[]{
                 "UnrealEd",
+                "Projects"
             });
         }
 
