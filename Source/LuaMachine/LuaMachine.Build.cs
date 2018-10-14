@@ -60,7 +60,12 @@ public class LuaMachine : ModuleRules
 
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53.lib"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53_win64.lib"));
+        }
+
+        if (Target.Platform == UnrealTargetPlatform.Mac)
+        {
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53_mac.lib"));
         }
 
     }
