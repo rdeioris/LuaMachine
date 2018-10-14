@@ -18,7 +18,7 @@ public:
 
 	void CleanupLuaStates(bool bIsSimulating);
 
-	ULuaState* GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld);
+	ULuaState* GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly=false);
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;

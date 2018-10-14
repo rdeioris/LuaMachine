@@ -62,7 +62,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);
 
-	void FromLuaValue(FLuaValue& LuaValue);
+	void FromLuaValue(FLuaValue& LuaValue, bool bGenerateTableRef=false);
 	FLuaValue ToLuaValue(int Index);
 
 	UPROPERTY(EditAnywhere)
@@ -84,11 +84,15 @@ public:
 
 	void GetGlobal(const char* Name);
 
-	int32 GetFunctionFromTree(FString Tree);
+	int32 GetFieldFromTree(FString Tree);
+
+	void SetFieldFromTree(FString Tree, FLuaValue& Value);
 
 	void SetGlobal(const char* Name);
 
 	void PushValue(int Index);
+
+	void PushGlobalTable();
 
 	bool PCall(int NArgs, FLuaValue& Value, int NRet=1);
 	bool Call(int NArgs, FLuaValue& Value, int NRet = 1);
@@ -97,11 +101,13 @@ public:
 
 	void PushNil();
 
+	void Unref(int Ref);
+
 	void PushCFunction(lua_CFunction Function);
 	
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	bool RunCode(FString Code, FString CodePath, int NRet=0, bool SpitErrors=true);
+	bool RunCode(FString Code, FString CodePath, int NRet=0);
 
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);
 	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
@@ -139,7 +145,7 @@ protected:
 	lua_State* L;
 	bool bDisabled;
 
-	static void Internal_FromLuaValue(lua_State *L, FLuaValue& LuaValue);
+	static void Internal_FromLuaValue(lua_State *L, FLuaValue& LuaValue, bool bGenerateTableRef = false);
 	static void Internal_ToLuaValue(lua_State *L, FLuaValue* LuaValue, int Index);
 
 	UWorld* CurrentWorld;

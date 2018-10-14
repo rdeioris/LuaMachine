@@ -19,6 +19,7 @@ class LUAMACHINE_API ULuaComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	ULuaComponent();
+	virtual void BeginDestroy() override;
 
 protected:
 	// Called when the game starts
@@ -27,8 +28,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	virtual void InitializeComponent() override;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ULuaState> LuaState;

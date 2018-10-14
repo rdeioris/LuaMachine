@@ -72,23 +72,21 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key)
 {
-	FLuaValue ReturnValue;
-	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
-	if (LuaState && LuaState->Table.Contains(Key))
-	{
-		ReturnValue = LuaState->Table[Key];
-	}
-
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+	uint32 ItemsToPop = L->GetFieldFromTree(Key);
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop(ItemsToPop);
 	return ReturnValue;
 }
 
 void ULuaBlueprintFunctionLibrary::LuaSetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key, FLuaValue Value)
 {
-	ULuaState* LuaState = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
-	if (LuaState && LuaState->Table.Contains(Key))
-	{
-		LuaState->Table[Key] = Value;
-	}
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+	L->SetFieldFromTree(Key, Value);
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args)
@@ -98,7 +96,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldCont
 	if (!L)
 		return ReturnValue;
 
-	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
+	int32 ItemsToPop = L->GetFieldFromTree(FunctionName);
 
 	int NArgs = 0;
 	for (FLuaValue& Arg : Args)

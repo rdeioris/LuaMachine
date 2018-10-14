@@ -14,16 +14,14 @@ ULuaState::ULuaState()
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 {
+	CurrentWorld = InWorld;
+
 	if (L != nullptr)
 	{
-		CurrentWorld = InWorld;
 		return this;
 	}
 
 	if (bDisabled)
-		return nullptr;
-
-	if (!LuaCodeAsset)
 		return nullptr;
 
 	L = luaL_newstate();
@@ -69,8 +67,14 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// pop global table
 	Pop();
 
+	if (!LuaCodeAsset)
+		return this;
+
 	if (!RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName()))
 	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
 		bDisabled = true;
 		lua_close(L);
 		L = nullptr;
@@ -80,23 +84,21 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	return this;
 }
 
-bool ULuaState::RunCode(FString Code, FString CodePath, int NRet, bool SpitErrors)
+bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
 	const TCHAR* CodeRaw = *Code;
 	FString FullCodePath = FString("@") + CodePath;
 
 	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*FullCodePath)))
 	{
-		if (SpitErrors)
-			LogError(FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
+		LastError = FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
 	else
 	{
 		if (lua_pcall(L, 0, NRet, 0))
 		{
-			if (SpitErrors)
-				LogError(FString::Printf(TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1))));
+			LastError = FString::Printf(TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 			return false;
 		}
 	}
@@ -104,12 +106,12 @@ bool ULuaState::RunCode(FString Code, FString CodePath, int NRet, bool SpitError
 	return true;
 }
 
-void ULuaState::FromLuaValue(FLuaValue& LuaValue)
+void ULuaState::FromLuaValue(FLuaValue& LuaValue, bool bGenerateTableRef)
 {
-	Internal_FromLuaValue(L, LuaValue);
+	Internal_FromLuaValue(L, LuaValue, bGenerateTableRef);
 }
 
-void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
+void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue, bool bGenerateTableRef)
 {
 	switch (LuaValue.Type)
 	{
@@ -124,6 +126,14 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue)
 		break;
 	case ELuaValueType::String:
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
+		break;
+	case ELuaValueType::Table:
+		if (LuaValue.TableRef == LUA_NOREF && bGenerateTableRef)
+		{
+			lua_newtable(L);
+			LuaValue.TableRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		}
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.TableRef);
 		break;
 	case ELuaValueType::Object:
 	{
@@ -240,7 +250,7 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 			}
 		}
 		else {
-			LuaState->FromLuaValue(*LuaValue);
+			LuaState->FromLuaValue(*LuaValue, true);
 			return 1;
 		}
 	}
@@ -302,7 +312,7 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 			}
 		}
 		else {
-			LuaState->FromLuaValue(*LuaValue);
+			LuaState->FromLuaValue(*LuaValue, true);
 			return 1;
 		}
 	}
@@ -433,10 +443,11 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 		return luaL_error(L, "LuaCodeAsset not set for package %s", TCHAR_TO_UTF8(*Key));
 	}
 
-	if (!LuaState->RunCode(LuaCode->Code.ToString(), LuaCode->GetPathName(), 1, false))
+	if (!LuaState->RunCode(LuaCode->Code.ToString(), LuaCode->GetPathName(), 1))
 	{
-		return luaL_error(L, "%s", UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		return luaL_error(L, "%s", lua_tostring(L, -1));
 	}
+
 	return 1;
 }
 
@@ -460,6 +471,69 @@ void ULuaState::GetField(int Index, const char* FieldName)
 	lua_getfield(L, Index, FieldName);
 }
 
+void ULuaState::PushGlobalTable()
+{
+	lua_pushglobaltable(L);
+}
+
+int32 ULuaState::GetFieldFromTree(FString Tree)
+{
+	TArray<FString> Parts;
+	Tree.ParseIntoArray(Parts, TEXT("."));
+	if (Parts.Num() == 0)
+	{
+		LastError = FString::Printf(TEXT("invalid Lua key: \"%s\""), *Tree);
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+		PushNil();
+		return 1;
+	}
+
+	PushGlobalTable();
+	int32 i;
+
+	for (i = 0; i < Parts.Num(); i++)
+	{
+		GetField(-1, TCHAR_TO_UTF8(*Parts[i]));
+
+		if (lua_isnil(L, -1))
+		{
+			if (i == Parts.Num() - 1)
+			{
+				return i + 2;
+			}
+			LastError = FString::Printf(TEXT("unknown Lua key: \"%s\""), *Parts[i]);
+			if (bLogError)
+				LogError(LastError);
+			ReceiveLuaError(LastError);
+			return i + 2;
+		}
+	}
+
+	return i + 1;
+}
+
+void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value)
+{
+	int32 ItemsToPop = GetFieldFromTree(Tree);
+	// invalid key
+	if (ItemsToPop == 1)
+	{
+		Pop();
+		return;
+	}
+
+	TArray<FString> Parts;
+	Tree.ParseIntoArray(Parts, TEXT("."));
+
+	Pop();
+	FromLuaValue(Value);
+	SetField(-2, TCHAR_TO_UTF8(*Parts.Last()));
+	Pop(ItemsToPop - 1);
+}
+
+
 void ULuaState::NewUObject(UObject* Object)
 {
 	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
@@ -471,32 +545,6 @@ void ULuaState::NewUObject(UObject* Object)
 void ULuaState::GetGlobal(const char* Name)
 {
 	lua_getglobal(L, Name);
-}
-
-int32 ULuaState::GetFunctionFromTree(FString Tree)
-{
-	TArray<FString> Parts;
-	Tree.ParseIntoArray(Parts, TEXT("."));
-	if (Parts.Num() == 0)
-		return 0;
-
-	GetGlobal(TCHAR_TO_UTF8(*Parts[0]));
-	if (lua_isnil(L, -1))
-		return false;
-
-	int32 i;
-
-	for (i = 1; i < Parts.Num(); i++)
-	{
-		GetField(-1, TCHAR_TO_UTF8(*Parts[i]));
-
-		if (lua_isnil(L, -1))
-		{
-			return -i;
-		}
-	}
-
-	return i;
 }
 
 void ULuaState::SetGlobal(const char* Name)
@@ -551,6 +599,11 @@ void ULuaState::PushCFunction(lua_CFunction Function)
 void* ULuaState::NewUserData(size_t DataSize)
 {
 	return lua_newuserdata(L, DataSize);
+}
+
+void ULuaState::Unref(int Ref)
+{
+	luaL_unref(L, LUA_REGISTRYINDEX, Ref);
 }
 
 ULuaState::~ULuaState()

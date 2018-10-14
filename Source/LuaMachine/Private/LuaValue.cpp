@@ -186,6 +186,8 @@ FString FLuaValue::ToString()
 		return FString::SanitizeFloat(Number);
 	case ELuaValueType::String:
 		return String;
+	case ELuaValueType::Table:
+		return FString("{}");
 	case ELuaValueType::Object:
 		return Object->GetFullName();
 	}

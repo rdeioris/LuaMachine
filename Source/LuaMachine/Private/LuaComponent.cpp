@@ -13,7 +13,6 @@ ULuaComponent::ULuaComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = false;
-	bWantsInitializeComponent = true;
 
 	// ...
 
@@ -26,6 +25,9 @@ void ULuaComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (!bLazy)
+		FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+
 	// ...
 
 }
@@ -36,12 +38,6 @@ void ULuaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-}
-
-void ULuaComponent::InitializeComponent()
-{
-	if (!bLazy)
-		FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 }
 
 void ULuaComponent::SetupMetatable()
@@ -100,7 +96,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	L->NewUObject(this);
 	SetupMetatable();
 
-	int32 ItemsToPop = L->GetFunctionFromTree(FunctionName);
+	int32 ItemsToPop = L->GetFieldFromTree(FunctionName);
 	
 	// first argument (self/actor)
 	L->PushValue(-(ItemsToPop + 1));
@@ -123,3 +119,24 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	return ReturnValue;
 }
 
+void ULuaComponent::BeginDestroy()
+{
+	// Note:: check only
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld(), true);
+	if (!L)
+	{
+		Super::BeginDestroy();
+		return;
+	}
+
+	// destroy references
+	for (TPair<FString, FLuaValue>& Pair : Table)
+	{
+		if (Pair.Value.Type == ELuaValueType::Table)
+		{
+			L->Unref(Pair.Value.TableRef);
+		}
+	}
+
+	Super::BeginDestroy();
+}

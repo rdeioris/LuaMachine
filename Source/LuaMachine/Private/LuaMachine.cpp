@@ -44,13 +44,15 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	LuaStates.Empty();
 }
 
-ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld)
+ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly)
 {
 	if (!LuaStateClass)
 		return nullptr;
 
 	if (!LuaStates.Contains(LuaStateClass))
 	{
+		if (bCheckOnly)
+			return nullptr;
 		LuaStates.Add(LuaStateClass, NewObject<ULuaState>(GetTransientPackage(), LuaStateClass));
 		LuaStates[LuaStateClass]->AddToRoot();
 	}

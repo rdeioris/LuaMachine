@@ -37,21 +37,22 @@ struct LUAMACHINE_API FLuaValue
 	{
 		Type = ELuaValueType::Nil;
 		Object = nullptr;
+		TableRef = LUA_NOREF;
 	}
 
-	FLuaValue(FString InString) : Object(nullptr)
+	FLuaValue(FString InString) : Object(nullptr), TableRef(LUA_NOREF)
 	{
 		Type = ELuaValueType::String;
 		String = InString;
 	}
 
-	FLuaValue(int32 Value) : Object(nullptr)
+	FLuaValue(int32 Value) : Object(nullptr), TableRef(LUA_NOREF)
 	{
 		Type = ELuaValueType::Integer;
 		Integer = Value;
 	}
 
-	FLuaValue(UObject* InObject)
+	FLuaValue(UObject* InObject) : TableRef(LUA_NOREF)
 	{
 		Type = ELuaValueType::Object;
 		Object = InObject;
@@ -63,6 +64,7 @@ struct LUAMACHINE_API FLuaValue
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.FunctionName = FunctionName;
 		LuaValue.Object = nullptr;
+		LuaValue.TableRef = LUA_NOREF;
 		return LuaValue;
 	}
 
@@ -88,6 +90,8 @@ struct LUAMACHINE_API FLuaValue
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FName FunctionName;
+
+	int TableRef;
 };
 
 class FLuaValueCustomization : public IPropertyTypeCustomization
