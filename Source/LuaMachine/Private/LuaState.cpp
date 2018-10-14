@@ -3,6 +3,7 @@
 #include "LuaState.h"
 #include "LuaComponent.h"
 #include "GameFramework/Actor.h"
+#include "Runtime/Core/Public/Misc/FileHelper.h"
 
 ULuaState::ULuaState()
 {
@@ -36,8 +37,18 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// override print
 	PushCFunction(ULuaState::TableFunction_print);
 	SetField(-2, "print");
-	// manage RequireTable
 	GetField(-1, "package");
+	if (!OverridePackagePath.IsEmpty())
+	{
+		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackagePath));
+		SetField(-2, "path");
+	}
+	if (!OverridePackageCPath.IsEmpty())
+	{
+		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackageCPath));
+		SetField(-2, "cpath");
+	}
+	// manage RequireTable
 	GetField(-1, "preload");
 	for (TPair<FString, ULuaCode*>& Pair : RequireTable)
 	{
@@ -67,18 +78,37 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// pop global table
 	Pop();
 
-	if (!LuaCodeAsset)
-		return this;
-
-	if (!RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName()))
+	if (LuaCodeAsset)
 	{
-		if (bLogError)
-			LogError(LastError);
-		ReceiveLuaError(LastError);
-		bDisabled = true;
-		lua_close(L);
-		L = nullptr;
-		return nullptr;
+
+		if (!RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName()))
+		{
+			if (bLogError)
+				LogError(LastError);
+			ReceiveLuaError(LastError);
+			bDisabled = true;
+			lua_close(L);
+			L = nullptr;
+			return nullptr;
+		}
+	}
+
+	if (!LuaFilename.IsEmpty())
+	{
+		FString Code;
+		if (FFileHelper::LoadFileToString(Code, *LuaFilename))
+		{
+			if (!RunCode(Code, LuaFilename))
+			{
+				if (bLogError)
+					LogError(LastError);
+				ReceiveLuaError(LastError);
+				bDisabled = true;
+				lua_close(L);
+				L = nullptr;
+				return nullptr;
+			}
+		}
 	}
 
 	return this;

@@ -18,6 +18,11 @@
       "Name": "LuaMachine",
       "Type": "Runtime",
       "LoadingPhase": "Default"
+    },
+    {
+      "Name": "LuaMachineEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default"
     }
   ]
 }

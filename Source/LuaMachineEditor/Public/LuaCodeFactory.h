@@ -12,7 +12,7 @@
  * 
  */
 UCLASS()
-class LUAMACHINE_API ULuaCodeFactory : public UFactory
+class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory
 {
 	GENERATED_UCLASS_BODY()
 

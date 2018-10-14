@@ -51,6 +51,9 @@ public:
 	ULuaCode* LuaCodeAsset;
 
 	UPROPERTY(EditAnywhere)
+	FString LuaFilename;
+
+	UPROPERTY(EditAnywhere)
 	TMap<FString, FLuaValue> Table;
 
 	UPROPERTY(EditAnywhere)
@@ -58,6 +61,12 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	bool bLuaOpenLibs;
+
+	UPROPERTY(EditAnywhere)
+	FString OverridePackagePath;
+
+	UPROPERTY(EditAnywhere)
+	FString OverridePackageCPath;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);

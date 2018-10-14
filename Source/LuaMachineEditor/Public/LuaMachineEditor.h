@@ -5,8 +5,9 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
+#include "SlateCore/Public/Styling/SlateStyle.h"
 
-class FLuaMachineModule : public IModuleInterface
+class FLuaMachineEditorModule : public IModuleInterface
 {
 public:
 
@@ -14,12 +15,6 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	static inline FLuaMachineModule& Get();
-
-	void CleanupLuaStates(bool bIsSimulating);
-
-	ULuaState* GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly=false);
-
 private:
-	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
+	TSharedPtr<FSlateStyleSet> StyleSet;
 };

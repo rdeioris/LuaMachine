@@ -2,7 +2,6 @@
 
 #include "LuaCodeFactory.h"
 #include "LuaCode.h"
-#include "Runtime/Core/Public/Misc/FileHelper.h"
 
 
 ULuaCodeFactory::ULuaCodeFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
