@@ -7,6 +7,10 @@
 #include "lua/lua.hpp"
 #include "LuaValue.generated.h"
 
+// required for Mac
+#ifdef Nil
+#undef Nil
+#endif
 
 /**
  *
