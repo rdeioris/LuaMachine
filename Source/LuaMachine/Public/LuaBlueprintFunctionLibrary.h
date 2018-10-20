@@ -30,6 +30,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
 	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
 	static FString Conv_LuaValueToString(FLuaValue Value);
 
@@ -44,6 +47,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static int32 Conv_LuaValueToInt(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static float Conv_LuaValueToFloat(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_IntToLuaValue(int32 Value);

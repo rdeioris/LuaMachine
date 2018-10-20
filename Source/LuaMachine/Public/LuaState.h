@@ -7,6 +7,7 @@
 #include "lua/lua.hpp"
 #include "LuaValue.h"
 #include "LuaCode.h"
+#include "Runtime/Core/Public/Containers/Queue.h"
 #include "LuaState.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
@@ -77,7 +78,13 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bLogError;
 
+	int32 GetTop();
+
 	FString LastError;
+
+	int32 InceptionLevel;
+
+	TQueue<FString> InceptionErrors;
 
 	void NewTable();
 
@@ -93,7 +100,7 @@ public:
 
 	void GetGlobal(const char* Name);
 
-	int32 GetFieldFromTree(FString Tree);
+	int32 GetFieldFromTree(FString Tree, bool bGlobal=true);
 
 	void SetFieldFromTree(FString Tree, FLuaValue& Value);
 
@@ -104,7 +111,7 @@ public:
 	void PushGlobalTable();
 
 	bool PCall(int NArgs, FLuaValue& Value, int NRet=1);
-	bool Call(int NArgs, FLuaValue& Value, int NRet = 1);
+	bool Call(int NArgs, FLuaValue& Value, int NRet=1);
 
 	void Pop(int32 Amount = 1);
 
@@ -128,6 +135,7 @@ public:
 	static int TableFunction_package_preload(lua_State *L);
 
 	static int MetaTableFunction__call(lua_State *L);
+	static int LuaPCallErrorHandler(lua_State *L);
 
 	static ULuaState* GetFromExtraSpace(lua_State *L)
 	{

@@ -65,6 +65,22 @@ int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 	return 0;
 }
 
+float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(FLuaValue Value)
+{
+	switch (Value.Type)
+	{
+	case ELuaValueType::Bool:
+		return Value.Bool ? 1.0f : 0.0f;
+	case ELuaValueType::Integer:
+		return Value.Integer;
+	case ELuaValueType::Number:
+		return Value.Number;
+	case ELuaValueType::String:
+		return FCString::Atof(*Value.String);
+	}
+	return 0.0f;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
 {
 	return FLuaValue(Value);
@@ -79,6 +95,14 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobalTableValue(UObject* WorldCon
 	FLuaValue ReturnValue = L->ToLuaValue(-1);
 	L->Pop(ItemsToPop);
 	return ReturnValue;
+}
+
+int32 ULuaBlueprintFunctionLibrary::LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return MIN_int32;
+	return L->GetTop();
 }
 
 void ULuaBlueprintFunctionLibrary::LuaSetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key, FLuaValue Value)

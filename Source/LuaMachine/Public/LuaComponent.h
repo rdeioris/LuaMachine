@@ -29,13 +29,13 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<ULuaState> LuaState;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FString, FLuaValue> Table;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TMap<FString, FLuaValue> Metatable;
 
 	UPROPERTY(EditAnywhere)
@@ -45,7 +45,13 @@ public:
 	bool bLogError;
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args);
+	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args, bool bGlobal);
+
+	UFUNCTION(BlueprintCallable)
+	FLuaValue LuaGetField(FString FieldName);
+
+	UFUNCTION(BlueprintCallable)
+	void LuaSetField(FString FieldName, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
 	FLuaComponentError OnLuaError;

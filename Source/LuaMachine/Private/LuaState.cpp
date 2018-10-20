@@ -11,6 +11,7 @@ ULuaState::ULuaState()
 	bLuaOpenLibs = true;
 	bDisabled = false;
 	bLogError = true;
+
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -126,6 +127,7 @@ bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 	}
 	else
 	{
+
 		if (lua_pcall(L, 0, NRet, 0))
 		{
 			LastError = FString::Printf(TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
@@ -208,6 +210,11 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 	FLuaValue LuaValue;
 	Internal_ToLuaValue(L, &LuaValue, Index);
 	return LuaValue;
+}
+
+int32 ULuaState::GetTop()
+{
+	return lua_gettop(L);
 }
 
 void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index)
@@ -408,15 +415,51 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
 	}
 
+	LuaState->InceptionLevel++;
+	UE_LOG(LogLuaMachine, Error, TEXT("Inception Level: %d"), LuaState->InceptionLevel);
 	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function, Parameters);
+	check(LuaState->InceptionLevel > 0);
+	LuaState->InceptionLevel--;
+
+	if (LuaState->InceptionLevel == 0)
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Starting Inception..."));
+		FString Error;
+		while (LuaState->InceptionErrors.Dequeue(Error))
+		{
+			ULuaComponent* LuaComponent = Cast <ULuaComponent>(LuaCallContext->Context);
+			if (LuaComponent)
+			{
+				if (LuaComponent->bLogError)
+				{
+					LuaState->LogError(Error);
+				}
+				LuaComponent->OnLuaError.Broadcast(Error);
+			}
+			else
+			{
+				if (LuaState->bLogError)
+				{
+					LuaState->LogError(Error);
+				}
+				LuaState->ReceiveLuaError(Error);
+			}
+		}
+		UE_LOG(LogLuaMachine, Error, TEXT("Ended Inception..."));
+	}
+
 
 	// get return value
-	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs && (FArgs->PropertyFlags & CPF_ReturnParm); ++FArgs)
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs; ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
+		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm))
+			continue;
+		
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
 			continue;
+
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			continue;
 
@@ -506,7 +549,7 @@ void ULuaState::PushGlobalTable()
 	lua_pushglobaltable(L);
 }
 
-int32 ULuaState::GetFieldFromTree(FString Tree)
+int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 {
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
@@ -520,7 +563,12 @@ int32 ULuaState::GetFieldFromTree(FString Tree)
 		return 1;
 	}
 
-	PushGlobalTable();
+	int32 AdditionalPop = bGlobal ? 1 : 0;
+
+	if (bGlobal)
+	{
+		PushGlobalTable();
+	}
 	int32 i;
 
 	for (i = 0; i < Parts.Num(); i++)
@@ -531,17 +579,17 @@ int32 ULuaState::GetFieldFromTree(FString Tree)
 		{
 			if (i == Parts.Num() - 1)
 			{
-				return i + 2;
+				return i + 1 + AdditionalPop;
 			}
 			LastError = FString::Printf(TEXT("unknown Lua key: \"%s\""), *Parts[i]);
 			if (bLogError)
 				LogError(LastError);
 			ReceiveLuaError(LastError);
-			return i + 2;
+			return i + 1 + AdditionalPop;
 		}
 	}
 
-	return i + 1;
+	return i + AdditionalPop;
 }
 
 void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value)
@@ -592,9 +640,16 @@ bool ULuaState::PCall(int NArgs, FLuaValue& Value, int NRet)
 	bool bSuccess = Call(NArgs, Value, NRet);
 	if (!bSuccess)
 	{
-		if (bLogError)
-			LogError(LastError);
-		ReceiveLuaError(LastError);
+		if (InceptionLevel > 0)
+		{
+			InceptionErrors.Enqueue(LastError);
+		}
+		else
+		{
+			if (bLogError)
+				LogError(LastError);
+			ReceiveLuaError(LastError);
+		}
 	}
 	return bSuccess;
 }
@@ -603,11 +658,13 @@ bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
 {
 	if (lua_pcall(L, NArgs, NRet, 0))
 	{
-		LastError = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		LastError = FString::Printf(TEXT("Lua error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
 	if (NRet > 0)
+	{
 		Value = ToLuaValue(-1);
+	}
 	return true;
 }
 

@@ -84,7 +84,31 @@ void ULuaComponent::SetupMetatable()
 	L->SetMetaTable(-2);
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args)
+FLuaValue ULuaComponent::LuaGetField(FString FieldName)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	// push component pointer as userdata
+	L->NewUObject(this);
+	SetupMetatable();
+
+	int32 ItemsToPop = L->GetFieldFromTree(FieldName, false);
+	ReturnValue = L->ToLuaValue(-1);
+
+	// we need to remove the return value and the object
+	L->Pop(ItemsToPop + 1);
+
+	return ReturnValue;
+}
+
+void ULuaComponent::LuaSetField(FString FieldName, FLuaValue Value)
+{
+}
+
+FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;
 
@@ -96,8 +120,8 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	L->NewUObject(this);
 	SetupMetatable();
 
-	int32 ItemsToPop = L->GetFieldFromTree(FunctionName);
-	
+	int32 ItemsToPop = L->GetFieldFromTree(FunctionName, bGlobal);
+
 	// first argument (self/actor)
 	L->PushValue(-(ItemsToPop + 1));
 	int NArgs = 1;
@@ -109,12 +133,16 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 
 	if (!L->PCall(NArgs, ReturnValue))
 	{
-		if (bLogError)
-			L->LogError(L->LastError);
-		OnLuaError.Broadcast(L->LastError);
+		if (L->InceptionLevel == 0)
+		{
+			if (bLogError)
+				L->LogError(L->LastError);
+			OnLuaError.Broadcast(L->LastError);
+		}
 	}
-	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
-	L->Pop(ItemsToPop);
+
+	// the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop(ItemsToPop + 1);
 
 	return ReturnValue;
 }
