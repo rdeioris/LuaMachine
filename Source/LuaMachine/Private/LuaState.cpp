@@ -416,14 +416,12 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	}
 
 	LuaState->InceptionLevel++;
-	UE_LOG(LogLuaMachine, Error, TEXT("Inception Level: %d"), LuaState->InceptionLevel);
 	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function, Parameters);
 	check(LuaState->InceptionLevel > 0);
 	LuaState->InceptionLevel--;
 
 	if (LuaState->InceptionLevel == 0)
 	{
-		UE_LOG(LogLuaMachine, Error, TEXT("Starting Inception..."));
 		FString Error;
 		while (LuaState->InceptionErrors.Dequeue(Error))
 		{
@@ -445,7 +443,6 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 				LuaState->ReceiveLuaError(Error);
 			}
 		}
-		UE_LOG(LogLuaMachine, Error, TEXT("Ended Inception..."));
 	}
 
 
