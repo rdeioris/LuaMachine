@@ -21,11 +21,32 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaCreateString(FString String);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateNumber(float Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateInteger(int32 Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateBool(bool bInBool);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateTable();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateObject(UObject* InObject);
+
 	UFUNCTION(BlueprintCallable, meta=(WorldContext="WorldContextObject"))
 	static FLuaValue LuaGetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static void LuaSetGlobalTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Key, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaGetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaSetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args);

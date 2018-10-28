@@ -19,7 +19,6 @@ class LUAMACHINE_API ULuaComponent : public UActorComponent
 public:	
 	// Sets default values for this component's properties
 	ULuaComponent();
-	virtual void BeginDestroy() override;
 
 protected:
 	// Called when the game starts

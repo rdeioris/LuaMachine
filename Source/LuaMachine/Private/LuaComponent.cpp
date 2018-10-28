@@ -146,25 +146,3 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 
 	return ReturnValue;
 }
-
-void ULuaComponent::BeginDestroy()
-{
-	// Note:: check only
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld(), true);
-	if (!L)
-	{
-		Super::BeginDestroy();
-		return;
-	}
-
-	// destroy references
-	for (TPair<FString, FLuaValue>& Pair : Table)
-	{
-		if (Pair.Value.Type == ELuaValueType::Table)
-		{
-			L->Unref(Pair.Value.TableRef);
-		}
-	}
-
-	Super::BeginDestroy();
-}

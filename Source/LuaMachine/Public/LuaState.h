@@ -72,7 +72,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);
 
-	void FromLuaValue(FLuaValue& LuaValue, bool bGenerateTableRef=false);
+	void FromLuaValue(FLuaValue& LuaValue);
 	FLuaValue ToLuaValue(int Index);
 
 	UPROPERTY(EditAnywhere)
@@ -118,6 +118,8 @@ public:
 	void PushNil();
 
 	void Unref(int Ref);
+	int NewRef();
+	void GetRef(int Ref);
 
 	void PushCFunction(lua_CFunction Function);
 	
@@ -161,9 +163,6 @@ public:
 protected:
 	lua_State* L;
 	bool bDisabled;
-
-	static void Internal_FromLuaValue(lua_State *L, FLuaValue& LuaValue, bool bGenerateTableRef = false);
-	static void Internal_ToLuaValue(lua_State *L, FLuaValue* LuaValue, int Index);
 
 	UWorld* CurrentWorld;
 };

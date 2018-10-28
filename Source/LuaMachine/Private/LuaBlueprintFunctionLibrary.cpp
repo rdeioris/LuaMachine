@@ -4,13 +4,36 @@
 #include "LuaMachine.h"
 
 
-
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateString(FString String)
 {
-	FLuaValue LuaString;
-	LuaString.Type = ELuaValueType::String;
-	LuaString.String = String;
-	return LuaString;
+	return FLuaValue(String);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNumber(float Value)
+{
+	return FLuaValue(Value);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger(int32 Value)
+{
+	return FLuaValue(Value);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateBool(bool bInBool)
+{
+	return FLuaValue(bInBool);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObject(UObject* InObject)
+{
+	return FLuaValue(InObject);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable()
+{
+	FLuaValue LuaValue;
+	LuaValue.Type = ELuaValueType::Table;
+	return LuaValue;
 }
 
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
@@ -91,9 +114,43 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobalTableValue(UObject* WorldCon
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return FLuaValue();
+
 	uint32 ItemsToPop = L->GetFieldFromTree(Key);
 	FLuaValue ReturnValue = L->ToLuaValue(-1);
 	L->Pop(ItemsToPop);
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key)
+{
+	if (Table.Type != ELuaValueType::Table)
+		return FLuaValue();
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	L->FromLuaValue(Table);
+	L->GetField(-1, TCHAR_TO_UTF8(*Key));
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop(2);
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaSetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key, FLuaValue Value)
+{
+	if (Table.Type != ELuaValueType::Table)
+		return FLuaValue();
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	L->FromLuaValue(Table);
+	L->FromLuaValue(Value);
+	L->SetField(-2, TCHAR_TO_UTF8(*Key));
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop();
 	return ReturnValue;
 }
 

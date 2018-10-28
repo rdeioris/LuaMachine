@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "lua/lua.hpp"
+#include "lua.hpp"
 #include "LuaValue.generated.h"
 
 // required for Mac
@@ -24,12 +24,12 @@ enum class ELuaValueType : uint8
 	Integer,
 	Number,
 	String,
-	UserData,
 	Function,
-	Thread,
-	Table,
 	Object,
+	Table,
 };
+
+class ULuaState;
 
 USTRUCT(BlueprintType)
 struct LUAMACHINE_API FLuaValue
@@ -41,39 +41,58 @@ struct LUAMACHINE_API FLuaValue
 		Type = ELuaValueType::Nil;
 		Object = nullptr;
 		TableRef = LUA_NOREF;
+		LuaState = nullptr;
+		Bool = false;
+		Integer = 0;
+		Number = 0;
 	}
 
-	FLuaValue(FString InString) : Object(nullptr), TableRef(LUA_NOREF)
+	FLuaValue(const FLuaValue& SourceValue);
+	FLuaValue& operator = (const FLuaValue &SourceValue);
+
+	FLuaValue(FString InString) : FLuaValue()
 	{
 		Type = ELuaValueType::String;
 		String = InString;
 	}
 
-	FLuaValue(int32 Value) : Object(nullptr), TableRef(LUA_NOREF)
+	FLuaValue(float Value) : FLuaValue()
+	{
+		Type = ELuaValueType::Number;
+		Number = Value;
+	}
+
+	FLuaValue(int32 Value) : FLuaValue()
 	{
 		Type = ELuaValueType::Integer;
 		Integer = Value;
 	}
 
-	FLuaValue(UObject* InObject) : TableRef(LUA_NOREF)
+	FLuaValue(bool bInBool) : FLuaValue()
+	{
+		Type = ELuaValueType::Bool;
+		Bool = bInBool;
+	}
+
+	FLuaValue(UObject* InObject) : FLuaValue()
 	{
 		Type = ELuaValueType::Object;
 		Object = InObject;
 	}
+
+	~FLuaValue();
 
 	static FLuaValue Function(FName FunctionName)
 	{
 		FLuaValue LuaValue;
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.FunctionName = FunctionName;
-		LuaValue.Object = nullptr;
-		LuaValue.TableRef = LUA_NOREF;
 		return LuaValue;
 	}
 
 	FString ToString();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ELuaValueType Type;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -91,8 +110,10 @@ struct LUAMACHINE_API FLuaValue
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	UObject* Object;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere)
 	FName FunctionName;
 
 	int TableRef;
+
+	ULuaState* LuaState;
 };

@@ -138,12 +138,7 @@ bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 	return true;
 }
 
-void ULuaState::FromLuaValue(FLuaValue& LuaValue, bool bGenerateTableRef)
-{
-	Internal_FromLuaValue(L, LuaValue, bGenerateTableRef);
-}
-
-void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue, bool bGenerateTableRef)
+void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 {
 	switch (LuaValue.Type)
 	{
@@ -160,21 +155,24 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue, bool bG
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
 	case ELuaValueType::Table:
-		if (LuaValue.TableRef == LUA_NOREF && bGenerateTableRef)
+		if (LuaValue.TableRef == LUA_NOREF)
 		{
 			lua_newtable(L);
+			lua_pushvalue(L, -1);
 			LuaValue.TableRef = luaL_ref(L, LUA_REGISTRYINDEX);
+			LuaValue.LuaState = this;
+			break;
 		}
+		check(this == LuaValue.LuaState);
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.TableRef);
 		break;
 	case ELuaValueType::Object:
 	{
-		ULuaState* InLuaState = ULuaState::GetFromExtraSpace(L);
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
 		if (LuaComponent)
 		{
-			InLuaState->NewUObject(LuaComponent);
-			if (LuaComponent->LuaState == InLuaState->GetClass())
+			NewUObject(LuaComponent);
+			if (LuaComponent->LuaState == GetClass())
 			{
 				LuaComponent->SetupMetatable();
 				return;
@@ -188,16 +186,16 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue, bool bG
 				for (UActorComponent* Component : LuaComponents)
 				{
 					ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
-					if (LuaComponent->LuaState == InLuaState->GetClass())
+					if (LuaComponent->LuaState == GetClass())
 					{
-						InLuaState->NewUObject(LuaComponent);
+						NewUObject(LuaComponent);
 						LuaComponent->SetupMetatable();
 						return;
 					}
 				}
 			}
 		}
-		InLuaState->NewUObject(LuaValue.Object);
+		NewUObject(LuaValue.Object);
 		break;
 	}
 	default:
@@ -208,55 +206,55 @@ void ULuaState::Internal_FromLuaValue(lua_State* L, FLuaValue& LuaValue, bool bG
 FLuaValue ULuaState::ToLuaValue(int Index)
 {
 	FLuaValue LuaValue;
-	Internal_ToLuaValue(L, &LuaValue, Index);
+
+	if (lua_isboolean(L, Index))
+	{
+		LuaValue.Type = ELuaValueType::Bool;
+		LuaValue.Bool = lua_toboolean(L, Index) != 0;
+	}
+	else if (lua_isinteger(L, Index))
+	{
+		LuaValue.Type = ELuaValueType::Integer;
+		LuaValue.Integer = lua_tointeger(L, Index);
+	}
+	else if (lua_isnumber(L, Index))
+	{
+		LuaValue.Type = ELuaValueType::Number;
+		LuaValue.Number = lua_tonumber(L, Index);
+	}
+	else if (lua_isstring(L, Index))
+	{
+		LuaValue.Type = ELuaValueType::String;
+		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+	}
+	else if (lua_istable(L, Index))
+	{
+		lua_pushvalue(L, Index);
+		LuaValue.Type = ELuaValueType::Table;
+		LuaValue.TableRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaState = this;
+	}
+	else if (lua_isuserdata(L, Index))
+	{
+		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
+		LuaValue.Type = UserData->Type;
+		switch (UserData->Type)
+		{
+		case(ELuaValueType::Object):
+			LuaValue.Object = UserData->Context;
+			break;
+		case(ELuaValueType::Function):
+			LuaValue.FunctionName = UserData->Function->GetFName();
+			break;
+		}
+	}
+
 	return LuaValue;
 }
 
 int32 ULuaState::GetTop()
 {
 	return lua_gettop(L);
-}
-
-void ULuaState::Internal_ToLuaValue(lua_State* L, FLuaValue* LuaValue, int Index)
-{
-	if (lua_isboolean(L, Index))
-	{
-		LuaValue->Type = ELuaValueType::Bool;
-		LuaValue->Bool = lua_toboolean(L, Index) != 0;
-	}
-	else if (lua_isinteger(L, Index))
-	{
-		LuaValue->Type = ELuaValueType::Integer;
-		LuaValue->Integer = lua_tointeger(L, Index);
-	}
-	else if (lua_isnumber(L, Index))
-	{
-		LuaValue->Type = ELuaValueType::Number;
-		LuaValue->Number = lua_tonumber(L, Index);
-	}
-	else if (lua_isstring(L, Index))
-	{
-		LuaValue->Type = ELuaValueType::String;
-		LuaValue->String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
-	}
-	else if (lua_istable(L, Index))
-	{
-		LuaValue->Type = ELuaValueType::Table;
-	}
-	else if (lua_isuserdata(L, Index))
-	{
-		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
-		LuaValue->Type = UserData->Type;
-		switch (UserData->Type)
-		{
-		case(ELuaValueType::Object):
-			LuaValue->Object = UserData->Context;
-			break;
-		case(ELuaValueType::Function):
-			LuaValue->FunctionName = UserData->Function->GetFName();
-			break;
-		}
-	}
 }
 
 int ULuaState::MetaTableFunctionState__index(lua_State *L)
@@ -287,12 +285,12 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 			}
 		}
 		else {
-			LuaState->FromLuaValue(*LuaValue, true);
+			LuaState->FromLuaValue(*LuaValue);
 			return 1;
 		}
 	}
 
-	LuaState->PushNil();
+	lua_pushnil(L);
 	return 1;
 }
 
@@ -305,7 +303,7 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
 	{
-		LuaState->Internal_ToLuaValue(L, LuaValue, 3);
+		*LuaValue = LuaState->ToLuaValue(3);
 	}
 	else
 	{
@@ -349,7 +347,7 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 			}
 		}
 		else {
-			LuaState->FromLuaValue(*LuaValue, true);
+			LuaState->FromLuaValue(*LuaValue);
 			return 1;
 		}
 	}
@@ -374,7 +372,7 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
 	{
-		LuaState->Internal_ToLuaValue(L, LuaValue, 3);
+		*LuaValue = LuaState->ToLuaValue(3);
 	}
 	else
 	{
@@ -452,7 +450,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		UProperty *Prop = *FArgs;
 		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm))
 			continue;
-		
+
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
 			continue;
@@ -585,7 +583,6 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 			return i + 1 + AdditionalPop;
 		}
 	}
-
 	return i + AdditionalPop;
 }
 
@@ -688,6 +685,16 @@ void* ULuaState::NewUserData(size_t DataSize)
 void ULuaState::Unref(int Ref)
 {
 	luaL_unref(L, LUA_REGISTRYINDEX, Ref);
+}
+
+int ULuaState::NewRef()
+{
+	return luaL_ref(L, LUA_REGISTRYINDEX);
+}
+
+void ULuaState::GetRef(int Ref)
+{
+	lua_rawgeti(L, LUA_REGISTRYINDEX, Ref);
 }
 
 ULuaState::~ULuaState()
