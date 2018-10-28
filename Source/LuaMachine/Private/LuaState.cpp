@@ -697,6 +697,11 @@ void ULuaState::GetRef(int Ref)
 	lua_rawgeti(L, LUA_REGISTRYINDEX, Ref);
 }
 
+int ULuaState::Next(int Index)
+{
+	return lua_next(L, Index);
+}
+
 ULuaState::~ULuaState()
 {
 	if (L)

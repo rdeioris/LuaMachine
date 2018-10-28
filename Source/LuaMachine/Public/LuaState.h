@@ -120,6 +120,7 @@ public:
 	void Unref(int Ref);
 	int NewRef();
 	void GetRef(int Ref);
+	int Next(int Index);
 
 	void PushCFunction(lua_CFunction Function);
 	

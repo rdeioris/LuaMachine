@@ -46,6 +46,12 @@ public:
 	static FLuaValue LuaGetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static TArray<FLuaValue> LuaGetTableKeys(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static TArray<FLuaValue> LuaGetTableValues(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static FLuaValue LuaSetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))

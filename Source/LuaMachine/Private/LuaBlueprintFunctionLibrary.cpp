@@ -193,3 +193,51 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldCont
 
 	return ReturnValue;
 }
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGetTableKeys(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table)
+{
+	TArray<FLuaValue> Keys;
+
+	if (Table.Type != ELuaValueType::Table)
+		return Keys;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return Keys;
+
+	L->FromLuaValue(Table);
+	L->PushNil(); // first key
+	while (L->Next(-2))
+	{
+		Keys.Add(L->ToLuaValue(-2)); // add key
+		L->Pop(); // pop the value
+	}
+
+	L->Pop(); // pop the table
+
+	return Keys;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGetTableValues(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table)
+{
+	TArray<FLuaValue> Keys;
+
+	if (Table.Type != ELuaValueType::Table)
+		return Keys;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return Keys;
+
+	L->FromLuaValue(Table);
+	L->PushNil(); // first key
+	while (L->Next(-2))
+	{
+		Keys.Add(L->ToLuaValue(-1)); // add value
+		L->Pop(); // pop the value
+	}
+
+	L->Pop(); // pop the table
+
+	return Keys;
+}
