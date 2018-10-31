@@ -155,18 +155,30 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
 	case ELuaValueType::Table:
-		if (LuaValue.TableRef == LUA_NOREF)
+		if (LuaValue.LuaRef == LUA_NOREF)
 		{
 			lua_newtable(L);
 			lua_pushvalue(L, -1);
-			LuaValue.TableRef = luaL_ref(L, LUA_REGISTRYINDEX);
+			LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 			LuaValue.LuaState = this;
 			break;
 		}
-		check(this == LuaValue.LuaState);
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.TableRef);
+		if (this != LuaValue.LuaState)
+		{
+			lua_pushnil(L);
+			break;
+		}
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
 		break;
-	case ELuaValueType::Object:
+	case ELuaValueType::Function:
+		if (this != LuaValue.LuaState)
+		{
+			lua_pushnil(L);
+			break;
+		}
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		break;
+	case ELuaValueType::UObject:
 	{
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
 		if (LuaComponent)
@@ -231,7 +243,14 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Table;
-		LuaValue.TableRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaState = this;
+	}
+	else if (lua_isfunction(L, Index))
+	{
+		lua_pushvalue(L, Index);
+		LuaValue.Type = ELuaValueType::Function;
+		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 		LuaValue.LuaState = this;
 	}
 	else if (lua_isuserdata(L, Index))
@@ -240,10 +259,10 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 		LuaValue.Type = UserData->Type;
 		switch (UserData->Type)
 		{
-		case(ELuaValueType::Object):
+		case(ELuaValueType::UObject):
 			LuaValue.Object = UserData->Context;
 			break;
-		case(ELuaValueType::Function):
+		case(ELuaValueType::UFunction):
 			LuaValue.FunctionName = UserData->Function->GetFName();
 			break;
 		}
@@ -268,13 +287,13 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 	if (LuaValue)
 	{
 		// first check for UFunction
-		if (LuaValue->Type == ELuaValueType::Function)
+		if (LuaValue->Type == ELuaValueType::UFunction)
 		{
 			UFunction* Function = LuaState->FindFunction(LuaValue->FunctionName);
 			if (Function)
 			{
 				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::Function;
+				LuaCallContext->Type = ELuaValueType::UFunction;
 				LuaCallContext->Context = LuaState;
 				LuaCallContext->Function = Function;
 				LuaState->NewTable();
@@ -330,13 +349,13 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 	if (LuaValue)
 	{
 		// first check for UFunction
-		if (LuaValue->Type == ELuaValueType::Function)
+		if (LuaValue->Type == ELuaValueType::UFunction)
 		{
 			UFunction* Function = LuaComponent->GetOwner()->FindFunction(LuaValue->FunctionName);
 			if (Function)
 			{
 				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::Function;
+				LuaCallContext->Type = ELuaValueType::UFunction;
 				LuaCallContext->Context = LuaComponent->GetOwner();
 				LuaCallContext->Function = Function;
 				LuaState->NewTable();
@@ -539,6 +558,11 @@ void ULuaState::GetField(int Index, const char* FieldName)
 	lua_getfield(L, Index, FieldName);
 }
 
+void ULuaState::RawGetI(int Index, int N)
+{
+	lua_rawgeti(L, Index, N);
+}
+
 void ULuaState::PushGlobalTable()
 {
 	lua_pushglobaltable(L);
@@ -609,7 +633,7 @@ void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value)
 void ULuaState::NewUObject(UObject* Object)
 {
 	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-	UserData->Type = ELuaValueType::Object;
+	UserData->Type = ELuaValueType::UObject;
 	UserData->Context = Object;
 	UserData->Function = nullptr;
 }

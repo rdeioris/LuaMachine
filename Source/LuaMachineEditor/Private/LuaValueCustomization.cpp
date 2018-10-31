@@ -103,7 +103,7 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 
 	TSharedPtr<IPropertyHandle> LuaValueObjectProperty = PropertyHandle->GetChildHandle(FName(TEXT("Object")));
 	IDetailPropertyRow& PropertyObjectRow = Builder.AddProperty(LuaValueObjectProperty.ToSharedRef());
-	PropertyObjectRow.Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::Object)));
+	PropertyObjectRow.Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::UObject)));
 
 	TSharedPtr<IPropertyHandle> LuaValueFunctionProperty = PropertyHandle->GetChildHandle(FName(TEXT("FunctionName")));
 
@@ -172,5 +172,5 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 
 	Builder.AddCustomRow(FText::FromString(TEXT("Function"))).ValueContent()[
 		SNew(STextComboBox).OptionsSource(&ValidLuaFunctions).OnSelectionChanged_Raw(this, &FLuaValueCustomization::LuaFunctionChanged, LuaValueFunctionProperty.ToSharedRef()).InitiallySelectedItem(CurrentSelectedFunction)
-	].Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::Function)));
+	].Visibility(TAttribute<EVisibility>::Create(TAttribute<EVisibility>::FGetter::CreateRaw(this, &FLuaValueCustomization::IsPropertyVisible, PropertyHandle, ELuaValueType::UFunction)));
 }

@@ -17,7 +17,7 @@ FString FLuaValue::ToString()
 		return String;
 	case ELuaValueType::Table:
 		return FString("{}");
-	case ELuaValueType::Object:
+	case ELuaValueType::UObject:
 		return Object->GetFullName();
 	}
 	return FString(TEXT("None"));
@@ -25,11 +25,11 @@ FString FLuaValue::ToString()
 
 FLuaValue::~FLuaValue()
 {
-	if (Type == ELuaValueType::Table)
+	if (Type == ELuaValueType::Table || Type == ELuaValueType::Function)
 	{
-		if (TableRef != LUA_NOREF)
+		if (LuaRef != LUA_NOREF)
 		{
-			LuaState->Unref(TableRef);
+			LuaState->Unref(LuaRef);
 		}
 	}
 }
@@ -38,7 +38,7 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 {
 	Type = SourceValue.Type;
 	Object = SourceValue.Object;
-	TableRef = SourceValue.TableRef;
+	LuaRef = SourceValue.LuaRef;
 	LuaState = SourceValue.LuaState;
 	Bool = SourceValue.Bool;
 	Integer = SourceValue.Integer;
@@ -47,10 +47,10 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if (Type == ELuaValueType::Table && TableRef != LUA_NOREF)
+	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function) && LuaRef != LUA_NOREF)
 	{
-		LuaState->GetRef(TableRef);
-		TableRef = LuaState->NewRef();
+		LuaState->GetRef(LuaRef);
+		LuaRef = LuaState->NewRef();
 	}
 }
 
@@ -58,7 +58,7 @@ FLuaValue& FLuaValue::operator = (const FLuaValue &SourceValue)
 {
 	Type = SourceValue.Type;
 	Object = SourceValue.Object;
-	TableRef = SourceValue.TableRef;
+	LuaRef = SourceValue.LuaRef;
 	LuaState = SourceValue.LuaState;
 	Bool = SourceValue.Bool;
 	Integer = SourceValue.Integer;
@@ -67,10 +67,10 @@ FLuaValue& FLuaValue::operator = (const FLuaValue &SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if (Type == ELuaValueType::Table && TableRef != LUA_NOREF)
+	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function) && LuaRef != LUA_NOREF)
 	{
-		LuaState->GetRef(TableRef);
-		TableRef = LuaState->NewRef();
+		LuaState->GetRef(LuaRef);
+		LuaRef = LuaState->NewRef();
 	}
 
 	return *this;

@@ -43,7 +43,7 @@ FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 
 UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 {
-	if (Value.Type == ELuaValueType::Object)
+	if (Value.Type == ELuaValueType::UObject)
 	{
 		return Value.Object;
 	}
@@ -52,7 +52,7 @@ UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 
 UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(FLuaValue Value)
 {
-	if (Value.Type == ELuaValueType::Object)
+	if (Value.Type == ELuaValueType::UObject)
 	{
 		UClass* Class = Cast<UClass>(Value.Object);
 		if (Class)
@@ -67,7 +67,7 @@ UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(FLuaValue Value)
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
 {
 	FLuaValue LuaValue;
-	LuaValue.Type = ELuaValueType::Object;
+	LuaValue.Type = ELuaValueType::UObject;
 	LuaValue.Object = Object;
 	return LuaValue;
 }
@@ -137,6 +137,22 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetTableValue(UObject* WorldContextOb
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGetTableValueByIndex(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, int32 Index)
+{
+	if (Table.Type != ELuaValueType::Table)
+		return FLuaValue();
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	L->FromLuaValue(Table);
+	L->RawGetI(-1, Index);
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop(2);
+	return ReturnValue;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaSetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key, FLuaValue Value)
 {
 	if (Table.Type != ELuaValueType::Table)
@@ -190,6 +206,34 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCallGlobalFunction(UObject* WorldCont
 
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCallLuaValueFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FLuaValue Function, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	if (Function.Type != ELuaValueType::Function)
+		return ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Function);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	L->PCall(NArgs, ReturnValue);
+
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop();
 
 	return ReturnValue;
 }

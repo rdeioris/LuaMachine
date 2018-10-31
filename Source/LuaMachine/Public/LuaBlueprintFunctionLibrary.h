@@ -46,6 +46,9 @@ public:
 	static FLuaValue LuaGetTableValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, FString Key);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaGetTableValueByIndex(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table, int32 Index);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static TArray<FLuaValue> LuaGetTableKeys(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Table);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
@@ -56,6 +59,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaCallGlobalFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString FunctionName, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+	static FLuaValue LuaCallLuaValueFunction(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FLuaValue Function, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);

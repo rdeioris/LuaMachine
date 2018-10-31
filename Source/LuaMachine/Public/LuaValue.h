@@ -25,8 +25,9 @@ enum class ELuaValueType : uint8
 	Number,
 	String,
 	Function,
-	Object,
 	Table,
+	UFunction,
+	UObject,
 };
 
 class ULuaState;
@@ -40,7 +41,7 @@ struct LUAMACHINE_API FLuaValue
 	{
 		Type = ELuaValueType::Nil;
 		Object = nullptr;
-		TableRef = LUA_NOREF;
+		LuaRef = LUA_NOREF;
 		LuaState = nullptr;
 		Bool = false;
 		Integer = 0;
@@ -76,7 +77,7 @@ struct LUAMACHINE_API FLuaValue
 
 	FLuaValue(UObject* InObject) : FLuaValue()
 	{
-		Type = ELuaValueType::Object;
+		Type = ELuaValueType::UObject;
 		Object = InObject;
 	}
 
@@ -85,7 +86,7 @@ struct LUAMACHINE_API FLuaValue
 	static FLuaValue Function(FName FunctionName)
 	{
 		FLuaValue LuaValue;
-		LuaValue.Type = ELuaValueType::Function;
+		LuaValue.Type = ELuaValueType::UFunction;
 		LuaValue.FunctionName = FunctionName;
 		return LuaValue;
 	}
@@ -113,7 +114,7 @@ struct LUAMACHINE_API FLuaValue
 	UPROPERTY(EditAnywhere)
 	FName FunctionName;
 
-	int TableRef;
+	int LuaRef;
 
 	ULuaState* LuaState;
 };

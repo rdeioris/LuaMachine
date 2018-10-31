@@ -56,13 +56,13 @@ void ULuaComponent::SetupMetatable()
 	for (TPair<FString, FLuaValue>& Pair : Metatable)
 	{
 		// first check for UFunction
-		if (Pair.Value.Type == ELuaValueType::Function)
+		if (Pair.Value.Type == ELuaValueType::UFunction)
 		{
 			UFunction* Function = GetOwner()->FindFunction(Pair.Value.FunctionName);
 			if (Function)
 			{
 				FLuaUserData* LuaCallContext = (FLuaUserData*)L->NewUserData(sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::Function;
+				LuaCallContext->Type = ELuaValueType::UFunction;
 				LuaCallContext->Context = GetOwner();
 				LuaCallContext->Function = Function;
 				L->NewTable();

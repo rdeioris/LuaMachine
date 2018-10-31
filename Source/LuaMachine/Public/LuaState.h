@@ -24,13 +24,13 @@ struct FLuaUserData
 
 	FLuaUserData(UObject* InObject)
 	{
-		Type = ELuaValueType::Object;
+		Type = ELuaValueType::UObject;
 		Context = InObject;
 	}
 
 	FLuaUserData(UObject* InObject, UFunction* InFunction)
 	{
-		Type = ELuaValueType::Function;
+		Type = ELuaValueType::UFunction;
 		Context = InObject;
 		Function = InFunction;
 	}
@@ -121,6 +121,8 @@ public:
 	int NewRef();
 	void GetRef(int Ref);
 	int Next(int Index);
+
+	void RawGetI(int Index, int N);
 
 	void PushCFunction(lua_CFunction Function);
 	
