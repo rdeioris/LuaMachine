@@ -64,6 +64,12 @@ public:
 	bool bLuaOpenLibs;
 
 	UPROPERTY(EditAnywhere)
+	bool bAddProjectContentDirToPackagePath;
+
+	UPROPERTY(EditAnywhere)
+	TArray<FString> AppendProjectContentDirSubDir;
+
+	UPROPERTY(EditAnywhere)
 	FString OverridePackagePath;
 
 	UPROPERTY(EditAnywhere)

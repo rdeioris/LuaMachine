@@ -4,6 +4,7 @@
 #include "LuaComponent.h"
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
+#include "Runtime/Core/Public/Misc/Paths.h"
 
 ULuaState::ULuaState()
 {
@@ -11,7 +12,7 @@ ULuaState::ULuaState()
 	bLuaOpenLibs = true;
 	bDisabled = false;
 	bLogError = true;
-
+	bAddProjectContentDirToPackagePath = true;
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -44,6 +45,27 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackagePath));
 		SetField(-2, "path");
 	}
+
+	if (bAddProjectContentDirToPackagePath)
+	{
+		GetField(-1, "path");
+		const char* CurrentLuaPath = lua_tostring(L, -1);
+		FString NewPackagePath = FString(CurrentLuaPath) + ";" + FPaths::ProjectContentDir() + "/?.lua";
+		Pop();
+		lua_pushstring(L, TCHAR_TO_UTF8(*NewPackagePath));
+		SetField(-2, "path");
+	}
+
+	for (FString SubDir : AppendProjectContentDirSubDir)
+	{
+		GetField(-1, "path");
+		const char* CurrentLuaPath = lua_tostring(L, -1);
+		FString NewPackagePath = FString(CurrentLuaPath) + ";" + FPaths::ProjectContentDir() / SubDir + "/?.lua";
+		Pop();
+		lua_pushstring(L, TCHAR_TO_UTF8(*NewPackagePath));
+		SetField(-2, "path");
+	}
+
 	if (!OverridePackageCPath.IsEmpty())
 	{
 		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackageCPath));
@@ -97,9 +119,11 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	if (!LuaFilename.IsEmpty())
 	{
 		FString Code;
-		if (FFileHelper::LoadFileToString(Code, *LuaFilename))
+		FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), LuaFilename);
+		
+		if (FFileHelper::LoadFileToString(Code, *AbsoluteFilename))
 		{
-			if (!RunCode(Code, LuaFilename))
+			if (!RunCode(Code, AbsoluteFilename))
 			{
 				if (bLogError)
 					LogError(LastError);
