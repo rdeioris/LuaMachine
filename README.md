@@ -27,6 +27,8 @@ dummyinteger = 17
 dummystring = 'Hello World'
 ```
 
+From the Lua point of view, "dummyinteger" and "dummystring" are fields of the global table (the one you can access from lua with the "_G" symbol)
+
 ### LuaValue
 
 LuaValue's are the way Unreal communicates with a specific Lua virtual machine. They contains values that both Lua and your project can use.
