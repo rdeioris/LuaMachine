@@ -10,7 +10,7 @@ Contrary to other available Unreal Engine Lua plugins, this one does not try to 
 
 Once installed, the plugin will expose a "LuaState" UObject and a "LuaValue" UStruct, as well as a Blueprint Function Library and a handy Lua Component for mapping Actors to Lua objects.
 
-### LuaState
+## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
 
@@ -35,7 +35,7 @@ Open your Level Blueprint and add the following nodes:
 
 "LuaGetGlobal" will retrieve the value associated with the specified name
 
-### LuaValue
+## LuaValue
 
 LuaValue's are the way Unreal communicates with a specific Lua virtual machine. They contains values that both Lua and your project can use.
 
@@ -50,6 +50,18 @@ This a list of the currently supported values:
 * Table (reference to a lua table)
 * UObject (reference to an Unreal UObject)
 * UFunction (reference to an Unreal UFunction)
+
+## Calling Lua functions
+
+## Exposing UFunctions
+
+## LuaComponent
+
+
+
+## Functional Tests
+
+## Commercial Support
 
 
 
