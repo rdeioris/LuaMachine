@@ -49,40 +49,40 @@ public:
 	virtual UWorld* GetWorld() const override { return CurrentWorld; }
 
 	UPROPERTY(EditAnywhere)
-	ULuaCode* LuaCodeAsset;
+		ULuaCode* LuaCodeAsset;
 
 	UPROPERTY(EditAnywhere)
-	FString LuaFilename;
+		FString LuaFilename;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FString, FLuaValue> Table;
+		TMap<FString, FLuaValue> Table;
 
 	UPROPERTY(EditAnywhere)
-	TMap<FString, ULuaCode*> RequireTable;
+		TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere)
-	bool bLuaOpenLibs;
+		bool bLuaOpenLibs;
 
 	UPROPERTY(EditAnywhere)
-	bool bAddProjectContentDirToPackagePath;
+		bool bAddProjectContentDirToPackagePath;
 
 	UPROPERTY(EditAnywhere)
-	TArray<FString> AppendProjectContentDirSubDir;
+		TArray<FString> AppendProjectContentDirSubDir;
 
 	UPROPERTY(EditAnywhere)
-	FString OverridePackagePath;
+		FString OverridePackagePath;
 
 	UPROPERTY(EditAnywhere)
-	FString OverridePackageCPath;
+		FString OverridePackageCPath;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
-	void ReceiveLuaError(const FString& Message);
+		void ReceiveLuaError(const FString& Message);
 
-	void FromLuaValue(FLuaValue& LuaValue);
+	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr);
 	FLuaValue ToLuaValue(int Index);
 
 	UPROPERTY(EditAnywhere)
-	bool bLogError;
+		bool bLogError;
 
 	int32 GetTop();
 
@@ -106,7 +106,7 @@ public:
 
 	void GetGlobal(const char* Name);
 
-	int32 GetFieldFromTree(FString Tree, bool bGlobal=true);
+	int32 GetFieldFromTree(FString Tree, bool bGlobal = true);
 
 	void SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal = true);
 
@@ -116,8 +116,8 @@ public:
 
 	void PushGlobalTable();
 
-	bool PCall(int NArgs, FLuaValue& Value, int NRet=1);
-	bool Call(int NArgs, FLuaValue& Value, int NRet=1);
+	bool PCall(int NArgs, FLuaValue& Value, int NRet = 1);
+	bool Call(int NArgs, FLuaValue& Value, int NRet = 1);
 
 	void Pop(int32 Amount = 1);
 
@@ -131,7 +131,7 @@ public:
 	void RawGetI(int Index, int N);
 
 	void PushCFunction(lua_CFunction Function);
-	
+
 	ULuaState* GetLuaState(UWorld* InWorld);
 
 	bool RunCode(TArray<uint8> Code, FString CodePath, int NRet = 0);
@@ -153,7 +153,7 @@ public:
 	static int MetaTableFunction__call(lua_State *L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
-	
+
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 
 	static ULuaState* GetFromExtraSpace(lua_State *L)

@@ -178,11 +178,8 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueGetField(FLuaValue Table, FString Key)
 {
-	if (Table.Type != ELuaValueType::Table)
-		return FLuaValue();
-
 	ULuaState* L = Table.LuaState;
 	if (!L)
 		return FLuaValue();
@@ -220,10 +217,8 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int3
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(UObject* WorldContextObject, FLuaValue Table, FString Key, FLuaValue Value)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueSetField(UObject* WorldContextObject, FLuaValue Table, FString Key, FLuaValue Value)
 {
-	if (Table.Type != ELuaValueType::Table)
-		return FLuaValue();
 
 	ULuaState* L = Table.LuaState;
 	if (!L)
@@ -280,9 +275,6 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
-
-	if (Value.Type != ELuaValueType::Function)
-		return ReturnValue;
 
 	ULuaState* L = Value.LuaState;
 	if (!L)

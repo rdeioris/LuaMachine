@@ -238,7 +238,7 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 	return Output;
 }
 
-void ULuaState::FromLuaValue(FLuaValue& LuaValue)
+void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 {
 	switch (LuaValue.Type)
 	{
@@ -310,6 +310,31 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 		NewUObject(LuaValue.Object);
 		break;
 	}
+	case ELuaValueType::UFunction:
+		// first time we should have a CallContext, then we cache it in the Object field
+		if (!CallContext)
+		{
+			CallContext = LuaValue.Object;
+		}
+		if (CallContext)
+		{
+			UFunction* Function = CallContext->FindFunction(LuaValue.FunctionName);
+			if (Function)
+			{
+				// cache it for context-less calls
+				LuaValue.Object = CallContext;
+				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+				LuaCallContext->Type = ELuaValueType::UFunction;
+				LuaCallContext->Context = CallContext;
+				LuaCallContext->Function = Function;
+				NewTable();
+				PushCFunction(ULuaState::MetaTableFunction__call);
+				SetField(-2, "__call");
+				SetMetaTable(-2);
+				return;
+			}
+		}
+
 	default:
 		lua_pushnil(L);
 	}
@@ -318,6 +343,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue)
 FLuaValue ULuaState::ToLuaValue(int Index)
 {
 	FLuaValue LuaValue;
+	LuaValue.LuaState = this;
 
 	if (lua_isboolean(L, Index))
 	{
@@ -344,14 +370,12 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Table;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
-		LuaValue.LuaState = this;
 	}
 	else if (lua_isfunction(L, Index))
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
-		LuaValue.LuaState = this;
 	}
 	else if (lua_isuserdata(L, Index))
 	{
@@ -364,6 +388,7 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 			break;
 		case(ELuaValueType::UFunction):
 			LuaValue.FunctionName = UserData->Function->GetFName();
+			LuaValue.Object = UserData->Context;
 			break;
 		}
 	}
@@ -386,27 +411,8 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
 	{
-		// first check for UFunction
-		if (LuaValue->Type == ELuaValueType::UFunction)
-		{
-			UFunction* Function = LuaState->FindFunction(LuaValue->FunctionName);
-			if (Function)
-			{
-				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::UFunction;
-				LuaCallContext->Context = LuaState;
-				LuaCallContext->Function = Function;
-				LuaState->NewTable();
-				LuaState->PushCFunction(ULuaState::MetaTableFunction__call);
-				LuaState->SetField(-2, "__call");
-				LuaState->SetMetaTable(-2);
-				return 1;
-			}
-		}
-		else {
-			LuaState->FromLuaValue(*LuaValue);
-			return 1;
-		}
+		LuaState->FromLuaValue(*LuaValue, LuaState);
+		return 1;
 	}
 
 	lua_pushnil(L);
@@ -448,27 +454,9 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
 	{
-		// first check for UFunction
-		if (LuaValue->Type == ELuaValueType::UFunction)
-		{
-			UFunction* Function = LuaComponent->GetOwner()->FindFunction(LuaValue->FunctionName);
-			if (Function)
-			{
-				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::UFunction;
-				LuaCallContext->Context = LuaComponent->GetOwner();
-				LuaCallContext->Function = Function;
-				LuaState->NewTable();
-				LuaState->PushCFunction(ULuaState::MetaTableFunction__call);
-				LuaState->SetField(-2, "__call");
-				LuaState->SetMetaTable(-2);
-				return 1;
-			}
-		}
-		else {
-			LuaState->FromLuaValue(*LuaValue);
-			return 1;
-		}
+		LuaState->FromLuaValue(*LuaValue, LuaComponent->GetOwner());
+		return 1;
+
 	}
 
 	LuaState->PushNil();
