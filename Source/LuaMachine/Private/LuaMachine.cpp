@@ -43,6 +43,12 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 	if (!LuaStateClass)
 		return nullptr;
 
+	if (LuaStateClass == ULuaState::StaticClass())
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("attempt to use LuaState Abstract class, please create a child of LuaState"));
+		return nullptr;
+	}
+
 	if (!LuaStates.Contains(LuaStateClass))
 	{
 		if (bCheckOnly)

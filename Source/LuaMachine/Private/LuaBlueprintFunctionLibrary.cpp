@@ -119,6 +119,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
 	return FLuaValue(Value);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_StringToLuaValue(FString Value)
+{
+	return FLuaValue(Value);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());

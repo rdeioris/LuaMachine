@@ -138,12 +138,12 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 {
 
-	if (LuaCodeAsset->bCooked && LuaCodeAsset->bCookAsBytecode)
+	if (CodeAsset->bCooked && CodeAsset->bCookAsBytecode)
 	{
-		return RunCode(LuaCodeAsset->ByteCode, LuaCodeAsset->GetPathName(), NRet);
+		return RunCode(CodeAsset->ByteCode, CodeAsset->GetPathName(), NRet);
 	}
 
-	return RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName(), NRet);
+	return RunCode(CodeAsset->Code.ToString(), CodeAsset->GetPathName(), NRet);
 
 }
 
@@ -178,7 +178,7 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasErr
 bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
 	TArray<uint8> Bytes;
-	Bytes.Append((uint8 *)TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString()), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString())));
+	Bytes.Append((uint8 *)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
 	return RunCode(Bytes, CodePath, NRet);
 }
 

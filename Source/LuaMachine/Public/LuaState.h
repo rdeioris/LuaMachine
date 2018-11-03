@@ -37,7 +37,7 @@ struct FLuaUserData
 };
 
 
-UCLASS(Abstract, EditInlineNew, BlueprintType, Blueprintable)
+UCLASS(Abstract, Blueprintable, HideDropdown)
 class LUAMACHINE_API ULuaState : public UObject
 {
 	GENERATED_BODY()
