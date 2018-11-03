@@ -83,11 +83,10 @@ struct LUAMACHINE_API FLuaValue
 
 	~FLuaValue();
 
-	static FLuaValue Function(UObject* Context, FName FunctionName)
+	static FLuaValue Function(FName FunctionName)
 	{
 		FLuaValue LuaValue;
 		LuaValue.Type = ELuaValueType::UFunction;
-		LuaValue.Object = Context;
 		LuaValue.FunctionName = FunctionName;
 		return LuaValue;
 	}
