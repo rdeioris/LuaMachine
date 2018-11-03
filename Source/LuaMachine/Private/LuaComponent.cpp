@@ -106,6 +106,19 @@ FLuaValue ULuaComponent::LuaGetField(FString FieldName)
 
 void ULuaComponent::LuaSetField(FString FieldName, FLuaValue Value)
 {
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	if (!L)
+		return;
+
+	// push component pointer as userdata
+	L->NewUObject(this);
+	SetupMetatable();
+
+	L->SetFieldFromTree(FieldName, Value, false);
+
+	// remove UObject
+	L->Pop();
+	
 }
 
 FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args, bool bGlobal)
@@ -143,6 +156,36 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 
 	// the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop + 1);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	if (Value.Type != ELuaValueType::Function)
+		return ReturnValue;
+
+	ULuaState* L = Value.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Value);
+	// push component pointer as userdata
+	L->NewUObject(this);
+	SetupMetatable();
+
+	int NArgs = 1;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	L->PCall(NArgs, ReturnValue);
+
+	L->Pop();
 
 	return ReturnValue;
 }

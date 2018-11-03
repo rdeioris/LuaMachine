@@ -732,9 +732,9 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 	return i + AdditionalPop;
 }
 
-void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value)
+void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal)
 {
-	int32 ItemsToPop = GetFieldFromTree(Tree);
+	int32 ItemsToPop = GetFieldFromTree(Tree, bGlobal);
 	// invalid key
 	if (ItemsToPop == 1)
 	{
@@ -748,7 +748,7 @@ void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value)
 	Pop();
 	FromLuaValue(Value);
 	SetField(-2, TCHAR_TO_UTF8(*Parts.Last()));
-	Pop(ItemsToPop - 1);
+	Pop(ItemsToPop - (bGlobal ? 1 : 0));
 }
 
 

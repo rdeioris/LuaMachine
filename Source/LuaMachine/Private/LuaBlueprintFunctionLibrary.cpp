@@ -150,6 +150,29 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, 
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset)
+{
+	FLuaValue ReturnValue;
+
+	if (!CodeAsset)
+		return ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	if (!L->RunCodeAsset(CodeAsset, 1))
+	{
+		if (L->bLogError)
+			L->LogError(L->LastError);
+		L->ReceiveLuaError(L->LastError);
+	}
+
+	ReturnValue = L->ToLuaValue(-1);
+	L->Pop();
+	return ReturnValue;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
 {
 	if (Table.Type != ELuaValueType::Table)
