@@ -16,9 +16,13 @@ FString FLuaValue::ToString()
 	case ELuaValueType::String:
 		return String;
 	case ELuaValueType::Table:
-		return FString("{}");
+		return FString::Printf(TEXT("table: %d"), LuaRef);
+	case ELuaValueType::Function:
+		return FString::Printf(TEXT("function: %d"), LuaRef);
 	case ELuaValueType::UObject:
 		return Object->GetFullName();
+	case ELuaValueType::UFunction:
+		return FunctionName.ToString();
 	}
 	return FString(TEXT("None"));
 }

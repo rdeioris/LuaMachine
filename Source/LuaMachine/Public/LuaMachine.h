@@ -17,8 +17,11 @@ public:
 	static inline FLuaMachineModule& Get();
 
 	void CleanupLuaStates(bool bIsSimulating);
+	void UnregisterLuaState(ULuaState* LuaState);
 
 	ULuaState* GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly=false);
+
+	TArray<ULuaState*> GetRegisteredLuaStates();
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;

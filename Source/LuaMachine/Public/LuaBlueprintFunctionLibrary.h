@@ -58,13 +58,16 @@ public:
 	static FLuaValue LuaTableSetField(UObject* WorldContextObject, FLuaValue Table, FString Key, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
-	static FLuaValue LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString Name, TArray<FLuaValue> Args);
+	static FLuaValue LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args);
 
-	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
-	static FLuaValue LuaValueCall(UObject* WorldContextObject, FLuaValue Value, TArray<FLuaValue> Args);
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
 	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsNil(FLuaValue Value);
@@ -74,6 +77,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
 	static FString Conv_LuaValueToString(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FText Conv_LuaValueToText(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static UObject* Conv_LuaValueToObject(FLuaValue Value);

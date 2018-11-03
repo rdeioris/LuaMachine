@@ -2,9 +2,11 @@
 
 #include "LuaState.h"
 #include "LuaComponent.h"
+#include "LuaMachine.h"
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
 #include "Runtime/Core/Public/Misc/Paths.h"
+#include "Runtime/Core/Public/Serialization/BufferArchive.h"
 
 ULuaState::ULuaState()
 {
@@ -103,8 +105,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	if (LuaCodeAsset)
 	{
-
-		if (!RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName()))
+		if (!RunCodeAsset(LuaCodeAsset))
 		{
 			if (bLogError)
 				LogError(LastError);
@@ -118,33 +119,74 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	if (!LuaFilename.IsEmpty())
 	{
-		FString Code;
-		FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), LuaFilename);
-		
-		if (FFileHelper::LoadFileToString(Code, *AbsoluteFilename))
+		bool bHasError = false;
+		if (!RunFile(LuaFilename, true, bHasError))
 		{
-			if (!RunCode(Code, AbsoluteFilename))
-			{
-				if (bLogError)
-					LogError(LastError);
-				ReceiveLuaError(LastError);
-				bDisabled = true;
-				lua_close(L);
-				L = nullptr;
-				return nullptr;
-			}
+			if (bLogError)
+				LogError(LastError);
+			ReceiveLuaError(LastError);
+			bDisabled = true;
+			lua_close(L);
+			L = nullptr;
+			return nullptr;
 		}
 	}
 
 	return this;
 }
 
+bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
+{
+
+	if (LuaCodeAsset->bCooked && LuaCodeAsset->bCookAsBytecode)
+	{
+		return RunCode(LuaCodeAsset->ByteCode, LuaCodeAsset->GetPathName(), NRet);
+	}
+
+	return RunCode(LuaCodeAsset->Code.ToString(), LuaCodeAsset->GetPathName(), NRet);
+
+}
+
+bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasError, int NRet)
+{
+	TArray<uint8> Code;
+	FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), Filename);
+
+	if (!FPaths::FileExists(AbsoluteFilename))
+	{
+		if (bIgnoreNonExistent)
+			return true;
+		LastError = FString::Printf(TEXT("Unable to open file %s"), *Filename);
+		return false;
+	}
+
+	if (FFileHelper::LoadFileToArray(Code, *AbsoluteFilename))
+	{
+		if (RunCode(Code, AbsoluteFilename, NRet))
+		{
+			return true;
+		}
+		bHasError = true;
+		return false;
+	}
+
+	bHasError = true;
+	LastError = FString::Printf(TEXT("Unable to open file %s"), *Filename);
+	return false;
+}
+
 bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
-	const TCHAR* CodeRaw = *Code;
+	TArray<uint8> Bytes;
+	Bytes.Append((uint8 *)TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString()), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*LuaCodeAsset->Code.ToString())));
+	return RunCode(Bytes, CodePath, NRet);
+}
+
+bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
+{
 	FString FullCodePath = FString("@") + CodePath;
 
-	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*FullCodePath)))
+	if (luaL_loadbuffer(L, (const char *)Code.GetData(), Code.Num(), TCHAR_TO_UTF8(*FullCodePath)))
 	{
 		LastError = FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
@@ -154,12 +196,46 @@ bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 
 		if (lua_pcall(L, 0, NRet, 0))
 		{
-			LastError = FString::Printf(TEXT("Lua compilation error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+			LastError = FString::Printf(TEXT("Lua execution error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 			return false;
 		}
 	}
 
 	return true;
+}
+
+int ULuaState::ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData)
+{
+	TArray<uint8>* Output = (TArray<uint8> *)UserData;
+	Output->Append((uint8 *)Ptr, Size);
+	return 0;
+}
+
+TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& ErrorString)
+{
+	const TCHAR* CodeRaw = *Code;
+	FString FullCodePath = FString("@") + CodePath;
+	TArray<uint8> Output;
+
+	lua_State* L = luaL_newstate();
+	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*FullCodePath)))
+	{
+		ErrorString = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		Output.Empty();
+		lua_close(L);
+		return Output;
+	}
+
+	if (lua_dump(L, ULuaState::ToByteCode_Writer, &Output, 1))
+	{
+		ErrorString = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		Output.Empty();
+		lua_close(L);
+		return Output;
+	}
+
+	lua_close(L);
+	return Output;
 }
 
 void ULuaState::FromLuaValue(FLuaValue& LuaValue)
@@ -542,9 +618,31 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 1));
 
+	// first check for code assets
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
+		bool bLuaError = false;
+		if (LuaState->bAddProjectContentDirToPackagePath && LuaState->RunFile(Key + ".lua", true, bLuaError, 1))
+		{
+			return 1;
+		}
+		if (bLuaError)
+		{
+			return luaL_error(L, "%s", lua_tostring(L, -1));
+		}
+		// now search in additional paths
+		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
+		{
+			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, bLuaError, 1))
+			{
+				return 1;
+			}
+			if (bLuaError)
+			{
+				return luaL_error(L, "%s", lua_tostring(L, -1));
+			}
+		}
 		return luaL_error(L, "unable to find package %s", TCHAR_TO_UTF8(*Key));
 	}
 
@@ -554,7 +652,7 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 		return luaL_error(L, "LuaCodeAsset not set for package %s", TCHAR_TO_UTF8(*Key));
 	}
 
-	if (!LuaState->RunCode(LuaCode->Code.ToString(), LuaCode->GetPathName(), 1))
+	if (!LuaState->RunCodeAsset(LuaCode, 1))
 	{
 		return luaL_error(L, "%s", lua_tostring(L, -1));
 	}
@@ -754,5 +852,7 @@ ULuaState::~ULuaState()
 {
 	if (L)
 		lua_close(L);
+
+	FLuaMachineModule::Get().UnregisterLuaState(this);
 }
 

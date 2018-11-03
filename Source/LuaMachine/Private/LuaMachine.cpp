@@ -53,6 +53,37 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 	return LuaStates[LuaStateClass]->GetLuaState(InWorld);
 }
 
+TArray<ULuaState*> FLuaMachineModule::GetRegisteredLuaStates()
+{
+	TArray<ULuaState*> RegisteredStates;
+	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+	{
+		RegisteredStates.Add(Pair.Value);
+	}
+
+	return RegisteredStates;
+}
+
+void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
+{
+	TSubclassOf<ULuaState> FoundLuaStateClass = nullptr;
+	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+	{
+		if (Pair.Value == LuaState)
+		{
+			FoundLuaStateClass = Pair.Key;
+			break;
+		}
+	}
+
+	if (FoundLuaStateClass)
+	{
+
+		LuaStates[FoundLuaStateClass]->RemoveFromRoot();
+		LuaStates.Remove(FoundLuaStateClass);
+	}
+}
+
 FLuaMachineModule& FLuaMachineModule::Get()
 {
 	static FLuaMachineModule* Singleton = nullptr;

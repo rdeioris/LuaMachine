@@ -35,7 +35,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return LuaValue;
-	
+
 	LuaValue.Type = ELuaValueType::Table;
 	LuaValue.LuaState = L;
 	return LuaValue;
@@ -44,6 +44,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 {
 	return Value.ToString();
+}
+
+FText ULuaBlueprintFunctionLibrary::Conv_LuaValueToText(FLuaValue Value)
+{
+	return FText::FromString(Value.ToString());
 }
 
 UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
@@ -123,6 +128,25 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject
 	uint32 ItemsToPop = L->GetFieldFromTree(Name);
 	FLuaValue ReturnValue = L->ToLuaValue(-1);
 	L->Pop(ItemsToPop);
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	bool bError = false;
+	if (!L->RunFile(Filename, bIgnoreNonExistent, bError, 1))
+	{
+		if (L->bLogError)
+			L->LogError(L->LastError);
+		L->ReceiveLuaError(L->LastError);
+	}
+
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop();
 	return ReturnValue;
 }
 
@@ -225,7 +249,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(UObject* WorldContextObject, FLuaValue Value, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 

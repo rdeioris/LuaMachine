@@ -16,8 +16,21 @@ class LUAMACHINE_API ULuaCode : public UDataAsset
 	
 public:
 
+	ULuaCode();
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere)
 	FText Code;
 	
-	
+	UPROPERTY(EditAnywhere)
+	bool bCookAsBytecode;
+
+	UPROPERTY()
+	TArray<uint8> ByteCode;
+
+	UPROPERTY()
+	bool bCooked;
+
+	virtual void Serialize(FArchive& Ar) override;
+
+	virtual void PreSave(const ITargetPlatform* TargetPlatform) override;
 };

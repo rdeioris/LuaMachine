@@ -134,7 +134,12 @@ public:
 	
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	bool RunCode(FString Code, FString CodePath, int NRet=0);
+	bool RunCode(TArray<uint8> Code, FString CodePath, int NRet = 0);
+	bool RunCode(FString Code, FString CodePath, int NRet = 0);
+
+	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
+
+	bool RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasError, int NRet = 0);
 
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);
 	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
@@ -146,7 +151,10 @@ public:
 	static int TableFunction_package_preload(lua_State *L);
 
 	static int MetaTableFunction__call(lua_State *L);
-	static int LuaPCallErrorHandler(lua_State *L);
+
+	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
+	
+	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 
 	static ULuaState* GetFromExtraSpace(lua_State *L)
 	{
