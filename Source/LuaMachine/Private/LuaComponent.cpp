@@ -164,9 +164,6 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 
-	if (Value.Type != ELuaValueType::Function)
-		return ReturnValue;
-
 	ULuaState* L = Value.LuaState;
 	if (!L)
 		return ReturnValue;

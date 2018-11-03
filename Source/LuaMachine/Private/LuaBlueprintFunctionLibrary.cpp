@@ -178,15 +178,19 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueGetField(FLuaValue Table, FString Key)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
 {
+	FLuaValue ReturnValue;
+	if (Table.Type != ELuaValueType::Table)
+		return ReturnValue;
+	
 	ULuaState* L = Table.LuaState;
 	if (!L)
-		return FLuaValue();
+		return ReturnValue;
 
 	L->FromLuaValue(Table);
 	L->GetField(-1, TCHAR_TO_UTF8(*Key));
-	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	ReturnValue = L->ToLuaValue(-1);
 	L->Pop(2);
 	return ReturnValue;
 }
@@ -217,17 +221,20 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int3
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueSetField(UObject* WorldContextObject, FLuaValue Table, FString Key, FLuaValue Value)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value)
 {
+	FLuaValue ReturnValue;
+	if (Table.Type != ELuaValueType::Table)
+		return ReturnValue;
 
 	ULuaState* L = Table.LuaState;
 	if (!L)
-		return FLuaValue();
+		return ReturnValue;
 
 	L->FromLuaValue(Table);
 	L->FromLuaValue(Value);
 	L->SetField(-2, TCHAR_TO_UTF8(*Key));
-	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	ReturnValue = L->ToLuaValue(-1);
 	L->Pop();
 	return ReturnValue;
 }
@@ -268,6 +275,29 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FLuaValue Value, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Value);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	L->PCall(NArgs, ReturnValue);
+
+	L->Pop();
 
 	return ReturnValue;
 }
