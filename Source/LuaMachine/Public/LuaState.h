@@ -19,8 +19,10 @@ DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
 struct FLuaUserData
 {
 	ELuaValueType Type;
-	UObject* Context;
-	UFunction* Function;
+	// we use weak pointers as both fields can eventually be garbage collected
+	// while the lua VM hold a reference to the userdata
+	TWeakObjectPtr<UObject> Context;
+	TWeakObjectPtr<UFunction> Function;
 
 	FLuaUserData(UObject* InObject)
 	{

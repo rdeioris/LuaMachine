@@ -380,15 +380,22 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 	else if (lua_isuserdata(L, Index))
 	{
 		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
-		LuaValue.Type = UserData->Type;
 		switch (UserData->Type)
 		{
 		case(ELuaValueType::UObject):
-			LuaValue.Object = UserData->Context;
+			if (UserData->Context.IsValid())
+			{
+				LuaValue.Type = UserData->Type;
+				LuaValue.Object = UserData->Context.Get();
+			}
 			break;
 		case(ELuaValueType::UFunction):
-			LuaValue.FunctionName = UserData->Function->GetFName();
-			LuaValue.Object = UserData->Context;
+			if (UserData->Context.IsValid() && UserData->Function.IsValid())
+			{
+				LuaValue.Type = UserData->Type;
+				LuaValue.FunctionName = UserData->Function->GetFName();
+				LuaValue.Object = UserData->Context.Get();
+			}
 			break;
 		}
 	}
@@ -447,7 +454,15 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 		return luaL_error(L, "invalid state for ULuaComponent");
 	}
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
-	ULuaComponent* LuaComponent = (ULuaComponent*)UserData->Context;
+
+	if (!UserData->Context.IsValid())
+	{
+		return luaL_error(L, "invalid state for ULuaComponent");
+	}
+
+	ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData->Context.Get());
+	if (!LuaComponent)
+		return luaL_error(L, "invalid state for ULuaComponent");
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
@@ -472,7 +487,14 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 		return luaL_error(L, "invalid state for ULuaComponent");
 	}
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
-	ULuaComponent* LuaComponent = (ULuaComponent*)UserData->Context;
+	if (!UserData->Context.IsValid())
+	{
+		return luaL_error(L, "invalid state for ULuaComponent");
+	}
+
+	ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData->Context.Get());
+	if (!LuaComponent)
+		return luaL_error(L, "invalid state for ULuaComponent");
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
 
@@ -499,15 +521,20 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	}
 	FLuaUserData* LuaCallContext = (FLuaUserData*)lua_touserdata(L, 1);
 
-	FScopeCycleCounterUObject ObjectScope(LuaCallContext->Context);
-	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function);
+	if (!LuaCallContext->Context.IsValid() || !LuaCallContext->Function.IsValid())
+	{
+		return luaL_error(L, "invalid state for lua UFunction");
+	}
+
+	FScopeCycleCounterUObject ObjectScope(LuaCallContext->Context.Get());
+	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function.Get());
 
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
 	int StackPointer = 2;
 	// arguments
-	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
@@ -521,7 +548,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	}
 
 	LuaState->InceptionLevel++;
-	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function, Parameters);
+	LuaCallContext->Context->ProcessEvent(LuaCallContext->Function.Get(), Parameters);
 	check(LuaState->InceptionLevel > 0);
 	LuaState->InceptionLevel--;
 
@@ -552,7 +579,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 
 
 	// get return value
-	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function); FArgs; ++FArgs)
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
 		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm))
