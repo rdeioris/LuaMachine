@@ -226,9 +226,11 @@ Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for inf
 
 ## Commercial Support
 
+Commercial support is offered by Unbit (based in Rome, Italy), just contact info at unbit dot it or follow/direct message @unbit on twitter
+
 ## Sponsors
 
-
+AIV, Accademia Italiana Videogiochi (http://www.aiv01.it). They are using it for Lua lessons in the Game Design classes.
 
 
 
