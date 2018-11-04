@@ -297,7 +297,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 				TArray<UActorComponent*> LuaComponents = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 				for (UActorComponent* Component : LuaComponents)
 				{
-					ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+					LuaComponent = Cast<ULuaComponent>(Component);
 					if (LuaComponent->LuaState == GetClass())
 					{
 						NewUObject(LuaComponent);
@@ -882,10 +882,10 @@ int32 ULuaState::ToInteger(int Index)
 
 FLuaValue ULuaState::CreateLuaTable()
 {
-	FLuaValue Table;
-	Table.Type = ELuaValueType::Table;
-	Table.LuaState = this;
-	return Table;
+	FLuaValue NewTable;
+	NewTable.Type = ELuaValueType::Table;
+	NewTable.LuaState = this;
+	return NewTable;
 }
 
 ULuaState::~ULuaState()
