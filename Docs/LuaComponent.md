@@ -80,3 +80,9 @@ void LuaSetField(FString Name, FLuaValue Value);
 ```
 
 Set a field in the userdata virtual table
+
+## Exposed Events
+
+### OnLuaError
+
+Triggered when the lua virtual machine generates an error when triggered from the LuaComponent. The error string is passed as the event argument
