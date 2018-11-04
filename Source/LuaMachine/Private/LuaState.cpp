@@ -505,7 +505,7 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	}
 	else
 	{
-		lua_rawset(L, 1);
+		LuaComponent->Table.Add(Key, LuaState->ToLuaValue(3));
 	}
 
 	return 0;

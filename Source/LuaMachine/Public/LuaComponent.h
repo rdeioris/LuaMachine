@@ -11,7 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLuaComponentError, FString, Message);
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS( ClassGroup=(Scripting), meta=(BlueprintSpawnableComponent) )
 class LUAMACHINE_API ULuaComponent : public UActorComponent
 {
 	GENERATED_BODY()
