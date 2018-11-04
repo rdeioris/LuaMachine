@@ -25,6 +25,10 @@ Finally open your Level Blueprint and add the following nodes:
 
 ![Quickstart](Docs/Screenshots/Quickstart.PNG?raw=true "Quickstart")
 
+If you play the game, you will see the Lua string printed on top.
+
+The LuaRunFile node will execute a lua file (relative to the Content/ directory) in the specified LuaState (QuickLuaState in our case) and will return the value returned by the script itself as a LuaValue UStruct. The plugin offers a bunch of operations you can apply to LuaValue's, in this example we simply converted the value to an Unreal String.
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
