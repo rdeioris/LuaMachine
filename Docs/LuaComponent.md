@@ -41,6 +41,11 @@ you can get a meaningful value:
 
 ![LuaComponent5](Screenshots/LuaComponent5.PNG?raw=true "LuaComponent5")
 
+## LuaComponent Interactions
+
+When passing a UObject to Lua, it will check if the UObject is a LuaComponent or an Actor containing a LuaComponent in the same LuaState. In such a case the related userdata will be used instead.
+
+As an example immagine a 
 
 ## Exposed Functions
 
