@@ -53,6 +53,16 @@ Open the QuickLuaState Blueprint you created before. This Blueprint exposes lot 
 
 ![Quickstart3](Docs/Screenshots/Quickstart3.PNG?raw=true "Quickstart3")
 
+The Table 'TMap' allows you to add items to the Lua global table. We will first try by adding a string and a number (float):
+
+![Quickstart4](Docs/Screenshots/Quickstart4.PNG?raw=true "Quickstart4")
+
+Note that we set the "Lua Filename" field to hello.lua, in this way we can avoid to call the LuaRunFile node as hello.lua will be executed during the spawn of the QuickLuaState.
+
+Let's modify our Level Blueprint:
+
+
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
