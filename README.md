@@ -73,7 +73,19 @@ and expose it in the Table TMap:
 
 ![Quickstart7](Docs/Screenshots/Quickstart7.PNG?raw=true "Quickstart7")
 
-now by calling get_player_location() from lua, will trigger the QuickLuaState's GetPlayerPawnLocation(). Note that not all of the UFunction can be exposed: if they take or return values they must be LuaValue's
+calling get_player_location() from lua, will trigger the QuickLuaState's GetPlayerPawnLocation(). Note that not all of the UFunction's can be exposed: if they take or return values they must be LuaValue's
+
+Let's update hello.lua
+
+```lua
+function call_me_from_unreal(number)
+    location = get_player_location()
+    return number * 2 + location.x + location.y + location.z
+end
+
+current_time = os.date()
+return "Hello, i am a lua script, current time is: " .. current_time
+```
 
 
 ## LuaState
