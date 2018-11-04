@@ -63,6 +63,8 @@ Let's modify our Level Blueprint:
 
 ![Quickstart5](Docs/Screenshots/Quickstart5.PNG?raw=true "Quickstart5")
 
+The hello.lua script is loaded automatically, while the LuaGetGlobal nodes, retrieve the specific fields from the Lua global table, and return them as LuaValue's
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
