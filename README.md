@@ -216,6 +216,12 @@ Note that tables are passed by referece, so technically you can update the same 
 
 Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for infos on how to use the FLuaValue api.
 
+## Shortcut fir specifying field names
+
+As a shortcut for reaching long paths in tables, you can use the dot as the separator for field names.
+
+As an example the LuaGetGlobal node, can access the package.path item by simply passing it "package.path" as the field name.
+
 ## LuaComponent
 
 ULuaComponent allows to use an Actor as a Lua userdata.
