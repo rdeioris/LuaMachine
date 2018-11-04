@@ -80,6 +80,7 @@ Let's update hello.lua
 ```lua
 function call_me_from_unreal(number)
     location = get_player_location()
+    print(location.x, location.y, location.z)
     return number * 2 + location.x + location.y + location.z
 end
 
