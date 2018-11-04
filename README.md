@@ -226,7 +226,31 @@ Check its docs here: [LuaComponent](Docs/LuaComponent.md)
 
 ## Packaging
 
+You have various way to use Lua scripting facilities in your packaged project:
+
+### LuaCode for everything
+
+Transform your scripts (just drag them in the content browser) to LuaCode assets and eventually fix the RequireTabl. By default they will be byte-compiled. It is highly suggested to "sign" the pak file to avoid pak file modifications. This method does not permit customization of scripts after the build.
+
+### Scripts file packaging
+
+You can include your scripts in the pak file automatically by specifying the directory containing them in the package settings:
+
+![Packaging](Docs/Screenshots/Packaging.PNG?raw=true "Packaging")
+
+Signing the pak file could be a good thing again, in addition to this byte-compiling the scripts could be accomplished with the 'luac' command (included in lua distributions)
+
+### Scripts file inclusion
+
+This is for allowing easy customization of your scripts after the packaging. Basically you include the scripts directories in your Content directory:
+
+![Packaging2](Docs/Screenshots/Packaging2.PNG?raw=true "Packaging2")
+
 ## Functional Tests
+
+The projects includes various functional tests (all written as blueprints, so they could be useful as examples too).
+
+Just enable the plugin content visualization from the content browser and from the Automator tool execute the Project related tests.
 
 ## Commercial Support
 
