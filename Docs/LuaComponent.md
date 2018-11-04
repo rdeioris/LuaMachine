@@ -45,7 +45,9 @@ you can get a meaningful value:
 
 When passing a UObject to Lua, it will check if the UObject is a LuaComponent or an Actor containing a LuaComponent in the same LuaState. In such a case the related userdata will be used instead.
 
-As an example immagine a 
+As an example immagine a collision system where the 'other actor' is passed as teh argument to a lua function.
+
+If the actor has no LuaComponent's attached it, the function will get a raw userdata (it cannot do anythn relevant with it). If instead it has a LuaComponent attached to it (of the same LuaState of the calling one), the userdata will be the LuaComponent one with the related table/metatable
 
 ## Exposed Functions
 
