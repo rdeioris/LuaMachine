@@ -190,7 +190,7 @@ GET_FUNCTION_NAME_CHECKED is an Unreal Macro for sanitizing UFunction names. Alb
 
 You can call LuaState's offered api using the ULuaBlueprintFunctionLibrary class.
 
-Check its docs here:
+Check its docs here: [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md)
 
 ## LuaValue
 
@@ -214,7 +214,7 @@ This a list of the currently supported values:
 
 ## LuaComponent
 
-
+## Packaging
 
 ## Functional Tests
 
