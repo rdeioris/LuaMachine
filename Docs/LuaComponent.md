@@ -34,3 +34,7 @@ You can specify a metatable for the LuaComponent. As an example you may want to 
 ```lua
 print(self)
 ```
+
+you can get a meaningful value:
+
+
