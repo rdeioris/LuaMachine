@@ -207,10 +207,12 @@ This a list of the currently supported values:
 * String (string/FString value)
 * Function (reference to a lua function)
 * Table (reference to a lua table)
-* UObject (reference to an Unreal UObject)
-* UFunction (reference to an Unreal UFunction)
+* UObject (pointer to an Unreal UObject)
+* UFunction (pointer to an Unreal UFunction)
 
-Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for infos on how to use them.
+Note that tables are passed by referece, so technically you can update the same table from both lua and Unreal.
+
+Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for infos on how to use the FLuaValue api.
 
 ## Calling Lua functions
 
