@@ -220,6 +220,10 @@ Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for inf
 
 ## LuaComponent
 
+ULuaComponent allows to use an Actor as a Lua userdata.
+
+Check its docs here: [LuaComponent](Docs/LuaComponent.md)
+
 ## Packaging
 
 ## Functional Tests
