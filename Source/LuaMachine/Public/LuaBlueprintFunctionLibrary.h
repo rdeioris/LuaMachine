@@ -30,7 +30,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaCreateBool(bool bInBool);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static FLuaValue LuaCreateTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -110,6 +110,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_FloatToLuaValue(float Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static int32 Conv_LuaValueToInt(FLuaValue Value);

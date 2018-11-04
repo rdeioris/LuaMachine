@@ -82,6 +82,12 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
 	return LuaValue;
 }
 
+
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_FloatToLuaValue(float Value)
+{
+	return FLuaValue(Value);
+}
+
 int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 {
 	switch (Value.Type)
