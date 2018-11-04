@@ -45,6 +45,8 @@ Now the script will add the call_me_from_unreal function to the global table:
 
 ![Quickstart2](Docs/Screenshots/Quickstart2.PNG?raw=true "Quickstart2")
 
+The LuaGlobalCall node calls a function from the global table passing arguments as an array of LuaValue's.
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
