@@ -216,10 +216,6 @@ Note that tables are passed by referece, so technically you can update the same 
 
 Check [LuaBlueprintFunctionLibrary](Docs/LuaBlueprintFunctionLibrary.md) for infos on how to use the FLuaValue api.
 
-## Calling Lua functions
-
-## Exposing UFunctions
-
 ## LuaComponent
 
 ULuaComponent allows to use an Actor as a Lua userdata.
