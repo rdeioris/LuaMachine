@@ -43,7 +43,7 @@ public:
 	static void LuaSetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	static FLuaValue LuaTableGetField(FLuaValue Table, FString Name);
+	static FLuaValue LuaTableGetField(FLuaValue Table, FString Key);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index);

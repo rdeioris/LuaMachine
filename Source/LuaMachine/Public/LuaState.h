@@ -147,6 +147,8 @@ public:
 
 	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
 
+	FLuaValue CreateLuaTable();
+
 	bool RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasError, int NRet = 0);
 
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);

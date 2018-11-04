@@ -79,3 +79,33 @@ FLuaValue& FLuaValue::operator = (const FLuaValue &SourceValue)
 
 	return *this;
 }
+
+FLuaValue FLuaValue::SetField(FString Key, FLuaValue Value)
+{
+	if (Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->FromLuaValue(Value);
+	LuaState->SetField(-2, TCHAR_TO_UTF8(*Key));
+	LuaState->Pop();
+	return *this;
+}
+
+FLuaValue FLuaValue::GetField(FString Key)
+{
+	if (Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->GetField(-1, TCHAR_TO_UTF8(*Key));
+	FLuaValue ReturnValue = LuaState->ToLuaValue(-1);
+	LuaState->Pop(2);
+	return ReturnValue;
+}

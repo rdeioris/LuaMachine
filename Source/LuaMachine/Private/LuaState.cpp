@@ -880,6 +880,14 @@ int32 ULuaState::ToInteger(int Index)
 	return lua_tointeger(L, Index);
 }
 
+FLuaValue ULuaState::CreateLuaTable()
+{
+	FLuaValue Table;
+	Table.Type = ELuaValueType::Table;
+	Table.LuaState = this;
+	return Table;
+}
+
 ULuaState::~ULuaState()
 {
 	if (L)

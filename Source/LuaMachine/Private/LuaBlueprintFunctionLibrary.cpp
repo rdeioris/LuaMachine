@@ -36,9 +36,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 	if (!L)
 		return LuaValue;
 
-	LuaValue.Type = ELuaValueType::Table;
-	LuaValue.LuaState = L;
-	return LuaValue;
+	return L->CreateLuaTable();
 }
 
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
@@ -194,11 +192,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FStrin
 	if (!L)
 		return ReturnValue;
 
-	L->FromLuaValue(Table);
-	L->GetField(-1, TCHAR_TO_UTF8(*Key));
-	ReturnValue = L->ToLuaValue(-1);
-	L->Pop(2);
-	return ReturnValue;
+	return Table.GetField(Key);
 }
 
 bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(FLuaValue Value)
@@ -237,12 +231,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, FStrin
 	if (!L)
 		return ReturnValue;
 
-	L->FromLuaValue(Table);
-	L->FromLuaValue(Value);
-	L->SetField(-2, TCHAR_TO_UTF8(*Key));
-	ReturnValue = L->ToLuaValue(-1);
-	L->Pop();
-	return ReturnValue;
+	return Table.SetField(Key, Value);
 }
 
 int32 ULuaBlueprintFunctionLibrary::LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
