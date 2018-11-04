@@ -17,12 +17,20 @@
     {
       "Name": "LuaMachine",
       "Type": "Runtime",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [
+        "Mac",
+        "Win64"
+      ]
     },
     {
       "Name": "LuaMachineEditor",
       "Type": "Editor",
-      "LoadingPhase": "Default"
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [
+        "Mac",
+        "Win64"
+      ]
     }
   ]
 }
