@@ -228,7 +228,7 @@ You have various way to use Lua scripting facilities in your packaged project:
 
 ### LuaCode for everything
 
-Transform your scripts (just drag them in the content browser) to LuaCode assets and eventually fix the RequireTabl. By default they will be byte-compiled. It is highly suggested to "sign" the pak file to avoid pak file modifications. This method does not permit customization of scripts after the build.
+Transform your scripts (just drag them in the content browser) to LuaCode assets and eventually fix the RequireTable. By default they will be byte-compiled. It is highly suggested to "sign" the pak file to avoid pak file modifications. This method does not permit customization of scripts after the build.
 
 ### Scripts file packaging
 
