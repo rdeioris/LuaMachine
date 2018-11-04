@@ -98,30 +98,13 @@ Now you should have an idea of the plugin potential, continue reading for more i
 
 ## LuaState
 
-A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
+A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life. (Note that while in the Editor, LuaState's are constantly recreated whenever you enter PIE mode to simplify development)
 
 Having multiple LuaState's allows clean separation of domains: as an example you may want a state for game configuration, another one for game logic and one for the modders. More complex examples include having states dedicated to specific Actors, GameModes or Levels.
 
-LuaState's load and execute the lua code of your project. You can load scripts (both in text and bytecode format) from your filesystem, or from a specific asset exposed by the plugin, named LuaCode. The advantage of using filesystem scripts is that you can change them even after the project has been packaged, while LuaCode assets are directly built in your pak files.
+LuaState's are loaded on-demand, so you can create dozens of them but they will not start Lua VMs until you do not need them.
 
-Each LuaState can use both files and LuaCode assets.
-
-Let's start with a simple example. Create a new LuaCode asset and edit it adding the following code:
-
-```lua
-dummyinteger = 17
-dummystring = 'Hello World'
-```
-
-From the Lua point of view, "dummyinteger" and "dummystring" are fields of the global table (the one you can access from lua with the "_G" symbol)
-
-Now create a LuaState and assign it the LuaCode asset.
-
-Open your Level Blueprint and add the following nodes:
-
-"LuaGetGlobal" will retrieve the value associated with the specified name. Note that this time we ignored the return value of the script.
-
-
+LuaState's can load and execute scripts automatically if you specify the field "LuaCodeAsset" and/or "LuaFilename". You can load scripts (both in text and bytecode format) from your filesystem (via "LuaFilename"), or from a specific asset exposed by the plugin, named LuaCode (you can specify it with the "LuaCodeAsset" field). The advantage of using filesystem scripts is that you can change them even after the project has been packaged (unless yo package them too), while LuaCode assets are directly built in your pak files (as bytecode by default).
 
 
 ## LuaValue
