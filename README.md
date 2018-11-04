@@ -88,6 +88,15 @@ current_time = os.date()
 return "Hello, i am a lua script, current time is: " .. current_time
 ```
 
+and the Level Blueprint:
+
+![Quickstart8](Docs/Screenshots/Quickstart8.PNG?raw=true "Quickstart8")
+
+Please check the print() function: it is automatically mapped to the Unreal Output Log by the plugin.
+
+Now you should have an idea of the Plugin potential, check the following dedicated documentation sections for more infos:
+
+
 
 ## LuaState
 
