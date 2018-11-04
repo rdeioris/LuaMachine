@@ -1,4 +1,4 @@
-// Copyright 1998-2018 Epic Games, Inc. All Rights Reserved.
+// Copyright 2018 - Roberto De Ioris
 
 #include "LuaMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"

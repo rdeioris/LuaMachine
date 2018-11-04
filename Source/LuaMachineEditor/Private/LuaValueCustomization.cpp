@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright 2018 - Roberto De Ioris
 
 #include "LuaValueCustomization.h"
 #include "LuaMachine/Public/LuaValue.h"
