@@ -44,16 +44,16 @@ public:
 	bool bLogError;
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args, bool bGlobal);
+	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FLuaValue LuaGetField(FString FieldName);
+	FLuaValue LuaGetField(FString Name);
 
 	UFUNCTION(BlueprintCallable)
-	void LuaSetField(FString FieldName, FLuaValue Value);
+	void LuaSetField(FString Name, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
 	FLuaComponentError OnLuaError;

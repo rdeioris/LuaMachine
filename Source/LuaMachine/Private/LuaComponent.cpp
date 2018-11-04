@@ -84,7 +84,7 @@ void ULuaComponent::SetupMetatable()
 	L->SetMetaTable(-2);
 }
 
-FLuaValue ULuaComponent::LuaGetField(FString FieldName)
+FLuaValue ULuaComponent::LuaGetField(FString Name)
 {
 	FLuaValue ReturnValue;
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
@@ -95,7 +95,7 @@ FLuaValue ULuaComponent::LuaGetField(FString FieldName)
 	L->NewUObject(this);
 	SetupMetatable();
 
-	int32 ItemsToPop = L->GetFieldFromTree(FieldName, false);
+	int32 ItemsToPop = L->GetFieldFromTree(Name, false);
 	ReturnValue = L->ToLuaValue(-1);
 
 	// we need to remove the return value and the object
@@ -104,7 +104,7 @@ FLuaValue ULuaComponent::LuaGetField(FString FieldName)
 	return ReturnValue;
 }
 
-void ULuaComponent::LuaSetField(FString FieldName, FLuaValue Value)
+void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 	if (!L)
@@ -114,14 +114,14 @@ void ULuaComponent::LuaSetField(FString FieldName, FLuaValue Value)
 	L->NewUObject(this);
 	SetupMetatable();
 
-	L->SetFieldFromTree(FieldName, Value, false);
+	L->SetFieldFromTree(Name, Value, false);
 
 	// remove UObject
 	L->Pop();
 	
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue> Args, bool bGlobal)
+FLuaValue ULuaComponent::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;
 
@@ -133,7 +133,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString FunctionName, TArray<FLuaValue>
 	L->NewUObject(this);
 	SetupMetatable();
 
-	int32 ItemsToPop = L->GetFieldFromTree(FunctionName, bGlobal);
+	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
 	// first argument (self/actor)
 	L->PushValue(-(ItemsToPop + 1));
