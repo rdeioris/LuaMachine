@@ -61,7 +61,7 @@ Note that we set the "Lua Filename" field to hello.lua, in this way we can avoid
 
 Let's modify our Level Blueprint:
 
-
+![Quickstart5](Docs/Screenshots/Quickstart5.PNG?raw=true "Quickstart5")
 
 ## LuaState
 
