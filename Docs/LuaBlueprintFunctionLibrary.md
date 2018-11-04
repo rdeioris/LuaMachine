@@ -1,4 +1,4 @@
-#LuaBlueprintFunctionLibrary
+# LuaBlueprintFunctionLibrary
 
 This is the BlueprintFunctionLibrary for accessing the LuaMachine api from both C++ and Blueprints.
 
