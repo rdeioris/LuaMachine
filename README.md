@@ -125,6 +125,14 @@ A single event is exposed by ULuaState: "LuaError"
 
 If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
+### LuaState in C++
+
+You can define your LuaState's as C++ classes, this is handy for exposing functions that would be hard to define with blueprints:
+
+```cpp
+
+```
+
 ## LuaValue
 
 LuaValue's are the way Unreal communicates with a specific Lua virtual machine. They contains values that both Lua and your project can use.
