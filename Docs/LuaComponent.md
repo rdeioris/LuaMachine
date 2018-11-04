@@ -26,3 +26,11 @@ Note the colon-syntax for implementing OOP style programming. Basically the LuaC
 While the game runs, you can see the "Table" property being updated from lua:
 
 ![LuaComponent3](Screenshots/LuaComponent3.PNG?raw=true "LuaComponent3")
+
+## Metatable
+
+You can specify a metatable for the LuaComponent. As an example you may want to implement a "__tostring" function so when doing
+
+```lua
+print(self)
+```
