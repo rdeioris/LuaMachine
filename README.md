@@ -186,6 +186,12 @@ FLuaValue UAdvancedLuaState::GetSimpleString()
 
 ```
 
+GET_FUNCTION_NAME_CHECKED is an Unreal Macro for sanitizing UFunction names. Albeit not necessary (the argument is the FName of the function) it is highly suggested to use it to avoid silent errors.
+
+You can call LuaState's offered api using the ULuaBlueprintFunctionLibrary class.
+
+Check its docs here:
+
 ## LuaValue
 
 LuaValue's are the way Unreal communicates with a specific Lua virtual machine. They contains values that both Lua and your project can use.
