@@ -130,6 +130,59 @@ If defined, it will be triggered whenever the Lua VM generates an error. The Err
 You can define your LuaState's as C++ classes, this is handy for exposing functions that would be hard to define with blueprints:
 
 ```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaState.h"
+#include "AdvancedLuaState.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class LUATEST420_API UAdvancedLuaState : public ULuaState
+{
+	GENERATED_BODY()
+public:
+	UAdvancedLuaState();
+
+	UFUNCTION()
+	FLuaValue GetPlayerPawnLocation();
+
+	UFUNCTION()
+	FLuaValue GetSimpleString();
+	
+};
+```
+
+```cpp
+#include "AdvancedLuaState.h"
+#include "Kismet/GameplayStatics.h"
+#include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+
+UAdvancedLuaState::UAdvancedLuaState()
+{
+	Table.Add("simple_string", FLuaValue("Test string"));
+	Table.Add("get_player_location", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UAdvancedLuaState, GetPlayerPawnLocation)));
+	Table.Add("get_simple_string", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UAdvancedLuaState, GetSimpleString)));
+}
+
+FLuaValue UAdvancedLuaState::GetPlayerPawnLocation()
+{
+	FVector Location = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetActorLocation();
+	FLuaValue Table = CreateLuaTable();
+	Table.SetField("x", FLuaValue(Location.X));
+	Table.SetField("y", FLuaValue(Location.X));
+	Table.SetField("z", FLuaValue(Location.X));
+
+	return Table;
+}
+
+FLuaValue UAdvancedLuaState::GetSimpleString()
+{
+	return FLuaValue("Hello World");
+}
 
 ```
 
