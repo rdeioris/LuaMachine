@@ -37,4 +37,6 @@ print(self)
 
 you can get a meaningful value:
 
+![LuaComponent4](Screenshots/LuaComponent4.PNG?raw=true "LuaComponent4")
 
+![LuaComponent5](Screenshots/LuaComponent5.PNG?raw=true "LuaComponent5")
