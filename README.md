@@ -94,9 +94,7 @@ and the Level Blueprint:
 
 Please check the print() function: it is automatically mapped to the Unreal Output Log by the plugin.
 
-Now you should have an idea of the Plugin potential, check the following dedicated documentation sections for more infos:
-
-
+Now you should have an idea of the plugin potential, continue reading for more infos.
 
 ## LuaState
 
