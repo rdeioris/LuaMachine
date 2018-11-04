@@ -65,6 +65,17 @@ Let's modify our Level Blueprint:
 
 The hello.lua script is loaded automatically, while the LuaGetGlobal nodes, retrieve the specific fields from the Lua global table, and return them as LuaValue's
 
+Time to expose an Unreal UFunction to Lua: just add a Function to QuickLuaState:
+
+![Quickstart6](Docs/Screenshots/Quickstart6.PNG?raw=true "Quickstart6")
+
+and expose it in the Table TMap:
+
+![Quickstart7](Docs/Screenshots/Quickstart7.PNG?raw=true "Quickstart7")
+
+now by calling get_player_location() from lua, will trigger the QuickLuaState's GetPlayerPawnLocation(). Note that not all of the UFunction can be exposed: if they take or return values they must be LuaValue's
+
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
