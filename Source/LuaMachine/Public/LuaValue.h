@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "lua.hpp"
+#include "lua/lua.hpp"
 #include "LuaValue.generated.h"
 
 // required for Mac

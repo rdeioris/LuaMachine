@@ -51,40 +51,40 @@ public:
 	virtual UWorld* GetWorld() const override { return CurrentWorld; }
 
 	UPROPERTY(EditAnywhere)
-		ULuaCode* LuaCodeAsset;
+	ULuaCode* LuaCodeAsset;
 
 	UPROPERTY(EditAnywhere)
-		FString LuaFilename;
+	FString LuaFilename;
 
 	UPROPERTY(EditAnywhere)
-		TMap<FString, FLuaValue> Table;
+	TMap<FString, FLuaValue> Table;
 
 	UPROPERTY(EditAnywhere)
-		TMap<FString, ULuaCode*> RequireTable;
+	TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere)
-		bool bLuaOpenLibs;
+	bool bLuaOpenLibs;
 
 	UPROPERTY(EditAnywhere)
-		bool bAddProjectContentDirToPackagePath;
+	bool bAddProjectContentDirToPackagePath;
 
 	UPROPERTY(EditAnywhere)
-		TArray<FString> AppendProjectContentDirSubDir;
+	TArray<FString> AppendProjectContentDirSubDir;
 
 	UPROPERTY(EditAnywhere)
-		FString OverridePackagePath;
+	FString OverridePackagePath;
 
 	UPROPERTY(EditAnywhere)
-		FString OverridePackageCPath;
+	FString OverridePackageCPath;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
-		void ReceiveLuaError(const FString& Message);
+	void ReceiveLuaError(const FString& Message);
 
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr);
 	FLuaValue ToLuaValue(int Index);
 
 	UPROPERTY(EditAnywhere)
-		bool bLogError;
+	bool bLogError;
 
 	int32 GetTop();
 
@@ -129,6 +129,12 @@ public:
 	int NewRef();
 	void GetRef(int Ref);
 	int Next(int Index);
+
+	int GC(int What, int Data = 0);
+
+	int32 ToInteger(int Index);
+
+	void Len(int Index);
 
 	void RawGetI(int Index, int N);
 

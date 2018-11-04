@@ -183,7 +183,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FStrin
 	FLuaValue ReturnValue;
 	if (Table.Type != ELuaValueType::Table)
 		return ReturnValue;
-	
+
 	ULuaState* L = Table.LuaState;
 	if (!L)
 		return ReturnValue;
@@ -255,10 +255,10 @@ void ULuaBlueprintFunctionLibrary::LuaSetGlobal(UObject* WorldContextObject, TSu
 	L->SetFieldFromTree(Name, Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FString Name, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, WorldContextObject->GetWorld());
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return ReturnValue;
 
@@ -279,10 +279,10 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaState, FLuaValue Value, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, WorldContextObject->GetWorld());
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return ReturnValue;
 
@@ -325,6 +325,21 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLu
 	L->Pop();
 
 	return ReturnValue;
+}
+
+int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)
+{
+
+	ULuaState* L = Value.LuaState;
+	if (!L)
+		return 0;
+
+	L->FromLuaValue(Value);
+	L->Len(-1);
+	int32 Length = L->ToInteger(-1);
+	L->Pop(2);
+
+	return Length;
 }
 
 TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableGetKeys(FLuaValue Table)
@@ -373,4 +388,40 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableGetValues(FLuaValue Tabl
 	L->Pop(); // pop the table
 
 	return Keys;
+}
+
+int32 ULuaBlueprintFunctionLibrary::LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return -1;
+
+	return L->GC(LUA_GCCOUNT);
+}
+
+void ULuaBlueprintFunctionLibrary::LuaGCCollect(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+
+	L->GC(LUA_GCCOLLECT);
+}
+
+void ULuaBlueprintFunctionLibrary::LuaGCStop(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+
+	L->GC(LUA_GCSTOP);
+}
+
+void ULuaBlueprintFunctionLibrary::LuaGCRestart(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+
+	L->GC(LUA_GCRESTART);
 }

@@ -66,6 +66,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static int32 LuaValueLength(FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
 	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
@@ -74,6 +77,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
+	static int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void LuaGCCollect(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void LuaGCStop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static void LuaGCRestart(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsNil(FLuaValue Value);

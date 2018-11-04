@@ -813,9 +813,11 @@ bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
 {
 	if (lua_pcall(L, NArgs, NRet, 0))
 	{
+		
 		LastError = FString::Printf(TEXT("Lua error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
+
 	if (NRet > 0)
 	{
 		Value = ToLuaValue(-1);
@@ -861,6 +863,21 @@ void ULuaState::GetRef(int Ref)
 int ULuaState::Next(int Index)
 {
 	return lua_next(L, Index);
+}
+
+int ULuaState::GC(int What, int Data)
+{
+	return lua_gc(L, What, Data);
+}
+
+void ULuaState::Len(int Index)
+{
+	lua_len(L, Index);
+}
+
+int32 ULuaState::ToInteger(int Index)
+{
+	return lua_tointeger(L, Index);
 }
 
 ULuaState::~ULuaState()
