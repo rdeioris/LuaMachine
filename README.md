@@ -104,8 +104,20 @@ Having multiple LuaState's allows clean separation of domains: as an example you
 
 LuaState's are loaded on-demand, so you can create dozens of them but they will not start Lua VMs until you do not need them.
 
-LuaState's can load and execute scripts automatically if you specify the field "LuaCodeAsset" and/or "LuaFilename". You can load scripts (both in text and bytecode format) from your filesystem (via "LuaFilename"), or from a specific asset exposed by the plugin, named LuaCode (you can specify it with the "LuaCodeAsset" field). The advantage of using filesystem scripts is that you can change them even after the project has been packaged (unless yo package them too), while LuaCode assets are directly built in your pak files (as bytecode by default).
+LuaState's can load and execute scripts automatically if you specify the fields "LuaCodeAsset" and/or "LuaFilename". You can load scripts (both in text and bytecode format) from your filesystem (via "LuaFilename"), or from a specific asset exposed by the plugin, named LuaCode (you can specify it with the "LuaCodeAsset" field). The advantage of using filesystem scripts is that you can change them even after the project has been packaged (unless you package them too), while LuaCode assets are directly built in your pak files (as bytecode by default).
 
+### LuaState Properties
+
+* LuaCodeAsset: specify a LuaCode asset to automatically load an execute on spawn
+* LuaFileName: specify a script path (relative to Content/) to load and execute on spawn
+* Table: TMap<FString, FLuaValue> allows adding FLuaValue's to the Lua VM global table
+* RequireTable: TMap<FString, ULuaCode> allows to map LuaCode assets to specific name, so you can call require('name') from your code
+* LuaOpenLibs: if true, automatically load the lua standard library on spawn
+* AddProjectContentDirToPackage: if true, when doing require('name') will search for 'name.lua' in the Content/ directory
+* AppendProjectContentDirToPackage: TArray<FString> allows specifying a list of Content/ subdirectories to search for packages (while doing require('name'))
+* OverridePackagePath: (advanced users) allows to modify package.path
+* OverridePackageCPath: (advanced users) allows to modify package.cpath
+* LogError: enable/disable logging of Lua errors
 
 ## LuaValue
 
