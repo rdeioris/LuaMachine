@@ -118,6 +118,12 @@ LuaState's can load and execute scripts automatically if you specify the fields 
 * OverridePackagePath: (advanced users) allows to modify package.path
 * OverridePackageCPath: (advanced users) allows to modify package.cpath
 * LogError: enable/disable logging of Lua errors
+  
+### LuaState Events
+
+A single event is exposed by ULuaState: "LuaError"
+
+If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
 ## LuaValue
 
