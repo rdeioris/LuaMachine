@@ -47,6 +47,12 @@ Now the script will add the call_me_from_unreal function to the global table:
 
 The LuaGlobalCall node calls a function from the global table passing arguments as an array of LuaValue's.
 
+So, now we know how to call lua functions from Unreal, time to do the opposite.
+
+Open the QuickLuaState Blueprint you created before. This Blueprint exposes lot of different fields to configure your Lua Virtual Machine:
+
+![Quickstart3](Docs/Screenshots/Quickstart3.PNG?raw=true "Quickstart3")
+
 ## LuaState
 
 A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
@@ -70,7 +76,10 @@ Now create a LuaState and assign it the LuaCode asset.
 
 Open your Level Blueprint and add the following nodes:
 
-"LuaGetGlobal" will retrieve the value associated with the specified name
+"LuaGetGlobal" will retrieve the value associated with the specified name. Note that this time we ignored the return value of the script.
+
+
+
 
 ## LuaValue
 
