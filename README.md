@@ -88,34 +88,50 @@ current_time = os.date()
 return "Hello, i am a lua script, current time is: " .. current_time
 ```
 
+and the Level Blueprint:
+
+![Quickstart8](Docs/Screenshots/Quickstart8.PNG?raw=true "Quickstart8")
+
+Please check the print() function: it is automatically mapped to the Unreal Output Log by the plugin.
+
+Now you should have an idea of the plugin potential, continue reading for more infos.
 
 ## LuaState
 
-A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life.
+A LuaState (ULuaState C++ class) represents a single Lua virtual machine (there can be multiple, each one isolated from the others). This is a "singleton" as each LuaState class can have a single instance for the whole process life. (Note that while in the Editor, LuaState's are constantly recreated whenever you enter PIE mode to simplify development)
 
 Having multiple LuaState's allows clean separation of domains: as an example you may want a state for game configuration, another one for game logic and one for the modders. More complex examples include having states dedicated to specific Actors, GameModes or Levels.
 
-LuaState's load and execute the lua code of your project. You can load scripts (both in text and bytecode format) from your filesystem, or from a specific asset exposed by the plugin, named LuaCode. The advantage of using filesystem scripts is that you can change them even after the project has been packaged, while LuaCode assets are directly built in your pak files.
+LuaState's are loaded on-demand, so you can create dozens of them but they will not start Lua VMs until you do not need them.
 
-Each LuaState can use both files and LuaCode assets.
+LuaState's can load and execute scripts automatically if you specify the fields "LuaCodeAsset" and/or "LuaFilename". You can load scripts (both in text and bytecode format) from your filesystem (via "LuaFilename"), or from a specific asset exposed by the plugin, named LuaCode (you can specify it with the "LuaCodeAsset" field). The advantage of using filesystem scripts is that you can change them even after the project has been packaged (unless you package them too), while LuaCode assets are directly built in your pak files (as bytecode by default).
 
-Let's start with a simple example. Create a new LuaCode asset and edit it adding the following code:
+### LuaState Properties
 
-```lua
-dummyinteger = 17
-dummystring = 'Hello World'
+* LuaCodeAsset: specify a LuaCode asset to automatically load an execute on spawn
+* LuaFileName: specify a script path (relative to Content/) to load and execute on spawn
+* Table: TMap<FString, FLuaValue> allows adding FLuaValue's to the Lua VM global table
+* RequireTable: TMap<FString, ULuaCode> allows to map LuaCode assets to specific name, so you can call require('name') from your code
+* LuaOpenLibs: if true, automatically load the lua standard library on spawn
+* AddProjectContentDirToPackage: if true, when doing require('name') will search for 'name.lua' in the Content/ directory
+* AppendProjectContentDirToPackage: TArray<FString> allows specifying a list of Content/ subdirectories to search for packages (while doing require('name'))
+* OverridePackagePath: (advanced users) allows to modify package.path
+* OverridePackageCPath: (advanced users) allows to modify package.cpath
+* LogError: enable/disable logging of Lua errors
+  
+### LuaState Events
+
+A single event is exposed by ULuaState: "LuaError"
+
+If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
+
+### LuaState in C++
+
+You can define your LuaState's as C++ classes, this is handy for exposing functions that would be hard to define with blueprints:
+
+```cpp
+
 ```
-
-From the Lua point of view, "dummyinteger" and "dummystring" are fields of the global table (the one you can access from lua with the "_G" symbol)
-
-Now create a LuaState and assign it the LuaCode asset.
-
-Open your Level Blueprint and add the following nodes:
-
-"LuaGetGlobal" will retrieve the value associated with the specified name. Note that this time we ignored the return value of the script.
-
-
-
 
 ## LuaValue
 
