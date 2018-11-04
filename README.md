@@ -6,7 +6,7 @@ If you want modders to customize your game/project, or you need to allow game de
 
 ## How it works
 
-Contrary to other available Unreal Engine Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
 
 ## Quickstart
 
