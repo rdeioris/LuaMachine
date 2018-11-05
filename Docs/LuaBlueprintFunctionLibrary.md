@@ -46,7 +46,7 @@ Create a new Lua Integer from an Unreal boolean
   
 ```cpp
 UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
-static FLuaValue LuaCreateTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+static FLuaValue LuaCreateTable(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State);
 ```
 
 Create a new Lua Table in the specific LuaState. The passed WorldContext will became the CurrentWorld for the LuaState (so you can call GetWorld() on the LuaState itself)
