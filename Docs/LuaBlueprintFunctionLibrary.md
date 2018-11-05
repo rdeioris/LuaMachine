@@ -60,3 +60,30 @@ static FLuaValue LuaCreateObject(UObject* InObject);
 
 Create a new Lua userdata pointing to an Unreal UObject
 
+## FLuaValue LuaGetGlobal(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FString Name)
+ 
+```cpp
+UFUNCTION(BlueprintCallable, meta=(WorldContext="WorldContextObject"))
+static FLuaValue LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name);
+```
+
+Get 'Name' from the Global Table. Name can be in the dotted form to specify subpaths (example: package.path)
+
+## LuaSetGlobal(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FString Name, FLuaValue Value)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static void LuaSetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, FLuaValue Value);
+```
+
+Assign 'Value' to 'Name' in the Global Table. Name can be in the dotted form to specify subpaths (example: package.path)
+
+## FLuaValue LuaTableGetField(FLuaValue Table, FString Key)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static FLuaValue LuaTableGetField(FLuaValue Table, FString Key);
+```
+
+Get a value from a lua table
+
