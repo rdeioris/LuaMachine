@@ -158,3 +158,118 @@ static int32 LuaValueLength(FLuaValue Value);
 ```
 
 Get the length of a value (equivalent to the lua '#')
+
+## int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
+static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+```
+
+Get the stack top of the specified State. Useful for debugging/testing
+
+## FLuaValue LuaRunFile(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FString Filename, bool bIgnoreNonExistent)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static FLuaValue LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent);
+```
+
+Run the specified file (rleative to the Content/ directory) in the specified State.
+
+## FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, ULuaCode* CodeAsset)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset);
+```
+
+Run the specified Code Asset in the specified State.
+
+## int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
+static int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+```
+
+Get the used memory (in Kbytes) of the specified Lua State.
+
+## void LuaGCCollect(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static void LuaGCCollect(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+```
+
+Triggers Lua GC
+
+## void LuaGCStop(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static void LuaGCStop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+```
+
+Disable automatic execution of the lua GC
+
+## void LuaGCRestart(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+static void LuaGCRestart(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+```
+
+Re-enable automatic execution of the lua GC
+
+## bool LuaValueIsNil(FLuaValue Value)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static bool LuaValueIsNil(FLuaValue Value);
+```
+
+check if a LuaValue is nil
+
+## bool LuaValueIsTable(FLuaValue Value)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static bool LuaValueIsTable(FLuaValue Value);
+```
+
+check if a LuaValue is a table
+
+## Autocasting
+
+```cpp
+  UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
+	static FString Conv_LuaValueToString(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FText Conv_LuaValueToText(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static UObject* Conv_LuaValueToObject(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static UClass* Conv_LuaValueToClass(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_FloatToLuaValue(float Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static int32 Conv_LuaValueToInt(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static float Conv_LuaValueToFloat(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_IntToLuaValue(int32 Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_StringToLuaValue(FString Value);
+```
