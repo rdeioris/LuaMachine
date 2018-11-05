@@ -87,3 +87,74 @@ static FLuaValue LuaTableGetField(FLuaValue Table, FString Key);
 
 Get a value from a lua table
 
+## FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index);
+```
+
+Get a value from a lua table/array using an index
+
+## TArray\<FLuaValue\> LuaTableGetKeys(FLuaValue Table)
+  
+ ```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static TArray<FLuaValue> LuaTableGetKeys(FLuaValue Table);
+ ```
+ 
+ Get the list of keys in a table
+ 
+## TArray\<FLuaValue\> LuaTableGetValues(FLuaValue Table)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static TArray<FLuaValue> LuaTableGetValues(FLuaValue Table);
+```
+
+Get the list of values in a table
+
+## FLuaValue LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value)
+
+```cpp
+UFUNCTION(BlueprintCallable)
+static FLuaValue LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value);
+```
+
+Set the field of a table
+
+##  FLuaValue LuaGlobalCall(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FString Name, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+static FLuaValue LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args);
+```
+
+Call a function by its name from the global table
+
+## FLuaValue LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FLuaValue Value, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+static FLuaValue LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
+```
+
+Call a value in the specified State
+
+##  FLuaValue LuaValueCall(FLuaValue Value, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
+```
+
+Call a value
+
+## int32 LuaValueLength(FLuaValue Value)
+
+```cpp
+UFUNCTION(BlueprintCallable, BlueprintPure)
+static int32 LuaValueLength(FLuaValue Value);
+```
+
+Get the length of a value (equivalent to the lua '#')
