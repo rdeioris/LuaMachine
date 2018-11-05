@@ -243,33 +243,33 @@ check if a LuaValue is a table
 ## Autocasting
 
 ```cpp
-  UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
-	static FString Conv_LuaValueToString(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
+static FString Conv_LuaValueToString(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static FText Conv_LuaValueToText(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static FText Conv_LuaValueToText(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static UObject* Conv_LuaValueToObject(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static UObject* Conv_LuaValueToObject(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static UClass* Conv_LuaValueToClass(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static UClass* Conv_LuaValueToClass(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static FLuaValue Conv_FloatToLuaValue(float Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static FLuaValue Conv_FloatToLuaValue(float Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static int32 Conv_LuaValueToInt(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static int32 Conv_LuaValueToInt(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static float Conv_LuaValueToFloat(FLuaValue Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static float Conv_LuaValueToFloat(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static FLuaValue Conv_IntToLuaValue(int32 Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static FLuaValue Conv_IntToLuaValue(int32 Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
-	static FLuaValue Conv_StringToLuaValue(FString Value);
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static FLuaValue Conv_StringToLuaValue(FString Value);
 ```
