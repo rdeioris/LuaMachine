@@ -50,15 +50,18 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index);
 
+	/* Assigns a value to a table index, returned value is the table itself */
 	UFUNCTION(BlueprintCallable)
 	static FLuaValue LuaTableSetByIndex(FLuaValue Table, int32 Index, FLuaValue Value);
 
+	/* Returns the array of keys in the table */
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static TArray<FLuaValue> LuaTableGetKeys(FLuaValue Table);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static TArray<FLuaValue> LuaTableGetValues(FLuaValue Table);
 
+	/* Assigns a value to a table key, returned value is the table itself */
 	UFUNCTION(BlueprintCallable)
 	static FLuaValue LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value);
 
@@ -68,6 +71,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
 
+	/* Calls a lua value (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
 
