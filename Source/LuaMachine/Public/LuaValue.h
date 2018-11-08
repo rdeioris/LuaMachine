@@ -120,4 +120,7 @@ struct LUAMACHINE_API FLuaValue
 
 	FLuaValue GetField(FString Key);
 	FLuaValue SetField(FString Key, FLuaValue Value);
+
+	FLuaValue GetFieldByIndex(int32 Index);
+	FLuaValue SetFieldByIndex(int32 Index, FLuaValue Value);
 };

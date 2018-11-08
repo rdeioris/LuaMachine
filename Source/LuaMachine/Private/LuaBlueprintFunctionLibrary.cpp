@@ -3,6 +3,10 @@
 #include "LuaBlueprintFunctionLibrary.h"
 #include "LuaMachine.h"
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
+{
+	return FLuaValue();
+}
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateString(FString String)
 {
@@ -159,6 +163,25 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, 
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	bool bError = false;
+	if (!L->RunCode(CodeString, CodeString, 1))
+	{
+		if (L->bLogError)
+			L->LogError(L->LastError);
+		L->ReceiveLuaError(L->LastError);
+	}
+
+	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	L->Pop();
+	return ReturnValue;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset)
 {
 	FLuaValue ReturnValue;
@@ -214,11 +237,19 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int3
 	if (!L)
 		return FLuaValue();
 
-	L->FromLuaValue(Table);
-	L->RawGetI(-1, Index);
-	FLuaValue ReturnValue = L->ToLuaValue(-1);
-	L->Pop(2);
-	return ReturnValue;
+	return Table.GetFieldByIndex(Index);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetByIndex(FLuaValue Table, int32 Index, FLuaValue Value)
+{
+	if (Table.Type != ELuaValueType::Table)
+		return FLuaValue();
+
+	ULuaState* L = Table.LuaState;
+	if (!L)
+		return FLuaValue();
+
+	return Table.SetFieldByIndex(Index, Value);
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value)

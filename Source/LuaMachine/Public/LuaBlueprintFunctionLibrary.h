@@ -17,6 +17,8 @@ class LUAMACHINE_API ULuaBlueprintFunctionLibrary : public UBlueprintFunctionLib
 	GENERATED_BODY()
 
 public:
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaCreateNil();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaCreateString(FString String);
@@ -48,6 +50,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index);
 
+	UFUNCTION(BlueprintCallable)
+	static FLuaValue LuaTableSetByIndex(FLuaValue Table, int32 Index, FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static TArray<FLuaValue> LuaTableGetKeys(FLuaValue Table);
 
@@ -77,6 +82,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 	static FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"))
 	static int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State);

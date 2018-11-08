@@ -700,6 +700,11 @@ void ULuaState::RawGetI(int Index, int N)
 	lua_rawgeti(L, Index, N);
 }
 
+void ULuaState::RawSetI(int Index, int N)
+{
+	lua_rawseti(L, Index, N);
+}
+
 void ULuaState::PushGlobalTable()
 {
 	lua_pushglobaltable(L);

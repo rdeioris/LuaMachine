@@ -109,3 +109,33 @@ FLuaValue FLuaValue::GetField(FString Key)
 	LuaState->Pop(2);
 	return ReturnValue;
 }
+
+FLuaValue FLuaValue::GetFieldByIndex(int32 Index)
+{
+	if (Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->RawGetI(-1, Index);
+	FLuaValue ReturnValue = LuaState->ToLuaValue(-1);
+	LuaState->Pop(2);
+	return ReturnValue;
+}
+
+FLuaValue FLuaValue::SetFieldByIndex(int32 Index, FLuaValue Value)
+{
+	if (Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->FromLuaValue(Value);
+	LuaState->RawSetI(-2, Index);
+	LuaState->Pop();
+	return *this;
+}

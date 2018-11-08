@@ -137,6 +137,7 @@ public:
 	void Len(int Index);
 
 	void RawGetI(int Index, int N);
+	void RawSetI(int Index, int N);
 
 	void PushCFunction(lua_CFunction Function);
 
