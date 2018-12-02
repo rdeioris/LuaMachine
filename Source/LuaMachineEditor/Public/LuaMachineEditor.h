@@ -15,6 +15,10 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
+	static inline FLuaMachineEditorModule& Get();
+
+	TSharedPtr<FSlateStyleSet> GetStyleSet();
+
 private:
 	TSharedPtr<FSlateStyleSet> StyleSet;
 };

@@ -1,6 +1,7 @@
 // Copyright 2018 - Roberto De Ioris
 
 #include "LuaCodeCustomization.h"
+#include "LuaMachineEditor.h"
 #include "Runtime/Slate/Public/Widgets/Text/SMultiLineEditableText.h"
 #include "Editor/PropertyEditor/Public/PropertyHandle.h"
 #include "Editor/PropertyEditor/Public/DetailLayoutBuilder.h"
@@ -13,7 +14,138 @@
 #include "Runtime/Slate/Public/Widgets/Text/SlateEditableTextLayout.h"
 #include "Runtime/SlateCore/Public/Fonts/FontMeasure.h"
 #include "Runtime/Slate/Public/Framework/Application/SlateApplication.h"
+#include "Runtime/Slate/Public/Framework/Text/SyntaxHighlighterTextLayoutMarshaller.h"
+#include "Runtime/Slate/Public/Framework/Text/SyntaxTokenizer.h"
+#include "Runtime/Slate/Public/Framework/Text/TextLayout.h"
+#include "Runtime/Slate/Public/Framework/Text/SlateTextRun.h"
 #include "LuaMachine/Public/LuaCode.h"
+
+class FLuaMachineSyntaxHighlighterTextLayoutMarshaller : public FSyntaxHighlighterTextLayoutMarshaller
+{
+public:
+	struct FSyntaxTextStyle
+	{
+		FSyntaxTextStyle() :
+			NormalTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Normal")),
+			CommentTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Comment"))
+		{}
+		FTextBlockStyle NormalTextStyle;
+		FTextBlockStyle CommentTextStyle;
+	};
+
+	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle)
+	{
+
+	}
+
+	static TSharedRef< FLuaMachineSyntaxHighlighterTextLayoutMarshaller> Create()
+	{
+		TArray<FSyntaxTokenizer::FRule> TokenizerRules;
+
+		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--[[")));
+		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--]]")));
+		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--")));
+
+		return MakeShareable(new FLuaMachineSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), FSyntaxTextStyle()));
+	}
+protected:
+	virtual void ParseTokens(const FString& SourceString, FTextLayout& TargetTextLayout, TArray<FSyntaxTokenizer::FTokenizedLine> TokenizedLines) override
+	{
+
+		enum class EParseState : uint8
+		{
+			None,
+			LookingForSingleLineComment,
+			LookingForMultiLineComment
+		};
+
+		TArray<FTextLayout::FNewLineData> LinesToAdd;
+		LinesToAdd.Reserve(TokenizedLines.Num());
+		
+
+		EParseState ParseState = EParseState::None;
+
+		for (const FSyntaxTokenizer::FTokenizedLine& TokenizedLine : TokenizedLines)
+		{
+			TSharedRef<FString> ModelString = MakeShareable(new FString());
+			TArray<TSharedRef<IRun>> Runs;
+
+			if (ParseState == EParseState::LookingForSingleLineComment)
+			{
+				ParseState = EParseState::None;
+			}
+
+			
+
+			for (const FSyntaxTokenizer::FToken& Token : TokenizedLine.Tokens)
+			{
+				const FString TokenString = SourceString.Mid(Token.Range.BeginIndex, Token.Range.Len());
+				const FTextRange ModelRange(ModelString->Len(), ModelString->Len() + TokenString.Len());
+
+				ModelString->Append(TokenString);
+
+				FRunInfo RunInfo(TEXT("SyntaxHighlight.LuaMachine.Normal"));
+
+				FTextBlockStyle CurrentBlockStyle = SyntaxTextStyle.NormalTextStyle;
+
+				bool bIsWhitespace = FString(TokenString).TrimEnd().IsEmpty();
+				if (!bIsWhitespace)
+				{
+					bool bHasMatchedSyntax = false;
+					if (Token.Type == FSyntaxTokenizer::ETokenType::Syntax)
+					{
+						if (ParseState == EParseState::None && TokenString == TEXT("--"))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+							ParseState = EParseState::LookingForSingleLineComment;
+						}
+						else if (ParseState == EParseState::None && TokenString == TEXT("--[["))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+							ParseState = EParseState::LookingForMultiLineComment;
+						}
+						else if (ParseState == EParseState::LookingForMultiLineComment && TokenString == TEXT("--]]"))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+							ParseState = EParseState::None;
+						}
+					}
+
+					if (Token.Type == FSyntaxTokenizer::ETokenType::Literal || !bHasMatchedSyntax)
+					{
+						if (ParseState == EParseState::LookingForSingleLineComment)
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+						}
+						else if (ParseState == EParseState::LookingForMultiLineComment)
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+						}
+					}
+					TSharedRef<ISlateRun> Run = FSlateTextRun::Create(RunInfo, ModelString, CurrentBlockStyle, ModelRange);
+					Runs.Add(Run);
+				}
+				else
+				{
+					RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.WhiteSpace");
+					TSharedRef<ISlateRun> Run = FSlateTextRun::Create(RunInfo, ModelString, SyntaxTextStyle.NormalTextStyle, ModelRange);
+					Runs.Add(Run);
+				}
+			}
+
+			LinesToAdd.Emplace(MoveTemp(ModelString), MoveTemp(Runs));
+		}
+
+		TargetTextLayout.AddLines(LinesToAdd);
+	}
+
+	FSyntaxTextStyle SyntaxTextStyle;
+};
 
 class SLuaMultiLineEditableText : public SMultiLineEditableText
 {
@@ -26,9 +158,11 @@ public:
 
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs)
+		void Construct(const FArguments& InArgs)
 	{
 		LuaCode = InArgs._LuaCodeOwner;
+
+		SyntaxHighlighter = FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create();
 
 		SMultiLineEditableText::Construct(
 			SMultiLineEditableText::FArguments()
@@ -37,9 +171,10 @@ public:
 			.HScrollBar(InArgs._HScrollBar)
 			.VScrollBar(InArgs._VScrollBar)
 			.Text(LuaCode->Code)
+			.Marshaller(SyntaxHighlighter)
 			.OnTextChanged(this, &SLuaMultiLineEditableText::UpdateLuaCode)
 		);
-		
+
 	}
 
 	void UpdateLuaCode(const FText& InCode)
@@ -78,6 +213,7 @@ protected:
 
 private:
 	TWeakObjectPtr<ULuaCode> LuaCode;
+	TSharedPtr<FLuaMachineSyntaxHighlighterTextLayoutMarshaller> SyntaxHighlighter;
 };
 
 class SLuaEditor : public SCompoundWidget
@@ -89,7 +225,7 @@ public:
 
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs)
+		void Construct(const FArguments& InArgs)
 	{
 		LuaCode = InArgs._LuaCodeOwner;
 
@@ -100,28 +236,28 @@ public:
 
 		ChildSlot.VAlign(VAlign_Fill).HAlign(HAlign_Fill)[
 			SNew(SBorder).BorderImage(&BackgroundColor).BorderBackgroundColor(FSlateColor(FLinearColor::White))
-			[
-				SNew(SGridPanel).FillColumn(0, 1.0f).FillRow(0, 2.0f)
-				+SGridPanel::Slot(0, 0)
+				[
+					SNew(SGridPanel).FillColumn(0, 1.0f).FillRow(0, 2.0f)
+					+ SGridPanel::Slot(0, 0)
 				[
 					SNew(SLuaMultiLineEditableText)
 					.HScrollBar(HorizontalScrollBar)
-					.VScrollBar(VerticalScrollBar)
-					.LuaCodeOwner(LuaCode)
+				.VScrollBar(VerticalScrollBar)
+				.LuaCodeOwner(LuaCode)
 				]
-				+ SGridPanel::Slot(1, 0)
+			+ SGridPanel::Slot(1, 0)
 				[
 					VerticalScrollBar.ToSharedRef()
 				]
-				+ SGridPanel::Slot(0, 1)
+			+ SGridPanel::Slot(0, 1)
 				[
 					HorizontalScrollBar.ToSharedRef()
 				]
-			]
+				]
 		];
 	}
 
-	
+
 
 private:
 	TWeakObjectPtr<ULuaCode> LuaCode;
@@ -149,7 +285,7 @@ void FLuaCodeCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder
 	Category.AddCustomRow(FText::FromString("Code")).WholeRowContent()[
 		SNew(SLuaEditor).LuaCodeOwner(LuaCode)
 	];
-	
+
 }
 
 
