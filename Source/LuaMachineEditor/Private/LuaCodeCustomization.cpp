@@ -20,6 +20,8 @@
 #include "Runtime/Slate/Public/Framework/Text/SlateTextRun.h"
 #include "LuaMachine/Public/LuaCode.h"
 
+#define ADD_RULE(rule) TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT(rule)))
+
 class FLuaMachineSyntaxHighlighterTextLayoutMarshaller : public FSyntaxHighlighterTextLayoutMarshaller
 {
 public:
@@ -27,10 +29,16 @@ public:
 	{
 		FSyntaxTextStyle() :
 			NormalTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Normal")),
-			CommentTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Comment"))
+			CommentTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Comment")),
+			StringTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.String")),
+			KeywordTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Keyword")),
+			NilTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Nil"))
 		{}
 		FTextBlockStyle NormalTextStyle;
 		FTextBlockStyle CommentTextStyle;
+		FTextBlockStyle StringTextStyle;
+		FTextBlockStyle KeywordTextStyle;
+		FTextBlockStyle NilTextStyle;
 	};
 
 	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle)
@@ -38,13 +46,44 @@ public:
 
 	}
 
+
 	static TSharedRef< FLuaMachineSyntaxHighlighterTextLayoutMarshaller> Create()
 	{
 		TArray<FSyntaxTokenizer::FRule> TokenizerRules;
 
-		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--[[")));
-		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--]]")));
-		TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT("--")));
+		ADD_RULE("--[[");
+		ADD_RULE("--]]");
+		ADD_RULE("--");
+		ADD_RULE("[[");
+		ADD_RULE("]]");
+		ADD_RULE("\\'");
+		ADD_RULE("\\\"");
+		ADD_RULE("'");
+		ADD_RULE("\"");
+
+		ADD_RULE("nil");
+
+		ADD_RULE("and");
+		ADD_RULE("end");
+		ADD_RULE("in");
+		ADD_RULE("repeat");
+		ADD_RULE("break");
+		ADD_RULE("false");
+		ADD_RULE("local");
+		ADD_RULE("return");
+		ADD_RULE("do");
+		ADD_RULE("for");
+		ADD_RULE("then");
+		ADD_RULE("else");
+		ADD_RULE("function");
+		ADD_RULE("not");
+		ADD_RULE("true");
+		ADD_RULE("elseif");
+		ADD_RULE("if");
+		ADD_RULE("or");
+		ADD_RULE("until");
+		ADD_RULE("while");
+
 
 		return MakeShareable(new FLuaMachineSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), FSyntaxTextStyle()));
 	}
@@ -56,7 +95,10 @@ protected:
 		{
 			None,
 			LookingForSingleLineComment,
-			LookingForMultiLineComment
+			LookingForMultiLineComment,
+			LookingForSingleQuoteString,
+			LookingForDoubleQuoteString,
+			LookingForMultiLineString,
 		};
 
 		TArray<FTextLayout::FNewLineData> LinesToAdd;
@@ -94,17 +136,58 @@ protected:
 					bool bHasMatchedSyntax = false;
 					if (Token.Type == FSyntaxTokenizer::ETokenType::Syntax)
 					{
-						if (ParseState == EParseState::None && TokenString == TEXT("--"))
+						if (ParseState == EParseState::None) 
 						{
-							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
-							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
-							ParseState = EParseState::LookingForSingleLineComment;
-						}
-						else if (ParseState == EParseState::None && TokenString == TEXT("--[["))
-						{
-							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
-							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
-							ParseState = EParseState::LookingForMultiLineComment;
+							TCHAR NextChar = TEXT(" ")[0];
+							if (Token.Range.EndIndex < SourceString.Len() - 1)
+							{
+								NextChar = SourceString[Token.Range.EndIndex];
+							}
+							if (TokenString == TEXT("--"))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+								CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+								ParseState = EParseState::LookingForSingleLineComment;
+							}
+							else if (TokenString == TEXT("--[["))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
+								CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+								ParseState = EParseState::LookingForMultiLineComment;
+							}
+							else if (TokenString == TEXT("[["))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+								CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+								ParseState = EParseState::LookingForMultiLineString;
+								bHasMatchedSyntax = true;
+							}
+							else if (TokenString == TEXT("'"))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+								CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+								ParseState = EParseState::LookingForSingleQuoteString;
+								bHasMatchedSyntax = true;
+							}
+							else if (TokenString == TEXT("\""))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+								CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+								ParseState = EParseState::LookingForDoubleQuoteString;
+								bHasMatchedSyntax = true;
+							}
+							else if (TokenString == TEXT("nil"))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
+								CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
+								ParseState = EParseState::None;
+							}
+							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar))
+							{
+								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
+								CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
+								ParseState = EParseState::None;
+							}
 						}
 						else if (ParseState == EParseState::LookingForMultiLineComment && TokenString == TEXT("--]]"))
 						{
@@ -112,6 +195,25 @@ protected:
 							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
 							ParseState = EParseState::None;
 						}
+						else if (ParseState == EParseState::LookingForMultiLineString && TokenString == TEXT("]]"))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+							CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+							ParseState = EParseState::None;
+						}
+						else if (ParseState == EParseState::LookingForSingleQuoteString && TokenString == TEXT("'"))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+							CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+							ParseState = EParseState::None;
+						}
+						else if (ParseState == EParseState::LookingForDoubleQuoteString && TokenString == TEXT("\""))
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+							CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
+							ParseState = EParseState::None;
+						}
+						
 					}
 
 					if (Token.Type == FSyntaxTokenizer::ETokenType::Literal || !bHasMatchedSyntax)
@@ -125,6 +227,11 @@ protected:
 						{
 							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Comment");
 							CurrentBlockStyle = SyntaxTextStyle.CommentTextStyle;
+						}
+						else if (ParseState == EParseState::LookingForMultiLineString || ParseState == EParseState::LookingForSingleQuoteString || ParseState == EParseState::LookingForDoubleQuoteString)
+						{
+							RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.String");
+							CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
 						}
 					}
 					TSharedRef<ISlateRun> Run = FSlateTextRun::Create(RunInfo, ModelString, CurrentBlockStyle, ModelRange);
