@@ -139,9 +139,14 @@ protected:
 						if (ParseState == EParseState::None) 
 						{
 							TCHAR NextChar = TEXT(" ")[0];
-							if (Token.Range.EndIndex < SourceString.Len() - 1)
+							TCHAR PrevChar = TEXT(" ")[0];
+							if (Token.Range.EndIndex < SourceString.Len())
 							{
 								NextChar = SourceString[Token.Range.EndIndex];
+							}
+							if (Token.Range.BeginIndex > 0)
+							{
+								PrevChar = SourceString[Token.Range.BeginIndex-1];
 							}
 							if (TokenString == TEXT("--"))
 							{
@@ -182,7 +187,7 @@ protected:
 								CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
 								ParseState = EParseState::None;
 							}
-							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar))
+							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar))
 							{
 								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
 								CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
@@ -316,6 +321,16 @@ protected:
 			return FReply::Handled();
 		}
 		return SMultiLineEditableText::OnKeyChar(InGeometry, InCharacterEvent);
+	}
+
+	virtual FReply OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override
+	{
+		
+		if (InKeyEvent.GetKeyCode() == 9)
+		{
+			return FReply::Handled();
+		}
+		return SMultiLineEditableText::OnKeyDown(InGeometry, InKeyEvent);
 	}
 
 private:
