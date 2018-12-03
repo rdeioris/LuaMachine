@@ -292,6 +292,7 @@ public:
 	void UpdateLuaCode(const FText& InCode)
 	{
 		LuaCode->Code = InCode;
+		LuaCode->MarkPackageDirty();
 	}
 
 protected:
@@ -351,8 +352,8 @@ public:
 	{
 		LuaCode = InArgs._LuaCodeOwner;
 
-		HorizontalScrollBar = SNew(SScrollBar).Orientation(Orient_Horizontal).Thickness(FVector2D(10.0f, 10.0f));
-		VerticalScrollBar = SNew(SScrollBar).Orientation(Orient_Vertical).Thickness(FVector2D(10.0f, 10.0f));
+		HorizontalScrollBar = SNew(SScrollBar).Orientation(Orient_Horizontal).Thickness(FVector2D(10.0f, 10.0f)).AlwaysShowScrollbar(true);
+		VerticalScrollBar = SNew(SScrollBar).Orientation(Orient_Vertical).Thickness(FVector2D(10.0f, 10.0f)).AlwaysShowScrollbar(true);
 
 		BackgroundColor = FSlateColorBrush(FLinearColor::Black);
 
@@ -364,8 +365,8 @@ public:
 				[
 					SNew(SLuaMultiLineEditableText)
 					.HScrollBar(HorizontalScrollBar)
-				.VScrollBar(VerticalScrollBar)
-				.LuaCodeOwner(LuaCode)
+					.VScrollBar(VerticalScrollBar)
+					.LuaCodeOwner(LuaCode)
 				]
 			+ SGridPanel::Slot(1, 0)
 				[
