@@ -23,13 +23,15 @@ FString FLuaValue::ToString()
 		return Object->GetFullName();
 	case ELuaValueType::UFunction:
 		return FunctionName.ToString();
+	case ELuaValueType::Thread:
+		return FString::Printf(TEXT("thread: %d"), LuaRef);
 	}
 	return FString(TEXT("None"));
 }
 
 FLuaValue::~FLuaValue()
 {
-	if (Type == ELuaValueType::Table || Type == ELuaValueType::Function)
+	if (Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread)
 	{
 		if (LuaRef != LUA_NOREF)
 		{
@@ -51,7 +53,7 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function) && LuaRef != LUA_NOREF)
+	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread) && LuaRef != LUA_NOREF)
 	{
 		LuaState->GetRef(LuaRef);
 		LuaRef = LuaState->NewRef();
@@ -71,7 +73,7 @@ FLuaValue& FLuaValue::operator = (const FLuaValue &SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function) && LuaRef != LUA_NOREF)
+	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread) && LuaRef != LUA_NOREF)
 	{
 		LuaState->GetRef(LuaRef);
 		LuaRef = LuaState->NewRef();

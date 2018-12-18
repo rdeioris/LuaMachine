@@ -122,6 +122,20 @@ float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(FLuaValue Value)
 	return 0.0f;
 }
 
+bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(FLuaValue Value)
+{
+	switch (Value.Type)
+	{
+	case ELuaValueType::Bool:
+		return Value.Bool;
+	case ELuaValueType::Integer:
+		return Value.Integer != 0;
+	case ELuaValueType::Number:
+		return Value.Number != 0;
+	}
+	return true;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
 {
 	return FLuaValue(Value);
@@ -228,6 +242,16 @@ bool ULuaBlueprintFunctionLibrary::LuaValueIsTable(FLuaValue Value)
 	return Value.Type == ELuaValueType::Table;
 }
 
+bool ULuaBlueprintFunctionLibrary::LuaValueIsBoolean(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::Bool;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsThread(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::Thread;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int32 Index)
 {
 	if (Table.Type != ELuaValueType::Table)
@@ -298,6 +322,46 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 	}
 
 	L->PCall(NArgs, ReturnValue);
+
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop(ItemsToPop);
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	int32 ItemsToPop = L->GetFieldFromTree(Name);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	int32 StackTop = L->GetTop();
+
+	FLuaValue LastReturnValue;
+	if (L->PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+
+		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 2;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(L->ToLuaValue(i), 0);
+			}
+			L->Pop(NumOfReturnValues - 1);
+		}
+		
+	}
 
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
 	L->Pop(ItemsToPop);

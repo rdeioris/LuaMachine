@@ -69,6 +69,9 @@ public:
 	static FLuaValue LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+	static TArray<FLuaValue> LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
 
 	/* Calls a lua value (must be callable) */
@@ -108,6 +111,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsTable(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsBoolean(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsThread(FLuaValue Value);
+
 	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
 	static FString Conv_LuaValueToString(FLuaValue Value);
 
@@ -131,6 +140,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static float Conv_LuaValueToFloat(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static bool Conv_LuaValueToBool(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_IntToLuaValue(int32 Value);

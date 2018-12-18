@@ -28,6 +28,7 @@ enum class ELuaValueType : uint8
 	Table,
 	UFunction,
 	UObject,
+	Thread,
 };
 
 class ULuaState;

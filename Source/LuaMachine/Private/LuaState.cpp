@@ -270,6 +270,22 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 		}
 		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
 		break;
+	case ELuaValueType::Thread:
+		if (LuaValue.LuaRef == LUA_NOREF)
+		{
+			lua_newthread(L);
+			lua_pushvalue(L, -1);
+			LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+			LuaValue.LuaState = this;
+			break;
+		}
+		if (this != LuaValue.LuaState)
+		{
+			lua_pushnil(L);
+			break;
+		}
+		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		break;
 	case ELuaValueType::Function:
 		if (this != LuaValue.LuaState)
 		{
@@ -350,25 +366,31 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 		LuaValue.Type = ELuaValueType::Bool;
 		LuaValue.Bool = lua_toboolean(L, Index) != 0;
 	}
+	else if (lua_type(L, Index) == LUA_TSTRING)
+	{
+		LuaValue.Type = ELuaValueType::String;
+		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+	}
 	else if (lua_isinteger(L, Index))
 	{
 		LuaValue.Type = ELuaValueType::Integer;
 		LuaValue.Integer = lua_tointeger(L, Index);
 	}
-	else if (lua_isnumber(L, Index))
+	else if (lua_type(L, Index) == LUA_TNUMBER)
 	{
 		LuaValue.Type = ELuaValueType::Number;
 		LuaValue.Number = lua_tonumber(L, Index);
-	}
-	else if (lua_isstring(L, Index))
-	{
-		LuaValue.Type = ELuaValueType::String;
-		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
 	}
 	else if (lua_istable(L, Index))
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Table;
+		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+	}
+	else if (lua_isthread(L, Index))
+	{
+		lua_pushvalue(L, Index);
+		LuaValue.Type = ELuaValueType::Thread;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isfunction(L, Index))
@@ -818,7 +840,7 @@ bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
 {
 	if (lua_pcall(L, NArgs, NRet, 0))
 	{
-		
+
 		LastError = FString::Printf(TEXT("Lua error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
