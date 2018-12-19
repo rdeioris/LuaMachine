@@ -215,6 +215,7 @@ This a list of the currently supported values:
 * Table (reference to a lua table)
 * UObject (pointer to an Unreal UObject)
 * UFunction (pointer to an Unreal UFunction)
+* Thread (reference to a lua thread/coroutines)
 
 Note that tables are passed by reference, so technically you can update the same table from both lua and Unreal.
 
@@ -231,6 +232,12 @@ As an example the LuaGetGlobal node, can access the package.path item by simply 
 ULuaComponent allows to use an Actor as a Lua userdata.
 
 Check its docs here: [LuaComponent](Docs/LuaComponent.md)
+
+## Lua Threads/Coroutines
+
+Lua Threads/Coroutines are fully supported
+
+Check dedicated docs here: [LuaCoroutines](Docs/LuaCoroutines.md)
 
 ## Packaging
 
