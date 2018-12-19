@@ -299,4 +299,7 @@ static FLuaValue Conv_IntToLuaValue(int32 Value);
 
 UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 static FLuaValue Conv_StringToLuaValue(FString Value);
+
+UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+static bool Conv_LuaValueToBool(FLuaValue Value);
 ```
