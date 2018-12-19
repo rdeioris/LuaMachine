@@ -42,7 +42,7 @@ https://www.lua.org/manual/5.3/manual.html#2.6
 Coroutines maps to native lua objects named 'threads'. Lua Threads are fully supported by the FLuaValue USTRUCT, so you can create a coroutine from lua and pass it to Unreal Engine functions:
 
 
-![Coroutine](Docs/Screenshots/Coroutine.PNG?raw=true "Coroutine")
+![Coroutine](Screenshots/Coroutine.PNG?raw=true "Coroutine")
 
 The BeginPlay event will create a new coroutine (a thread LuaValue) and stores it in a blueprint variable.
 
