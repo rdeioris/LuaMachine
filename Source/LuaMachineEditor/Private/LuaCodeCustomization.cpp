@@ -187,7 +187,7 @@ protected:
 								CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
 								ParseState = EParseState::None;
 							}
-							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar))
+							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar) && NextChar != TCHAR('_') && PrevChar != TCHAR('_'))
 							{
 								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
 								CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;

@@ -52,6 +52,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	TArray<FLuaValue> LuaCallFunctionMulti(FString Name, TArray<FLuaValue> Args, bool bGlobal);
 
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	TArray<FLuaValue> LuaCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FLuaValue LuaGetField(FString Name);
 

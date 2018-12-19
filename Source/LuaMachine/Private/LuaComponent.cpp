@@ -221,6 +221,7 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	if (!L)
 		return ReturnValue;
 
+	// push function
 	L->FromLuaValue(Value);
 	// push component pointer as userdata
 	L->NewUObject(this);
@@ -233,7 +234,66 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 		NArgs++;
 	}
 
-	L->PCall(NArgs, ReturnValue);
+	if (!L->PCall(NArgs, ReturnValue))
+	{
+		if (L->InceptionLevel == 0)
+		{
+			if (bLogError)
+				L->LogError(L->LastError);
+			OnLuaError.Broadcast(L->LastError);
+		}
+	}
+
+	L->Pop();
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	ULuaState* L = Value.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	// push function
+	L->FromLuaValue(Value);
+	int32 StackTop = L->GetTop();
+
+	// push component pointer as userdata
+	L->NewUObject(this);
+	SetupMetatable();
+
+	int NArgs = 1;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	FLuaValue LastReturnValue;
+	if (!L->PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+		if (L->InceptionLevel == 0)
+		{
+			if (bLogError)
+				L->LogError(L->LastError);
+			OnLuaError.Broadcast(L->LastError);
+		}
+	}
+	else
+	{
+		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 1;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(L->ToLuaValue(i), 0);
+			}
+			L->Pop(NumOfReturnValues - 1);
+		}
+	}
 
 	L->Pop();
 
