@@ -115,6 +115,18 @@ public:
 	static bool LuaValueIsBoolean(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsNumber(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsInteger(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsString(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsFunction(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsThread(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))

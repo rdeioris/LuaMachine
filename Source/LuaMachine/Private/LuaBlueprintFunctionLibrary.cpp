@@ -252,6 +252,26 @@ bool ULuaBlueprintFunctionLibrary::LuaValueIsThread(FLuaValue Value)
 	return Value.Type == ELuaValueType::Thread;
 }
 
+bool ULuaBlueprintFunctionLibrary::LuaValueIsFunction(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::Function;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsNumber(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::Number;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsInteger(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::Integer;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsString(FLuaValue Value)
+{
+	return Value.Type == ELuaValueType::String;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int32 Index)
 {
 	if (Table.Type != ELuaValueType::Table)
