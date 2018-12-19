@@ -358,6 +358,8 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* Worl
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name);
 
+	int32 StackTop = L->GetTop();
+
 	int NArgs = 0;
 	for (FLuaValue& Arg : Args)
 	{
@@ -365,13 +367,11 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* Worl
 		NArgs++;
 	}
 
-	int32 StackTop = L->GetTop();
-
 	FLuaValue LastReturnValue;
 	if (L->PCall(NArgs, LastReturnValue, LUA_MULTRET))
 	{
 
-		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 2;
+		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 1;
 		if (NumOfReturnValues > 0)
 		{
 			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
@@ -412,6 +412,45 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(UObject* WorldContext
 	return ReturnValue;
 }
 
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallValueMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Value);
+
+	int32 StackTop = L->GetTop();
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	FLuaValue LastReturnValue;
+	if (L->PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+
+		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 1;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(L->ToLuaValue(i), 0);
+			}
+			L->Pop(NumOfReturnValues - 1);
+		}
+
+	}
+
+	L->Pop();
+
+	return ReturnValue;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
@@ -431,7 +470,46 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLu
 
 	L->PCall(NArgs, ReturnValue);
 
-	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop();
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	ULuaState* L = Value.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Value);
+
+	int32 StackTop = L->GetTop();
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	FLuaValue LastReturnValue;
+	if (L->PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+
+		int32 NumOfReturnValues = (L->GetTop() - StackTop) + 1;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(L->ToLuaValue(i), 0);
+			}
+			L->Pop(NumOfReturnValues - 1);
+		}
+
+	}
+
 	L->Pop();
 
 	return ReturnValue;

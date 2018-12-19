@@ -74,9 +74,16 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaGlobalCallValue(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+	static TArray<FLuaValue> LuaGlobalCallValueMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
+
 	/* Calls a lua value (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
+
+	/* Calls a lua value with multiple return values (must be callable) */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static int32 LuaValueLength(FLuaValue Value);
