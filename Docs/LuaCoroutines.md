@@ -32,3 +32,9 @@ alive = coroutine.resume(coro)
 -- this time alive will be 'false' as the coroutine is 'dead' (it has finished its work)
 alive = coroutine.resume(coro)
 ```
+
+Note that albeit coroutine.yield() can be called without arguments, the coroutine.resume() function will always get the first return value as a boolean specifying if the coroutine is still alive or not.
+
+More infos can be found here:
+
+https://www.lua.org/manual/5.3/manual.html#2.6
