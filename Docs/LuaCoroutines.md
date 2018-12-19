@@ -26,10 +26,10 @@ alive, seventeen = coroutine.resume(coro)
 -- ... the last yield
 alive, ended = coroutine.resume(coro)
 
--- complete the function
+-- complete the coroutine
 alive = coroutine.resume(coro)
 
--- this time alive will be 'false' as the coroutine is 'dead' (it has finished its work)
+-- this time 'alive' will be 'false' as the coroutine is 'dead' (it has finished its work)
 alive = coroutine.resume(coro)
 ```
 
