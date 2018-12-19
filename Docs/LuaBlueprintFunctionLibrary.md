@@ -150,6 +150,33 @@ static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
 
 Call a value
 
+##  TArray\<FLuaValue\> LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FString Name, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+static TArray<FLuaValue> LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args);
+```
+
+Call a function by its name from the global table and returns multiple values
+
+## TArray\<FLuaValue\> LuaGlobalCallValueMulti(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, FLuaValue Value, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"))
+static TArray<FLuaValue> LuaGlobalCallValueMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value, TArray<FLuaValue> Args);
+```
+
+Call a value in the specified State and returns multiple values
+
+##  TArray\<FLuaValue\> LuaValueCallMulti(FLuaValue Value, TArray\<FLuaValue\> Args)
+
+```cpp
+UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
+```
+
+Call a value and returns multiple values
+
 ## int32 LuaValueLength(FLuaValue Value)
 
 ```cpp
