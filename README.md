@@ -4,6 +4,8 @@ Unreal Engine 4 Plugin for adding Lua scripting to your projects.
 
 If you want modders to customize your game/project, or you need to allow game designers to script parts of the logic, this plugin is for you.
 
+![LuaMachine](Docs/Screenshots/SyntaxColor.PNG?raw=true "LuaMachine")
+
 ## How it works
 
 Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
@@ -213,6 +215,7 @@ This a list of the currently supported values:
 * Table (reference to a lua table)
 * UObject (pointer to an Unreal UObject)
 * UFunction (pointer to an Unreal UFunction)
+* Thread (reference to a lua thread/coroutines)
 
 Note that tables are passed by reference, so technically you can update the same table from both lua and Unreal.
 
@@ -229,6 +232,12 @@ As an example the LuaGetGlobal node, can access the package.path item by simply 
 ULuaComponent allows to use an Actor as a Lua userdata.
 
 Check its docs here: [LuaComponent](Docs/LuaComponent.md)
+
+## Lua Threads/Coroutines
+
+Lua Threads/Coroutines are fully supported
+
+Check dedicated docs here: [LuaCoroutines](Docs/LuaCoroutines.md)
 
 ## Packaging
 
