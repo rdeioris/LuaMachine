@@ -1,6 +1,6 @@
 # Using Lua Coroutines
 
-Corutines in lua are "interruptable" functions: they can 'suspend' themselves and can be 'resumed' by another coroutine or from the main code:
+Coroutines in lua are "interruptable" functions: they can 'suspend' themselves and can be 'resumed' by another coroutine or from the main code:
 
 ```lua
 coro = coroutine.create(function()
