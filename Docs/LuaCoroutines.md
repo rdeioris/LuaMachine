@@ -38,3 +38,7 @@ Note that albeit coroutine.yield() can be called without arguments, the coroutin
 More infos can be found here:
 
 https://www.lua.org/manual/5.3/manual.html#2.6
+
+Coroutines maps to native lua objects named 'threads'. Lua Threads are fully supported by the FLuaValue USTRUCT, so you can create a coroutine from lua and pass it to Unreal Engine functions:
+
+
