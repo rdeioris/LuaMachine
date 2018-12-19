@@ -4,6 +4,8 @@ Unreal Engine 4 Plugin for adding Lua scripting to your projects.
 
 If you want modders to customize your game/project, or you need to allow game designers to script parts of the logic, this plugin is for you.
 
+![LuaMachine](Docs/Screenshots/SyntaxColor.PNG?raw=true "LuaMachine")
+
 ## How it works
 
 Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
