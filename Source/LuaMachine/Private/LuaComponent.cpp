@@ -118,7 +118,7 @@ void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
 
 	// remove UObject
 	L->Pop();
-	
+
 }
 
 FLuaValue ULuaComponent::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
@@ -249,6 +249,51 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	return ReturnValue;
 }
 
+FLuaValue ULuaComponent::LuaCallValueIfNotNil(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	if (Value.Type != ELuaValueType::Nil)
+		ReturnValue = LuaCallValue(Value, Args);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaComponent::LuaCallTableKey(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetField(Key);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaCallValue(Value, Args);
+}
+
+FLuaValue ULuaComponent::LuaCallTableIndex(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetFieldByIndex(Index);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaCallValue(Value, Args);
+}
+
 TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	TArray<FLuaValue> ReturnValue;
@@ -298,4 +343,49 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 	L->Pop();
 
 	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaComponent::LuaCallValueMultiIfNotNil(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+	if (Value.Type != ELuaValueType::Nil)
+		ReturnValue = LuaCallValueMulti(Value, Args);
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaComponent::LuaCallTableKeyMulti(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetField(Key);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaCallValueMulti(Value, Args);
+}
+
+TArray<FLuaValue> ULuaComponent::LuaCallTableIndexMulti(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetFieldByIndex(Index);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaCallValueMulti(Value, Args);
 }

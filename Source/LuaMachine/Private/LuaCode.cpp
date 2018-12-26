@@ -11,16 +11,25 @@ ULuaCode::ULuaCode()
 
 void ULuaCode::Serialize(FArchive& Ar)
 {
-	if (Ar.IsCooking() && bCookAsBytecode && !Code.IsEmpty())
+	if (Ar.IsCooking())
 	{
-		bCooked = true;
-		FString ErrorString;
-		ByteCode = ULuaState::ToByteCode(Code.ToString(), GetPathName(), ErrorString);
-		if (!ErrorString.IsEmpty())
+		if (bCookAsBytecode && !Code.IsEmpty())
 		{
-			UE_LOG(LogLuaMachine, Error, TEXT("Unable to generate bytecode: %s"), *ErrorString);
+			bCooked = true;
+			FString ErrorString;
+			ByteCode = ULuaState::ToByteCode(Code.ToString(), GetPathName(), ErrorString);
+			if (!ErrorString.IsEmpty())
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("Unable to generate bytecode: %s"), *ErrorString);
+			}
+			Code = FText::GetEmpty();
 		}
-		Code = FText::GetEmpty();
+	}
+	else if (Ar.IsSaving())
+	{
+		bCooked = false;
+		TArray<uint8> EmptyData;
+		ByteCode = EmptyData;
 	}
 
 	UObject::Serialize(Ar);

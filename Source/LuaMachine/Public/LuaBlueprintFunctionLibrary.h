@@ -81,6 +81,18 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	static FLuaValue LuaValueCall(FLuaValue Value, TArray<FLuaValue> Args);
 
+	/* Calls a lua value (must be callable and not nil) */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	static FLuaValue LuaValueCallIfNotNil(FLuaValue Value, TArray<FLuaValue> Args);
+
+	/* Calls a lua value taken from a table by key (must be callable) */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	static FLuaValue LuaTableKeyCall(FLuaValue InTable, FString Key, TArray<FLuaValue> Args);
+
+	/* Calls a lua value taken from a table by index (must be callable) */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	static FLuaValue LuaTableIndexCall(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args);
+
 	/* Calls a lua value with multiple return values (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
@@ -116,6 +128,9 @@ public:
 	static bool LuaValueIsNil(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsNotNil(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsTable(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -143,6 +158,9 @@ public:
 	static FText Conv_LuaValueToText(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FName Conv_LuaValueToName(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static UObject* Conv_LuaValueToObject(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
@@ -168,5 +186,11 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_StringToLuaValue(FString Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_TextToLuaValue(FText Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_NameToLuaValue(FName Value);
 	
 };

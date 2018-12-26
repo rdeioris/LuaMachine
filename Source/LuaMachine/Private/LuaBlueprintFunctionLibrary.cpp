@@ -48,6 +48,11 @@ FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 	return Value.ToString();
 }
 
+FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(FLuaValue Value)
+{
+	return FName(*Value.ToString());
+}
+
 FText ULuaBlueprintFunctionLibrary::Conv_LuaValueToText(FLuaValue Value)
 {
 	return FText::FromString(Value.ToString());
@@ -146,6 +151,16 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_StringToLuaValue(FString Value)
 	return FLuaValue(Value);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_TextToLuaValue(FText Value)
+{
+	return FLuaValue(Value.ToString());
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_NameToLuaValue(FName Value)
+{
+	return FLuaValue(Value.ToString());
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
@@ -235,6 +250,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FStrin
 bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(FLuaValue Value)
 {
 	return Value.Type == ELuaValueType::Nil;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsNotNil(FLuaValue Value)
+{
+	return Value.Type != ELuaValueType::Nil;
 }
 
 bool ULuaBlueprintFunctionLibrary::LuaValueIsTable(FLuaValue Value)
@@ -473,6 +493,49 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLu
 	L->Pop();
 
 	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	if (Value.Type != ELuaValueType::Nil)
+		ReturnValue = LuaValueCall(Value, Args);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetField(Key);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaValueCall(Value, Args);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableIndexCall(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetFieldByIndex(Index);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	return LuaValueCall(Value, Args);
 }
 
 TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args)

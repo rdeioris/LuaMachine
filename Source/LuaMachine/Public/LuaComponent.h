@@ -50,10 +50,28 @@ public:
 	FLuaValue LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	FLuaValue LuaCallValueIfNotNil(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	FLuaValue LuaCallTableKey(FLuaValue InTable, FString Key, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	FLuaValue LuaCallTableIndex(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	TArray<FLuaValue> LuaCallFunctionMulti(FString Name, TArray<FLuaValue> Args, bool bGlobal);
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
 	TArray<FLuaValue> LuaCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	TArray<FLuaValue> LuaCallValueMultiIfNotNil(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	TArray<FLuaValue> LuaCallTableKeyMulti(FLuaValue InTable, FString Key, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"))
+	TArray<FLuaValue> LuaCallTableIndexMulti(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FLuaValue LuaGetField(FString Name);
