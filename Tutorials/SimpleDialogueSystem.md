@@ -5,6 +5,8 @@
 
 ## The Dialogue LuaState
 
+## Adding the LuaComponent to the Talking Character
+
 ## Managing Unreal Engine events with Lua
 
 ## Showing dialogues and choices
