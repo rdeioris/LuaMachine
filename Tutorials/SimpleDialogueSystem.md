@@ -3,7 +3,7 @@
 
 ## The Talking Character
 
-## The DialogueLuaState
+## The Dialogue LuaState
 
 ## Managing Unreal Engine events with Lua
 
