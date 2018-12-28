@@ -52,7 +52,37 @@ end
 return character
 ```
 
-## Managing Unreal Engine events with Lua
+Now instructs the TalkingCharacter to load the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable pointing the LuaComponent, more on this later)
+
+
+
+## More Unreal Engine events with Lua
+
+Time to implement overlaping events.
+
+Add a new collision sphere that will trigger lua whenever something overlaps it
+
+```lua
+local character = {}
+
+function character:begin_play()
+  print('Hello World')
+end
+
+function character:begin_overlap()
+  print('Begin Overlap')
+end
+
+function character:end_overlap()
+  print('End Overlap')
+end
+
+return character
+```
+
+
+
+
 
 ## Showing dialogues and choices
 
