@@ -81,7 +81,27 @@ return character
 ```
 
 
+```lua
+local character = {}
 
+function character:begin_play()
+  print('Hello World')
+end
+
+function character:begin_overlap(other)
+  if is_player_pawn(other) then
+    print('Begin Overlap')
+  end
+end
+
+function character:end_overlap(other)
+  if is_player_pawn(other) then
+    print('End Overlap')
+  end
+end
+
+return character
+```
 
 
 ## Showing dialogues and choices
