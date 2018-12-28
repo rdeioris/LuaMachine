@@ -28,7 +28,15 @@ Create a new Character Blueprint and add a camera component pointing to the face
 
 The camera will be useful if you want to point to the face of the character during a dialogue (you will control the camera switch from lua)
 
-## The Dialogue LuaState
+## Preparing The DialogueLuaState
+
+To allow the TalkingCharacter to be governed by Lua, we need to setup a new Lua virtual machine, exposing a bunch of Unreal functions to scripts. To accomplish this, we need to add Unreal/Blueprint functions to the DialogueLuaState class and expose them in the Table property of the LuaState.
+
+We start with a simple printing function that we will expose as the lua 'print' and a LuaError event, that will be triggered automatically when a Lua call fails:
+
+
+
+
 
 ## Adding the LuaComponent to the Talking Character
 
