@@ -16,7 +16,17 @@ Restart Unreal Engine, and create the LuaState for our dialogue system:
 * select 'LuaState' from 'all classes'
 * name it 'DialogueLuaState'
 
+A LuaState represents a specific Lua virtual machine (there can be multiple isolated lua virtual machines in the same project).
+
+For this project we need a single LuaState (in the 'Variations' section you will find a different approach using a LuaState for each character)
+
 ## The Talking Character
+
+For the 'talking characters' (actors implementing dialogues in Lua) we will use the 'Twinblast' asset from Paragon. It is a perfect choice as it includes facial morph targets that will give more emphasis to the dialogues by visually reporting his emotional state.
+
+Create a new Character Blueprint and add a camera component pointing to the face of Twinblast and a LuaComponent:
+
+
 
 ## The Dialogue LuaState
 
