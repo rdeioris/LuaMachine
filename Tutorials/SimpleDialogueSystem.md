@@ -1,5 +1,20 @@
 # A simple Dialogue System with LuaMachine
 
+In this tutorial we will see how to use the LuaMachine plugin to implement a dialogue system controlled by Lua scripts.
+
+The Lua scripts will be part of the final build (they will be cooked in the pak file as bytecode) so you will not be able to change them after the game is packaged (check the 'Variations' section at the end of the tutorial for using normal scripts in the filesystem).
+
+The tutorial has beed tested on Unreal Engine 4.21 and LuaMachine 20181228 starting from the Third Person Blueprint template.
+
+## Installing the LuaMachine plugin
+
+Download the latest zip file for your specific unreal engine version and operating system from the releases page: https://github.com/rdeioris/LuaMachine/releases and unzip it into the Plugins directory of your project (create it, if it does not exist).
+
+Restart Unreal Engine, and create the LuaState for our dialogue system:
+
+* add new blueprint class
+* select 'LuaState' from 'all classes'
+* name it 'DialogueLuaState'
 
 ## The Talking Character
 
