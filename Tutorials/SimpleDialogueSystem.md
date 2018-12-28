@@ -69,11 +69,11 @@ function character:begin_play()
   print('Hello World')
 end
 
-function character:begin_overlap()
+function character:begin_overlap(other)
   print('Begin Overlap')
 end
 
-function character:end_overlap()
+function character:end_overlap(other)
   print('End Overlap')
 end
 
