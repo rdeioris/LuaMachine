@@ -306,23 +306,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 				return;
 			}
 		}
-		else {
-			AActor* Actor = Cast<AActor>(LuaValue.Object);
-			if (Actor)
-			{
-				TArray<UActorComponent*> LuaComponents = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
-				for (UActorComponent* Component : LuaComponents)
-				{
-					LuaComponent = Cast<ULuaComponent>(Component);
-					if (LuaComponent->LuaState == GetClass())
-					{
-						NewUObject(LuaComponent);
-						LuaComponent->SetupMetatable();
-						return;
-					}
-				}
-			}
-		}
 		NewUObject(LuaValue.Object);
 		break;
 	}
@@ -604,7 +587,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
-		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm))
+		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm|CPF_OutParm))
 			continue;
 
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);

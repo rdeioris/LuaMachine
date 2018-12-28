@@ -95,6 +95,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_FloatToLuaValue(float Value)
 	return FLuaValue(Value);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_BoolToLuaValue(bool Value)
+{
+	return FLuaValue(Value);
+}
+
 int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 {
 	switch (Value.Type)

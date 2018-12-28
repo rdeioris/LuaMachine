@@ -192,5 +192,8 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
 	static FLuaValue Conv_NameToLuaValue(FName Value);
+
+	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	static FLuaValue Conv_BoolToLuaValue(bool Value);
 	
 };
