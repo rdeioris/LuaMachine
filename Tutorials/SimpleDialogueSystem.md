@@ -26,7 +26,7 @@ For the 'talking characters' (actors implementing dialogues in Lua) we will use 
 
 Create a new Character Blueprint and add a camera component pointing to the face of Twinblast and a LuaComponent:
 
-
+The camera will be useful if you want to point to the face of the character during a dialogue (you will control the camera switch from lua)
 
 ## The Dialogue LuaState
 
