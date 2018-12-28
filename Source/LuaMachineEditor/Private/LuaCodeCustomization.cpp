@@ -62,6 +62,7 @@ public:
 		ADD_RULE("\"");
 
 		ADD_RULE("nil");
+		ADD_RULE("self");
 
 		ADD_RULE("and");
 		ADD_RULE("end");
@@ -181,7 +182,7 @@ protected:
 								ParseState = EParseState::LookingForDoubleQuoteString;
 								bHasMatchedSyntax = true;
 							}
-							else if (TokenString == TEXT("nil"))
+							else if (TokenString == TEXT("nil") || TokenString == TEXT("self"))
 							{
 								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
 								CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
@@ -264,8 +265,6 @@ class SLuaMultiLineEditableText : public SMultiLineEditableText
 public:
 	SLATE_BEGIN_ARGS(SLuaMultiLineEditableText) {}
 
-	SLATE_ARGUMENT(TSharedPtr<SScrollBar>, HScrollBar)
-	SLATE_ARGUMENT(TSharedPtr<SScrollBar>, VScrollBar)
 	SLATE_ARGUMENT(TWeakObjectPtr<ULuaCode>, LuaCodeOwner);
 
 	SLATE_END_ARGS()
@@ -280,8 +279,6 @@ public:
 			SMultiLineEditableText::FArguments()
 			.AutoWrapText(false)
 			.Margin(0.0f)
-			.HScrollBar(InArgs._HScrollBar)
-			.VScrollBar(InArgs._VScrollBar)
 			.Text(LuaCode->Code)
 			.Marshaller(SyntaxHighlighter)
 			.OnTextChanged(this, &SLuaMultiLineEditableText::UpdateLuaCode)
@@ -302,7 +299,7 @@ protected:
 		const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 		return FontMeasure->GetMaxCharacterHeight(FontInfo);
 	}
-
+	
 	virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override
 	{
 		// assume a 80*25 vt100 terminal
@@ -352,9 +349,6 @@ public:
 	{
 		LuaCode = InArgs._LuaCodeOwner;
 
-		HorizontalScrollBar = SNew(SScrollBar).Orientation(Orient_Horizontal).Thickness(FVector2D(10.0f, 10.0f)).AlwaysShowScrollbar(true);
-		VerticalScrollBar = SNew(SScrollBar).Orientation(Orient_Vertical).Thickness(FVector2D(10.0f, 10.0f)).AlwaysShowScrollbar(true);
-
 		BackgroundColor = FSlateColorBrush(FLinearColor::Black);
 
 		ChildSlot.VAlign(VAlign_Fill).HAlign(HAlign_Fill)[
@@ -364,18 +358,9 @@ public:
 					+ SGridPanel::Slot(0, 0)
 				[
 					SNew(SLuaMultiLineEditableText)
-					.HScrollBar(HorizontalScrollBar)
-					.VScrollBar(VerticalScrollBar)
 					.LuaCodeOwner(LuaCode)
 				]
-			+ SGridPanel::Slot(1, 0)
-				[
-					VerticalScrollBar.ToSharedRef()
-				]
-			+ SGridPanel::Slot(0, 1)
-				[
-					HorizontalScrollBar.ToSharedRef()
-				]
+			
 				]
 		];
 	}
@@ -384,8 +369,6 @@ public:
 
 private:
 	TWeakObjectPtr<ULuaCode> LuaCode;
-	TSharedPtr<SScrollBar> HorizontalScrollBar;
-	TSharedPtr<SScrollBar> VerticalScrollBar;
 	FSlateBrush BackgroundColor;
 };
 
