@@ -9,7 +9,7 @@
 /**
  * 
  */
-UCLASS()
+UCLASS(BlueprintType)
 class LUAMACHINE_API ULuaCode : public UDataAsset
 {
 	GENERATED_BODY()
