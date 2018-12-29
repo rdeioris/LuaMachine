@@ -109,6 +109,8 @@ Note that we want to store the Actor reference of the TalkingCharacter in the lu
 
 This is the updated script:
 
+## Triggering the 'Speak' event
+
 ## Showing dialogues and choices
 
 ## More Lua functions: change the current camera and Character's face
