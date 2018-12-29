@@ -156,7 +156,7 @@ Challenge: improve the set_camera() function to allow for custom blend time spec
 
 We can easily implement a shop for each character by simply generating the questions from a Lua table:
 
-Le'ts improve it by adding the 'gold/money' concept:
+Let's improve it by adding the 'gold/money' concept:
 
 ## More Talking Characters
 
