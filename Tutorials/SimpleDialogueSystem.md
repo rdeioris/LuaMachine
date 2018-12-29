@@ -189,13 +189,35 @@ function character:end_overlap(other)
 end
 ```
 
-Play and check if the TextRender component activate itself when you are near the TalkingCharacter and disappear when you move away
+Play and check if the TextRender component activates itself when you are near the TalkingCharacter and disappears when you move away.
 
 To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
 
+![CurrentTarget](SimpleDialogueSystem_Data/CurrentTarget.PNG?raw=true "CurrentTarget")
+
 Note that we want to store the Actor reference of the TalkingCharacter in the lua variable, but the 'self' table maps to the LuaComponent object. We can add a field to the 'self' table exposing the component's owner (the Actor) value:
 
+![Owner](SimpleDialogueSystem_Data/Owner.PNG?raw=true "Owner")
+
+The 'owner' field is now added to the LuaComponent's lua table (the one you get via 'self')
+
 This is the updated script:
+
+```lua
+function character:begin_overlap(other)
+  if get_player() == other then
+    self.flash('Speak with Twinblast')
+    current_target = self.owner
+  end
+end
+
+function character:end_overlap(other)
+  if get_player() == other then
+    self.flash('')
+    current_target = nil
+  end
+end
+```
 
 ## Triggering the 'Speak' event
 
