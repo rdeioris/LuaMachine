@@ -191,7 +191,7 @@ end
 
 Play and check if the TextRender component activates itself when you are near the TalkingCharacter and disappears when you move away.
 
-To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
+To set which one is the currently 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
 
 ![CurrentTarget](SimpleDialogueSystem_Data/CurrentTarget.PNG?raw=true "CurrentTarget")
 
