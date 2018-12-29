@@ -176,6 +176,12 @@ And expose it to Lua (select the LuaComponent to access the properties in the De
 Update the code again:
 
 ```lua
+
+function character:begin_play()
+  -- ensure the TextRender content is empty
+  self.flash('')
+end
+
 function character:begin_overlap(other)
   if get_player() == other then
     self.flash('Speak with Twinblast')
