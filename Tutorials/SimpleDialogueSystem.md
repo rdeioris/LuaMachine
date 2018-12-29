@@ -12,7 +12,7 @@ Download the latest zip file for your specific Unreal Engine version and operati
 
 Restart Unreal Engine, and create the LuaState for our dialogue system:
 
-* add new blueprint class
+* add new Blueprint Class
 * select 'LuaState' from 'all classes'
 * name it 'DialogueLuaState'
 
@@ -38,6 +38,8 @@ Create a new Character Blueprint and add a camera component pointing to the face
 
 The camera will be useful if you want to point to the face of the character during a dialogue (you will control the camera switch from lua).
 
+Remember to assign an animation to the Mesh component to avoid Twinblast to be in 'A pose' while speaking (my choice is Idle_Relaxed)
+
 ## Preparing the DialogueLuaState
 
 To allow the TalkingCharacter to be governed by Lua, we need to setup a new Lua virtual machine exposing a bunch of Unreal functions to Lua scripts. To accomplish this, we need to add Unreal/Blueprint functions to the DialogueLuaState class and expose them in the Table property of the LuaState.
@@ -62,7 +64,9 @@ return character
 
 You should get something very similar: (note syntax highlight ;)
 
-Now build the TalkingCharacter Graph to load and execute the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
+![CodeAsset](SimpleDialogueSystem_Data/CodeAsset.PNG?raw=true "CodeAsset")
+
+Now build the TalkingCharacter Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
 Drag the TalkingCharacter blueprint to the Level and hit Play.
 
@@ -94,6 +98,12 @@ end
 return character
 ```
 
+Add the new events to the TalkingCharacter's Event Graph:
+
+![Overlap](SimpleDialogueSystem_Data/Overlap.PNG?raw=true "Overlap")
+
+![Speak](SimpleDialogueSystem_Data/Speak.PNG?raw=true "Speak")
+
 Re-Play and try to overlap the TalkingCharacter Sphere with the Mannequin, if all goes well you should see 'Begin Overlap' printed when the player is near the TalkingCharacter and 'End Overlap' printed when the player is far from it.
 
 ## Dealing with multiple TalkingCharacters and checking which actor is overlapping
@@ -121,6 +131,11 @@ This is the updated script:
 
 ## Triggering the 'Speak' event
 
+When a TalkinCharacter is highlighted/targeted we want to trigger its 'Speak' event by clicking the left mouse button. To accomplish
+this we can manage the mouse click in the ThirdPersonCharacter Blueprint (would be the most logical choice), but to avoid clobbering the template blueprint we will use the Level Blueprint (suboptimal but it should work flawlessly):
+
+![LevelBlueprint](SimpleDialogueSystem_Data/LevelBlueprint.PNG?raw=true "LevelBlueprint")
+
 ## Showing dialogues and choices
 
 We are at the core of the tutorial: showing dialogues with questions/choices.
@@ -143,7 +158,7 @@ Challenge: improve the set_camera() function to allow for custom blend time spec
 
 We can easily implement a shop for each character by simply generating the questions from a Lua table:
 
-Le'ts improve it by adding the 'gold/money' concept:
+Let's improve it by adding the 'gold/money' concept:
 
 ## More Talking Characters
 
