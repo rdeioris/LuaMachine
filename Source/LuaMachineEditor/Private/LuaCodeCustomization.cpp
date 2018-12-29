@@ -22,6 +22,10 @@
 
 #define ADD_RULE(rule) TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT(rule)))
 
+#define ADD_RULE_BASIC(rule) ADD_RULE(rule); BasicTokens.Add(TEXT(rule))
+
+#define ADD_RULE_STDLIB(rule) ADD_RULE(rule); StdLibTokens.Add(TEXT(rule))
+
 class FLuaMachineSyntaxHighlighterTextLayoutMarshaller : public FSyntaxHighlighterTextLayoutMarshaller
 {
 public:
@@ -32,16 +36,20 @@ public:
 			CommentTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Comment")),
 			StringTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.String")),
 			KeywordTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Keyword")),
-			NilTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Nil"))
+			NilTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Nil")),
+			BasicTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.Basic")),
+			StdLibTextStyle(FLuaMachineEditorModule::Get().GetStyleSet()->GetWidgetStyle<FTextBlockStyle>("SyntaxHighlight.LuaMachine.StdLib"))
 		{}
 		FTextBlockStyle NormalTextStyle;
 		FTextBlockStyle CommentTextStyle;
 		FTextBlockStyle StringTextStyle;
 		FTextBlockStyle KeywordTextStyle;
 		FTextBlockStyle NilTextStyle;
+		FTextBlockStyle BasicTextStyle;
+		FTextBlockStyle StdLibTextStyle;
 	};
 
-	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle)
+	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, TArray<TCHAR *> InBasicTokens, TArray<TCHAR *> InStdLibTokens, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle), BasicTokens(InBasicTokens), StdLibTokens(InStdLibTokens)
 	{
 
 	}
@@ -50,6 +58,9 @@ public:
 	static TSharedRef< FLuaMachineSyntaxHighlighterTextLayoutMarshaller> Create()
 	{
 		TArray<FSyntaxTokenizer::FRule> TokenizerRules;
+
+		TArray<TCHAR *> BasicTokens;
+		TArray<TCHAR *> StdLibTokens;
 
 		ADD_RULE("--[[");
 		ADD_RULE("--]]");
@@ -63,6 +74,8 @@ public:
 
 		ADD_RULE("nil");
 		ADD_RULE("self");
+		ADD_RULE("_G");
+		ADD_RULE("_VERSION");
 
 		ADD_RULE("and");
 		ADD_RULE("end");
@@ -85,8 +98,43 @@ public:
 		ADD_RULE("until");
 		ADD_RULE("while");
 
+		ADD_RULE_BASIC("assert");
+		ADD_RULE_BASIC("collectgarbage");
+		ADD_RULE_BASIC("require");
+		ADD_RULE_BASIC("dofile");
+		ADD_RULE_BASIC("error ");
+		ADD_RULE_BASIC("getmetatable");
+		ADD_RULE_BASIC("ipairs");
+		ADD_RULE_BASIC("load");
+		ADD_RULE_BASIC("loadfile");
+		ADD_RULE_BASIC("next");
+		ADD_RULE_BASIC("pairs");
+		ADD_RULE_BASIC("pcall");
+		ADD_RULE_BASIC("print");
+		ADD_RULE_BASIC("rawequal");
+		ADD_RULE_BASIC("rawget");
+		ADD_RULE_BASIC("rawlen");
+		ADD_RULE_BASIC("rawset");
+		ADD_RULE_BASIC("select");
+		ADD_RULE_BASIC("setmetatable");
+		ADD_RULE_BASIC("tonumber");
+		ADD_RULE_BASIC("tostring");
+		ADD_RULE_BASIC("type");
+		ADD_RULE_BASIC("xpcall");
 
-		return MakeShareable(new FLuaMachineSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), FSyntaxTextStyle()));
+		ADD_RULE_STDLIB("coroutine");
+		ADD_RULE_STDLIB("package");
+		ADD_RULE_STDLIB("string");
+		ADD_RULE_STDLIB("utf8");
+		ADD_RULE_STDLIB("table");
+		ADD_RULE_STDLIB("math");
+		ADD_RULE_STDLIB("io");
+		ADD_RULE_STDLIB("file");
+		ADD_RULE_STDLIB("os");
+		ADD_RULE_STDLIB("debug");
+
+
+		return MakeShareable(new FLuaMachineSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), BasicTokens, StdLibTokens, FSyntaxTextStyle()));
 	}
 protected:
 	virtual void ParseTokens(const FString& SourceString, FTextLayout& TargetTextLayout, TArray<FSyntaxTokenizer::FTokenizedLine> TokenizedLines) override
@@ -104,7 +152,7 @@ protected:
 
 		TArray<FTextLayout::FNewLineData> LinesToAdd;
 		LinesToAdd.Reserve(TokenizedLines.Num());
-		
+
 
 		EParseState ParseState = EParseState::None;
 
@@ -118,7 +166,7 @@ protected:
 				ParseState = EParseState::None;
 			}
 
-			
+
 
 			for (const FSyntaxTokenizer::FToken& Token : TokenizedLine.Tokens)
 			{
@@ -137,7 +185,7 @@ protected:
 					bool bHasMatchedSyntax = false;
 					if (Token.Type == FSyntaxTokenizer::ETokenType::Syntax)
 					{
-						if (ParseState == EParseState::None) 
+						if (ParseState == EParseState::None)
 						{
 							TCHAR NextChar = TEXT(" ")[0];
 							TCHAR PrevChar = TEXT(" ")[0];
@@ -147,7 +195,7 @@ protected:
 							}
 							if (Token.Range.BeginIndex > 0)
 							{
-								PrevChar = SourceString[Token.Range.BeginIndex-1];
+								PrevChar = SourceString[Token.Range.BeginIndex - 1];
 							}
 							if (TokenString == TEXT("--"))
 							{
@@ -182,16 +230,27 @@ protected:
 								ParseState = EParseState::LookingForDoubleQuoteString;
 								bHasMatchedSyntax = true;
 							}
-							else if (TokenString == TEXT("nil") || TokenString == TEXT("self"))
-							{
-								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
-								CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
-								ParseState = EParseState::None;
-							}
 							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar) && NextChar != TCHAR('_') && PrevChar != TCHAR('_'))
 							{
-								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
-								CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
+								if (TokenString == TEXT("nil") || TokenString == TEXT("self") || TokenString == TEXT("_G") || TokenString == TEXT("_VERSION"))
+								{
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
+									CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;
+								}
+								else if (BasicTokens.Contains(TokenString))
+								{
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Basic");
+									CurrentBlockStyle = SyntaxTextStyle.BasicTextStyle;
+								}
+								else if (StdLibTokens.Contains(TokenString))
+								{
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.StdLib");
+									CurrentBlockStyle = SyntaxTextStyle.StdLibTextStyle;
+								}
+								else {
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
+									CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
+								}
 								ParseState = EParseState::None;
 							}
 						}
@@ -219,7 +278,7 @@ protected:
 							CurrentBlockStyle = SyntaxTextStyle.StringTextStyle;
 							ParseState = EParseState::None;
 						}
-						
+
 					}
 
 					if (Token.Type == FSyntaxTokenizer::ETokenType::Literal || !bHasMatchedSyntax)
@@ -258,6 +317,9 @@ protected:
 	}
 
 	FSyntaxTextStyle SyntaxTextStyle;
+
+	TArray<TCHAR *> BasicTokens;
+	TArray<TCHAR *> StdLibTokens;
 };
 
 class SLuaMultiLineEditableText : public SMultiLineEditableText
@@ -299,7 +361,7 @@ protected:
 		const TSharedRef<FSlateFontMeasure> FontMeasure = FSlateApplication::Get().GetRenderer()->GetFontMeasureService();
 		return FontMeasure->GetMaxCharacterHeight(FontInfo);
 	}
-	
+
 	virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override
 	{
 		// assume a 80*25 vt100 terminal
@@ -323,7 +385,7 @@ protected:
 
 	virtual FReply OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override
 	{
-		
+
 		if (InKeyEvent.GetKeyCode() == 9)
 		{
 			return FReply::Handled();
@@ -360,7 +422,7 @@ public:
 					SNew(SLuaMultiLineEditableText)
 					.LuaCodeOwner(LuaCode)
 				]
-			
+
 				]
 		];
 	}

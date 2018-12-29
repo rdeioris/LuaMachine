@@ -31,6 +31,8 @@ void FLuaMachineEditorModule::StartupModule()
 	StyleSet->Set("SyntaxHighlight.LuaMachine.String", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor(FColor::Orange)));
 	StyleSet->Set("SyntaxHighlight.LuaMachine.Keyword", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor(FColor::Cyan)));
 	StyleSet->Set("SyntaxHighlight.LuaMachine.Nil", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::Red));
+	StyleSet->Set("SyntaxHighlight.LuaMachine.StdLib", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::Yellow));
+	StyleSet->Set("SyntaxHighlight.LuaMachine.Basic", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::FromSRGBColor(FColor::Magenta)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
 
