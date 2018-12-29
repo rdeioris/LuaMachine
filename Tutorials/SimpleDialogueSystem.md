@@ -74,7 +74,7 @@ You should get something very similar: (note syntax highlight ;)
 
 ![TalkingScript](SimpleDialogueSystem_Data/TalkingScript.PNG?raw=true "TalkingScript")
 
-Now build the TalkingCharacter Event Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
+Now setup the TalkingCharacter Event Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
 ![BeginPlay](SimpleDialogueSystem_Data/BeginPlay.PNG?raw=true "BeginPlay")
 
