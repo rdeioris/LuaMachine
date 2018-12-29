@@ -122,6 +122,8 @@ Add the new events to the TalkingCharacter's Event Graph (pay attention to the o
 
 ![Overlap](SimpleDialogueSystem_Data/Overlap.PNG?raw=true "Overlap")
 
+Note that the overlapping actor is passed as the first argument of the Lua function
+
 'Speak' is a custom event:
 
 ![Speak](SimpleDialogueSystem_Data/Speak.PNG?raw=true "Speak")
@@ -135,7 +137,25 @@ we need a way to check that the overlapping actor is the player pawn.
 
 As getting the player pawn from Lua is a pretty handy function, very probably the best thing to do is exposing it as a global Lua function in the same way we exposed 'print':
 
+![GetPlayer](SimpleDialogueSystem_Data/GetPlayer.PNG?raw=true "GetPlayer")
+
+![LuaStateTable2](SimpleDialogueSystem_Data/LuaStateTable2.PNG?raw=true "LuaStateTable2")
+
 Now we can simply do a comparison in the begin_overlap/end_overlap functions:
+
+```lua
+function character:begin_overlap(other)
+  if get_player() == other then
+    print('Begin Overlap')
+  end
+end
+
+function character:end_overlap(other)
+  if get_player() == other then
+    print('End Overlap')
+  end
+end
+```
 
 Hit Play again and check if the overlap system still works (if you want, try placing other overlapping objects in the level to check the comparison works correctly)
 
@@ -144,6 +164,8 @@ As said before, multiple TalkingCharacter's could be spawned in the level, so we
 Let's start with the visual part: we want to set a message (from Lua) in the TextRender component of the TalkingCharacter.
 
 This is a function specific of the TalkingCharacter so we should expose it in its LuaComponent (we can access it using the automagic 'self' table)
+
+![SetFlash](SimpleDialogueSystem_Data/SetFlash.PNG?raw=true "SetFlash")
 
 To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
 
