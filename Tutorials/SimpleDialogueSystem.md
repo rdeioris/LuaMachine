@@ -36,8 +36,6 @@ We start with a simple 'Print' function that we will expose as the lua 'print' (
 
 
 
-
-
 ## The first script
 
 Create a new LuaCode asset in your Content Browser (it is under the 'Miscellaneous' group) and insert the following code:
@@ -52,7 +50,7 @@ end
 return character
 ```
 
-Now instructs the TalkingCharacter to load the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable pointing the LuaComponent, more on this later)
+Now build the TalkingCharacter Graph to load and execute the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
 
 
