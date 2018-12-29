@@ -96,6 +96,12 @@ end
 return character
 ```
 
+Add the new events to the TalkingCharacter's Event Graph:
+
+![Overlap](SimpleDialogueSystem_Data/Overlap.PNG?raw=true "Overlap")
+
+![Speak](SimpleDialogueSystem_Data/Speak.PNG?raw=true "Speak")
+
 Re-Play and try to overlap the TalkingCharacter Sphere with the Mannequin, if all goes well you should see 'Begin Overlap' printed when the player is near the TalkingCharacter and 'End Overlap' printed when the player is far from it.
 
 ## Dealing with multiple TalkingCharacters and checking which actor is overlapping
