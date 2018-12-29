@@ -119,6 +119,8 @@ We need two widgets: one for the dialogue text (a simple big multiline text box)
 
 ## More Lua functions: change the current camera and Character's face
 
+Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
+
 ## Inventory/Shop system
 
 ## Cooking and Packaging
@@ -126,3 +128,4 @@ We need two widgets: one for the dialogue text (a simple big multiline text box)
 ## Variations
 
 ### From LuaCode Asset to filesystem-based scripts
+
