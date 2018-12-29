@@ -86,7 +86,7 @@ If all goes well you should get a 'Hello World' message on screen.
 
 ## More Unreal Engine events with Lua
 
-Time to implement overlaping events for the sphere collider as well as a custom 'Speak' event that will be triggered by the player when wanting to talk to a specific 'TalkingCharacter'
+Time to implement overlapping events for the sphere collider as well as a custom 'Speak' event that will be triggered by the player when wanting to talk to a specific 'TalkingCharacter':
 
 ```lua
 local character = {}
@@ -110,9 +110,11 @@ end
 return character
 ```
 
-Add the new events to the TalkingCharacter's Event Graph:
+Add the new events to the TalkingCharacter's Event Graph (pay attention to the overlapping events as they must be related to the sphere, not the capsule of the character):
 
 ![Overlap](SimpleDialogueSystem_Data/Overlap.PNG?raw=true "Overlap")
+
+'Speak' is a custom event:
 
 ![Speak](SimpleDialogueSystem_Data/Speak.PNG?raw=true "Speak")
 
