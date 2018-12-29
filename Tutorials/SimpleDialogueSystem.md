@@ -113,6 +113,10 @@ This is the updated script:
 
 ## Showing dialogues and choices
 
+We are at the core of the tutorial: showing dialogues with questions/choices.
+
+We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices (a simple text button triggering a Lua function when clicked)
+
 ## More Lua functions: change the current camera and Character's face
 
 ## Inventory/Shop system
