@@ -24,9 +24,17 @@ For this project we need a single LuaState.
 
 ## The Talking Character
 
-For the 'talking characters' (actors implementing dialogues in Lua) we will use the 'Twinblast' asset from Paragon. It is a perfect choice as it includes facial morph targets that will give more emphasis to the dialogues by visually reporting emotional states.
+For the 'talking characters' (actors implementing dialogues in Lua) we will use the 'Twinblast' asset from Paragon.
 
-Create a new Character Blueprint and add a camera component pointing to the face of Twinblast, A Sphere Collider for detecting when the player is near enough, a Text Render for simple in-world messages and (obviously) a LuaComponent:
+![Twinblast](SimpleDialogueSystem_Data/Twinblast.PNG?raw=true "Twinblast")
+
+It is a perfect choice as it includes facial morph targets that will give more emphasis to the dialogues by visually reporting emotional states.
+
+![ContentBrowser](SimpleDialogueSystem_Data/ContentBrowser.PNG?raw=true "ContentBrowser")
+
+Create a new Character Blueprint and add a camera component pointing to the face of Twinblast, A Sphere Collider for detecting when the player is near enough, a Text Render for simple in-world messages and (obviously) a LuaComponent. Add a variable of type 'LuaValue' named 'TalkingTable' (i will explain it later)
+
+![TalkingCharacter](SimpleDialogueSystem_Data/TalkingCharacter.PNG?raw=true "TalkingCharacter")
 
 The camera will be useful if you want to point to the face of the character during a dialogue (you will control the camera switch from lua).
 
