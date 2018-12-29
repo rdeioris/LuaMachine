@@ -300,12 +300,18 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
 		if (LuaComponent)
 		{
-			NewUObject(LuaComponent);
 			// ensure we are in the same LuaState
 			if (LuaComponent->LuaState == GetClass())
 			{
 				LuaComponent->SetupMetatable();
 			}
+		}
+		else {
+			// allow comparison between userdata/UObject/UFunction
+			NewTable();
+			PushCFunction(ULuaState::MetaTableFunctionUserData__eq);
+			SetField(-2, "__eq");
+			SetMetaTable(-2);
 		}
 	}
 	break;
@@ -514,6 +520,62 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	}
 
 	return 0;
+}
+
+int ULuaState::MetaTableFunctionUserData__eq(lua_State *L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+
+	if (!lua_isuserdata(L, 1))
+	{
+		return luaL_error(L, "invalid state for usedata");
+	}
+
+	if (!lua_isuserdata(L, 2))
+	{
+		lua_pushboolean(L, 0);
+		return 1;
+	}
+
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+	if (!UserData->Context.IsValid())
+	{
+		return luaL_error(L, "invalid UObject for first userdata");
+	}
+
+	FLuaUserData* UserData2 = (FLuaUserData*)lua_touserdata(L, 2);
+	if (!UserData2->Context.IsValid())
+	{
+		return luaL_error(L, "invalid UObject for second userdata");
+	}
+
+	if (UserData->Type == UserData2->Type && UserData->Context.Get() == UserData2->Context.Get())
+	{
+		if (UserData->Type == ELuaValueType::UFunction)
+		{
+			if (!UserData->Function.IsValid())
+			{
+				return luaL_error(L, "invalid UFunction for first userdata");
+			}
+			if (!UserData2->Function.IsValid())
+			{
+				return luaL_error(L, "invalid UFunction for second userdata");
+			}
+			if (UserData->Function.Get() == UserData2->Function.Get())
+			{
+				lua_pushboolean(L, 1);
+				return 1;
+			}
+		}
+		else if (UserData->Type == ELuaValueType::UObject)
+		{
+			lua_pushboolean(L, 1);
+			return 1;
+		}
+	}
+
+	lua_pushboolean(L, 0);
+	return 1;
 }
 
 int ULuaState::MetaTableFunction__call(lua_State *L)

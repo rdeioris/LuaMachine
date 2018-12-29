@@ -52,7 +52,6 @@ void ULuaComponent::SetupMetatable()
 	L->PushCFunction(ULuaState::MetaTableFunctionLuaComponent__newindex);
 	L->SetField(-2, "__newindex");
 
-
 	for (TPair<FString, FLuaValue>& Pair : Metatable)
 	{
 		// first check for UFunction
