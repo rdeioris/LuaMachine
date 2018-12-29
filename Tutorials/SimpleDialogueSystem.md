@@ -16,6 +16,8 @@ Restart Unreal Engine, and create the LuaState for our dialogue system:
 * select 'LuaState' from 'all classes'
 * name it 'DialogueLuaState'
 
+![DialogueLuaState](Tutorials/SimpleDialogueSystem_Data/DialogueLuaState.PNG?raw=true "DialogueLuaState")
+
 A LuaState represents a specific Lua virtual machine (there can be multiple isolated Lua virtual machines in the same project).
 
 For this project we need a single LuaState.
