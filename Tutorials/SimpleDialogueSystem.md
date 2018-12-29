@@ -48,7 +48,9 @@ We start with a simple 'Print' function that we will expose as the lua 'print' (
 
 ![PrintAndLuaError](SimpleDialogueSystem_Data/PrintAndLuaError.PNG?raw=true "PrintAndLuaError")
 
-Once defined you can exposed them using the 'Table' property of the LuaState (you can access it using the 'Class Defaults' button:
+Note that 'Print' expects a LuaValue argument (named 'Message', check it at the right of the screenshot). The only allowed parameters type (included the return value) is the LuaValue one. Functions violating this rule will not be selectable in the interface.
+
+Once defined you can expose them using the 'Table' property of the LuaState (you can access it using the 'Class Defaults' button:
 
 ![LuaStateTable1](SimpleDialogueSystem_Data/LuaStateTable1.PNG?raw=true "LuaStateTable1")
 
