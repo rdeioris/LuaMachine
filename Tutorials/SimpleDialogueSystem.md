@@ -240,7 +240,7 @@ Play again, and if you click the left mouse button wile the TalkingCharacter is 
 
 We are at the core of the tutorial: showing dialogues with questions/choices.
 
-We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices (a simple text button triggering a Lua function when clicked)
+We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices/answers (a simple text button triggering a Lua function when clicked)
 
 Let's start with the DialogueQuestion Widget:
 
@@ -248,7 +248,15 @@ Let's start with the DialogueQuestion Widget:
 
 ![DialogueQuestionGraph](SimpleDialogueSystem_Data/DialogueQuestionGraph.PNG?raw=true "DialogueQuestionGraph")
 
+We have a widget with a button and a text (note: no canvas panel is required, you can remove it).
+
+The QuestionTable variable is a LuaValue marked as 'Expose on Spawn'. To generate a questione widget we need to pass it a lua table (well an array) composed of 2 items: the first one is the content of the button text, the second is a lua function triggered when the user click on the question/choice/answer (spoiler: the 'Question' name is probably not a good choice as no questions will be generated in the examples, only answers and choices :( )
+
+Now the DialogueScreen Widget:
+
 ![DialogueScreenDesigner](SimpleDialogueSystem_Data/DialogueScreenDesigner.PNG?raw=true "DialogueScreenDesigner")
+
+![DialogueScreenGraph](SimpleDialogueSystem_Data/DialogueScreenGraph.PNG?raw=true "DialogueScreenGraph")
 
 To allow Lua opening and closing the dialogue widgets we need to expose two new functions:
 
