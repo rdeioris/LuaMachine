@@ -66,7 +66,11 @@ You should get something very similar: (note syntax highlight ;)
 
 ![CodeAsset](SimpleDialogueSystem_Data/CodeAsset.PNG?raw=true "CodeAsset")
 
-Now build the TalkingCharacter Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
+Now build the TalkingCharacter Event Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
+
+![BeginPlay](SimpleDialogueSystem_Data/BeginPlay.PNG?raw=true "BeginPlay")
+
+The 'LuaRunCodeAsset' node will load a LuaCode asset and will store its return value (the 'character' local table) in the TalkingTable variable (we created it earlier). We can use this table for the whole lifecycle of the TalkingCharacter to call the functions exposed by the table (only begin_play() for now). Pay attention to the 'State' parameter of 'LuaRunCodeAsset' as you must set it to 'DialogueLuaState'. Finally, the 'LuaCallTableKey' node (exposed by the LuaComponent) will check if the passed table exposes the specified 'Key' and (if it is a function) will call it. Note that nodes exposed by LuaComponent will automatically pass the LuaComponent itself as the first argument of called functions. As we are using the table:function syntax we will get this parameter in the 'self' variable automagically. We will use the 'self' variable ater in the tutorial.
 
 Drag the TalkingCharacter blueprint to the Level and hit Play.
 
