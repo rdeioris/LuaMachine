@@ -117,6 +117,11 @@ We are at the core of the tutorial: showing dialogues with questions/choices.
 
 We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices (a simple text button triggering a Lua function when clicked)
 
+
+To allow Lua opening and closing the dialogue widgets we need to expose two new functions:
+
+We can now update the code to manage the dialogues when the 'Speak' event is triggered
+
 ## More Lua functions: change the current camera and Character's face
 
 Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
@@ -126,6 +131,8 @@ Challenge: improve the set_camera() function to allow for custom blend time spec
 We can easily implement a shop for each character by simply generating the questions from a lua table:
 
 Le'ts improve it by adding the 'gold/money' concept:
+
+## More Talking Characters
 
 ## Cooking and Packaging
 
