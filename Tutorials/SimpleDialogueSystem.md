@@ -258,7 +258,15 @@ Now the DialogueScreen Widget:
 
 ![DialogueScreenGraph](SimpleDialogueSystem_Data/DialogueScreenGraph.PNG?raw=true "DialogueScreenGraph")
 
+This widget requires two 'Expose on Spawn' variables (again LuaValue's). The first one is the content of the Multiline TextBox (note: it is marked as readonly in the properties), the second one is a table (well an array again) with the list of questions/answers/choices from which the various DialogueQuestion Widgets will be generated.
+
 To allow Lua opening and closing the dialogue widgets we need to expose two new functions:
+
+![OpenDialogue](SimpleDialogueSystem_Data/OpenDialogue.PNG?raw=true "OpenDialogue")
+
+![CloseDialogue](SimpleDialogueSystem_Data/OpenDialogue.PNG?raw=true "CloseDialogue")
+
+![LuaStateTable3](SimpleDialogueSystem_Data/LuaStateTable3.PNG?raw=true "LuaStateTable3")
 
 We can now update the code to manage the dialogues when the 'Speak' event is triggered
 
