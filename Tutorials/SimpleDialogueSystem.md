@@ -129,6 +129,11 @@ This is the updated script:
 
 ## Triggering the 'Speak' event
 
+When a TalkinCharacter is highlighted/targeted we want to trigger its 'Speak' event by clicking the left mouse button. To accomplish
+this we can manage the mouse click in the ThirdPersonCharacter Blueprint (would be the most logical choice), but to avoid clobbering the template blueprint we will use the Level Blueprint (suboptimal but it should work flawlessly):
+
+![LevelBlueprint](SimpleDialogueSystem_Data/LevelBlueprint.PNG?raw=true "LevelBlueprint")
+
 ## Showing dialogues and choices
 
 We are at the core of the tutorial: showing dialogues with questions/choices.
