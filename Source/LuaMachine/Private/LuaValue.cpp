@@ -100,10 +100,10 @@ FLuaValue FLuaValue::SetField(FString Key, FLuaValue Value)
 FLuaValue FLuaValue::GetField(FString Key)
 {
 	if (Type != ELuaValueType::Table)
-		return *this;
+		return FLuaValue();
 
 	if (!LuaState)
-		return *this;
+		return FLuaValue();
 
 	LuaState->FromLuaValue(*this);
 	LuaState->GetField(-1, TCHAR_TO_UTF8(*Key));
@@ -115,10 +115,10 @@ FLuaValue FLuaValue::GetField(FString Key)
 FLuaValue FLuaValue::GetFieldByIndex(int32 Index)
 {
 	if (Type != ELuaValueType::Table)
-		return *this;
+		return FLuaValue();
 
 	if (!LuaState)
-		return *this;
+		return FLuaValue();
 
 	LuaState->FromLuaValue(*this);
 	LuaState->RawGetI(-1, Index);

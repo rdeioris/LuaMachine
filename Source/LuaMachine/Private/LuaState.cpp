@@ -296,19 +296,19 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 		break;
 	case ELuaValueType::UObject:
 	{
+		NewUObject(LuaValue.Object);
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
 		if (LuaComponent)
 		{
 			NewUObject(LuaComponent);
+			// ensure we are in the same LuaState
 			if (LuaComponent->LuaState == GetClass())
 			{
 				LuaComponent->SetupMetatable();
-				return;
 			}
 		}
-		NewUObject(LuaValue.Object);
-		break;
 	}
+	break;
 	case ELuaValueType::UFunction:
 		// first time we should have a CallContext, then we cache it in the Object field
 		if (!CallContext)
@@ -587,7 +587,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		UProperty *Prop = *FArgs;
-		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm|CPF_OutParm))
+		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
 			continue;
 
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
@@ -747,7 +747,7 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 			{
 				return i + 1 + AdditionalPop;
 			}
-			LastError = FString::Printf(TEXT("unknown Lua key: \"%s\""), *Parts[i]);
+			LastError = FString::Printf(TEXT("Lua key \"%s\" is nil"), *Parts[i]);
 			if (bLogError)
 				LogError(LastError);
 			ReceiveLuaError(LastError);

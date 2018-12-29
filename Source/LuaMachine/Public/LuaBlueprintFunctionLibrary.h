@@ -48,6 +48,9 @@ public:
 	static FLuaValue LuaTableGetField(FLuaValue Table, FString Key);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue LuaComponentGetField(FLuaValue LuaComponent, FString Key);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaTableGetByIndex(FLuaValue Table, int32 Index);
 
 	/* Assigns a value to a table index, returned value is the table itself */
@@ -151,49 +154,49 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsThread(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta=(BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta=(DisplayName = "To String (LuaValue)", BlueprintAutocast))
 	static FString Conv_LuaValueToString(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Text (LuaValue)", BlueprintAutocast))
 	static FText Conv_LuaValueToText(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Name (LuaValue)", BlueprintAutocast))
 	static FName Conv_LuaValueToName(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Object (LuaValue)", BlueprintAutocast))
 	static UObject* Conv_LuaValueToObject(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Class (LuaValue)", BlueprintAutocast))
 	static UClass* Conv_LuaValueToClass(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Object)", BlueprintAutocast))
 	static FLuaValue Conv_ObjectToLuaValue(UObject* Object);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Float)", BlueprintAutocast))
 	static FLuaValue Conv_FloatToLuaValue(float Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Int (LuaValue)", BlueprintAutocast))
 	static int32 Conv_LuaValueToInt(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Float (LuaValue)", BlueprintAutocast))
 	static float Conv_LuaValueToFloat(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Bool (LuaValue)", BlueprintAutocast))
 	static bool Conv_LuaValueToBool(FLuaValue Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Int)", BlueprintAutocast))
 	static FLuaValue Conv_IntToLuaValue(int32 Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (String)", BlueprintAutocast))
 	static FLuaValue Conv_StringToLuaValue(FString Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (BDisplayName = "To LuaValue (Text)", lueprintAutocast))
 	static FLuaValue Conv_TextToLuaValue(FText Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Name)", BlueprintAutocast))
 	static FLuaValue Conv_NameToLuaValue(FName Value);
 
-	UFUNCTION(BlueprintPure, meta = (BlueprintAutocast))
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Bool)", BlueprintAutocast))
 	static FLuaValue Conv_BoolToLuaValue(bool Value);
 	
 };

@@ -1,6 +1,7 @@
 // Copyright 2018 - Roberto De Ioris
 
 #include "LuaBlueprintFunctionLibrary.h"
+#include "LuaComponent.h"
 #include "LuaMachine.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
@@ -252,6 +253,27 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FStrin
 	return Table.GetField(Key);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaComponentGetField(FLuaValue LuaComponent, FString Key)
+{
+	FLuaValue ReturnValue;
+	if (LuaComponent.Type != ELuaValueType::UObject)
+		return ReturnValue;
+
+	ULuaState* L = LuaComponent.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	ULuaComponent* Component = Cast<ULuaComponent>(LuaComponent.Object);
+
+	FLuaValue* LuaValue = Component->Table.Find(Key);
+	if (LuaValue)
+	{
+		return *LuaValue;
+	}
+
+	return ReturnValue;
+}
+
 bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(FLuaValue Value)
 {
 	return Value.Type == ELuaValueType::Nil;
@@ -405,7 +427,7 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* Worl
 			}
 			L->Pop(NumOfReturnValues - 1);
 		}
-		
+
 	}
 
 	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
