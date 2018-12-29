@@ -50,15 +50,17 @@ end
 return character
 ```
 
+You should get somethng very similar: (note syntax highlight ;)
+
 Now build the TalkingCharacter Graph to load and execute the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
+Drag the TalkingCharacter blueprint to the Level and hit Play.
 
+If all goes well you should get a 'Hello World' message on screen.
 
 ## More Unreal Engine events with Lua
 
-Time to implement overlaping events.
-
-Add a new collision sphere that will trigger lua whenever something overlaps it
+Time to implement overlaping events for the sphere collider as well as a custom 'Speak' event that will be triggered by the player when wanting to talk to a specific 'TalkingCharacter'
 
 ```lua
 local character = {}
@@ -75,31 +77,13 @@ function character:end_overlap(other)
   print('End Overlap')
 end
 
-return character
-```
-
-
-```lua
-local character = {}
-
-function character:begin_play()
-  print('Hello World')
-end
-
-function character:begin_overlap(other)
-  if is_player_pawn(other) then
-    print('Begin Overlap')
-  end
-end
-
-function character:end_overlap(other)
-  if is_player_pawn(other) then
-    print('End Overlap')
-  end
+function character:speak()
+  print('Speaking...')
 end
 
 return character
 ```
+
 
 
 ## Showing dialogues and choices
