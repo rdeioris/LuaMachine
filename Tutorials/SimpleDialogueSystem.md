@@ -103,16 +103,20 @@ Let's start with the visual part: we want to set a message (from Lua) in the Tex
 
 This is a function specific of the TalkingCharacter so we should expose it in its LuaComponent (we can access it using the automagic 'self' table)
 
-To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script):
+To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
 
+Note that we want to store the Actor reference of the TalkingCharacter in the lua variable, but the 'self' table maps to the LuaComponent object. We can add a field to the 'self' table exposing the component's owner (the Actor) value:
 
+This is the updated script:
 
 ## Showing dialogues and choices
 
-## The Lua api
+## More Lua functions: change the current camera and Character's face
+
+## Inventory/Shop system
 
 ## Cooking and Packaging
 
-## From LuaCode Asset to filesystem-based scripts
-
 ## Variations
+
+### From LuaCode Asset to filesystem-based scripts
