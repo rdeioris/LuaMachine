@@ -50,7 +50,7 @@ end
 return character
 ```
 
-You should get somethng very similar: (note syntax highlight ;)
+You should get something very similar: (note syntax highlight ;)
 
 Now build the TalkingCharacter Graph to load and execute the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
@@ -86,7 +86,7 @@ return character
 
 Re-Play and try to overlap the TalkingCharacter Sphere with the Mannequin, if all goes well you should see 'Begin Overlap' printed when the player is near the TalkingCharacter and 'End Overlap' printed when the player is far from it.
 
-## Dealing with multiple TalkingCharacter's and checking which actor is overlapping
+## Dealing with multiple TalkingCharacters and checking which actor is overlapping
 
 Our game could include dozens of characters or objects overlapping the collision sphere of the TalkingCharacter. For this reason
 we need a way to check that the overlapping actor is the player pawn.
@@ -117,15 +117,25 @@ We are at the core of the tutorial: showing dialogues with questions/choices.
 
 We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices (a simple text button triggering a Lua function when clicked)
 
+
+To allow Lua opening and closing the dialogue widgets we need to expose two new functions:
+
+We can now update the code to manage the dialogues when the 'Speak' event is triggered
+
+Note that the system will prevent multiple dialogues from opening concurrently. This will simplify scripting too as we just need to call
+open_dialogue() again from the callback to change the content.
+
 ## More Lua functions: change the current camera and Character's face
 
 Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
 
 ## Inventory/Shop system
 
-We can easily implement a shop for each character by simply generating the questions from a lua table:
+We can easily implement a shop for each character by simply generating the questions from a Lua table:
 
 Le'ts improve it by adding the 'gold/money' concept:
+
+## More Talking Characters
 
 ## Cooking and Packaging
 
