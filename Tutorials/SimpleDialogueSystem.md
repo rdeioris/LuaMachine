@@ -44,7 +44,7 @@ To allow the TalkingCharacter to be governed by Lua, we need to setup a new Lua 
 
 We start with a simple 'Print' function that we will expose as the lua 'print' (overriding the default one) and a LuaError event that will be triggered automatically when a Lua call fails:
 
-
+![PrintAndLuaError](SimpleDialogueSystem_Data/PrintAndLuaError.PNG?raw=true "PrintAndLuaError")
 
 ## The first script
 
