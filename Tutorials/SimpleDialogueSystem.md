@@ -38,6 +38,8 @@ Create a new Character Blueprint and add a camera component pointing to the face
 
 The camera will be useful if you want to point to the face of the character during a dialogue (you will control the camera switch from lua).
 
+Remember to assign an animation to the Mesh component to avoid Twinblast to be in 'A pose' while speaking (my choice is Idle_Relaxed)
+
 ## Preparing the DialogueLuaState
 
 To allow the TalkingCharacter to be governed by Lua, we need to setup a new Lua virtual machine exposing a bunch of Unreal functions to Lua scripts. To accomplish this, we need to add Unreal/Blueprint functions to the DialogueLuaState class and expose them in the Table property of the LuaState.
