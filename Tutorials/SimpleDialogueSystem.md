@@ -242,6 +242,13 @@ We are at the core of the tutorial: showing dialogues with questions/choices.
 
 We need two widgets: one for the dialogue text (a simple big multiline text box) and another one for questions/choices (a simple text button triggering a Lua function when clicked)
 
+Let's start with the DialogueQuestion Widget:
+
+![DialogueQuestionDesigner](SimpleDialogueSystem_Data/DialogueQuestionDesigner.PNG?raw=true "DialogueQuestionDesigner")
+
+![DialogueQuestionGraph](SimpleDialogueSystem_Data/DialogueQuestionGraph.PNG?raw=true "DialogueQuestionGraph")
+
+![DialogueScreenDesigner](SimpleDialogueSystem_Data/DialogueScreenDesigner.PNG?raw=true "DialogueScreenDesigner")
 
 To allow Lua opening and closing the dialogue widgets we need to expose two new functions:
 
