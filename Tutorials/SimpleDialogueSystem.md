@@ -84,6 +84,24 @@ end
 return character
 ```
 
+Re-Play and try to overlap the TalkingCharacter Sphere with the Mannequin, if all goes well you should see 'Begin Overlap' printed when the player is near the TalkingCharacter and 'End Overlap' printed when the player is far from it.
+
+## Dealing with multiple TalkingCharacter's and checking which actor is overlapping
+
+Our game could include dozens of characters or objects overlapping the collision sphere of the TalkingCharacter. For this reason
+we need a way to check that the overlapping actor is the player pawn.
+
+As getting the player pawn from Lua is a pretty handy function, very probably the best thing to do is exposing it as a global Lua function in the same way we exposed 'print':
+
+Now we can simply do a comparison in the begin_overlap/end_overlap functions:
+
+Hit Play again and check if the overlap system still works (if you want, try placing other overlapping objects in the level to check the comparison works correctly)
+
+As said before, multiple TalkingCharacter's could be spawned in the level, so we need a way to 'mark' which one is the currently focused character, both visually and from the Lua point of view.
+
+Let's start with the visual part: we want to set a message (from Lua) in the TextRender component of the TalkingCharacter.
+
+This is a function specific of the TalkingCharacter so we should expose it in its LuaComponent (we can access it using the automagic 'self' table)
 
 
 ## Showing dialogues and choices
