@@ -44,9 +44,13 @@ Remember to assign an animation to the Mesh component to avoid Twinblast to be i
 
 To allow the TalkingCharacter to be governed by Lua, we need to setup a new Lua virtual machine exposing a bunch of Unreal functions to Lua scripts. To accomplish this, we need to add Unreal/Blueprint functions to the DialogueLuaState class and expose them in the Table property of the LuaState.
 
-We start with a simple 'Print' function that we will expose as the lua 'print' (overriding the default one) and a LuaError event that will be triggered automatically when a Lua call fails:
+We start with a simple 'Print' function that we will expose as the lua 'print' (overriding the default one), a 'Quit' function ending the game exposed as 'quit' and a LuaError event that will be triggered automatically when a Lua call fails:
 
 ![PrintAndLuaError](SimpleDialogueSystem_Data/PrintAndLuaError.PNG?raw=true "PrintAndLuaError")
+
+Once defined you can exposed them using the 'Table' property of the LuaState (you can access it using the 'Class Defaults' button:
+
+![LuaStateTable1](SimpleDialogueSystem_Data/LuaStateTable1.PNG?raw=true "LuaStateTable1")
 
 ## The first script
 
@@ -65,6 +69,8 @@ return character
 You should get something very similar: (note syntax highlight ;)
 
 ![CodeAsset](SimpleDialogueSystem_Data/CodeAsset.PNG?raw=true "CodeAsset")
+
+![TalkingScript](SimpleDialogueSystem_Data/TalkingScript.PNG?raw=true "TalkingScript")
 
 Now build the TalkingCharacter Event Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
