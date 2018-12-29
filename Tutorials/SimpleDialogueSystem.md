@@ -62,7 +62,9 @@ return character
 
 You should get something very similar: (note syntax highlight ;)
 
-Now build the TalkingCharacter Graph to load and execute the CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
+![CodeAsset](SimpleDialogueSystem_Data/CodeAsset.PNG?raw=true "CodeAsset")
+
+Now build the TalkingCharacter Graph to load and execute the specific CodeAsset on BeginPlay event and to call the character:begin_play function (note the colon syntactic sugar to allow the Lua vm to automatically includes a 'self' variable mapped to the LuaComponent, more on this later)
 
 Drag the TalkingCharacter blueprint to the Level and hit Play.
 
