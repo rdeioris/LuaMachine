@@ -12,7 +12,7 @@ Download the latest zip file for your specific Unreal Engine version and operati
 
 Restart Unreal Engine, and create the LuaState for our dialogue system:
 
-* add new blueprint class
+* add new Blueprint Class
 * select 'LuaState' from 'all classes'
 * name it 'DialogueLuaState'
 
