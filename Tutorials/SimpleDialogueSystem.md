@@ -165,7 +165,31 @@ Let's start with the visual part: we want to set a message (from Lua) in the Tex
 
 This is a function specific of the TalkingCharacter so we should expose it in its LuaComponent (we can access it using the automagic 'self' table)
 
+Add the function to the TalkingCharacter Blueprint
+
 ![SetFlash](SimpleDialogueSystem_Data/SetFlash.PNG?raw=true "SetFlash")
+
+And expose it to Lua (select the LuaComponent to access the properties in the Details panel)
+
+![SetFlashExposed](SimpleDialogueSystem_Data/SetFlashExposed.PNG?raw=true "SetFlashExposed")
+
+Update the code again:
+
+```lua
+function character:begin_overlap(other)
+  if get_player() == other then
+    self.flash('Speak with Twinblast')
+  end
+end
+
+function character:end_overlap(other)
+  if get_player() == other then
+    self.flash('')
+  end
+end
+```
+
+Play and check if the TextRender component activate itself when you are near the TalkingCharacter and disappear when you move away
 
 To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script).
 
