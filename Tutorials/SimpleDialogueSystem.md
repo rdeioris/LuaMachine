@@ -103,6 +103,9 @@ Let's start with the visual part: we want to set a message (from Lua) in the Tex
 
 This is a function specific of the TalkingCharacter so we should expose it in its LuaComponent (we can access it using the automagic 'self' table)
 
+To set which one is the current 'focused' TalkingCharacter we will use a global Lua variable. We can just set it in the DialogueLuaState Table (and set/unset it in the begin_overlap/end_overlap functions of the TalkingCharacter script):
+
+
 
 ## Showing dialogues and choices
 
