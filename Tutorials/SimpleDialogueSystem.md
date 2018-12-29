@@ -123,6 +123,10 @@ Challenge: improve the set_camera() function to allow for custom blend time spec
 
 ## Inventory/Shop system
 
+We can easily implement a shop for each character by simply generating the questions from a lua table:
+
+Le'ts improve it by adding the 'gold/money' concept:
+
 ## Cooking and Packaging
 
 ## Variations
