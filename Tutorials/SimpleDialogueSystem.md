@@ -288,7 +288,6 @@ function character:speak()
       {'No', close_dialogue},
     }) 
   end
-
   
   -- called by the 'Speak' event
   page1()
