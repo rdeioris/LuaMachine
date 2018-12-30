@@ -264,7 +264,7 @@ To allow Lua opening and closing the dialogue widgets we need to expose two new 
 
 ![OpenDialogue](SimpleDialogueSystem_Data/OpenDialogue.PNG?raw=true "OpenDialogue")
 
-![CloseDialogue](SimpleDialogueSystem_Data/OpenDialogue.PNG?raw=true "CloseDialogue")
+![CloseDialogue](SimpleDialogueSystem_Data/CloseDialogue.PNG?raw=true "CloseDialogue")
 
 ![LuaStateTable3](SimpleDialogueSystem_Data/LuaStateTable3.PNG?raw=true "LuaStateTable3")
 
