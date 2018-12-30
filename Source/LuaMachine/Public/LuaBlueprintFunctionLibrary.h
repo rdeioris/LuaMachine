@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LuaState.h"
 #include "LuaValue.h"
+#include "UObject/TextProperty.h"
 #include "LuaBlueprintFunctionLibrary.generated.h"
 
 /**
