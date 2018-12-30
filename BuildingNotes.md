@@ -1,11 +1,11 @@
-# Building for Mac
+# Building Lua static library for Mac
 
 ```sh
 # edit src/Makefile and set MYCFLAGS to -mmacosx-version-min=10.12
 make macosx
 ```
 
-# Building for Win64
+# Building Lua static library for Win64
 
 ```sh
 # open visual studio shell for x64
