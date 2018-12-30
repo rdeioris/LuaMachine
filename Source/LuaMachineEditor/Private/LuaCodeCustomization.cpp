@@ -49,7 +49,7 @@ public:
 		FTextBlockStyle StdLibTextStyle;
 	};
 
-	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, TArray<TCHAR *> InBasicTokens, TArray<TCHAR *> InStdLibTokens, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle), BasicTokens(InBasicTokens), StdLibTokens(InStdLibTokens)
+	FLuaMachineSyntaxHighlighterTextLayoutMarshaller(TSharedPtr<FSyntaxTokenizer> InTokenizer, TArray<const TCHAR *> InBasicTokens, TArray<const TCHAR *> InStdLibTokens, const FSyntaxTextStyle& InSyntaxTextStyle) : FSyntaxHighlighterTextLayoutMarshaller(InTokenizer), SyntaxTextStyle(InSyntaxTextStyle), BasicTokens(InBasicTokens), StdLibTokens(InStdLibTokens)
 	{
 
 	}
@@ -59,8 +59,8 @@ public:
 	{
 		TArray<FSyntaxTokenizer::FRule> TokenizerRules;
 
-		TArray<TCHAR *> BasicTokens;
-		TArray<TCHAR *> StdLibTokens;
+		TArray<const TCHAR *> BasicTokens;
+		TArray<const TCHAR *> StdLibTokens;
 
 		ADD_RULE("--[[");
 		ADD_RULE("--]]");
@@ -318,8 +318,8 @@ protected:
 
 	FSyntaxTextStyle SyntaxTextStyle;
 
-	TArray<TCHAR *> BasicTokens;
-	TArray<TCHAR *> StdLibTokens;
+	TArray<const TCHAR *> BasicTokens;
+	TArray<const TCHAR *> StdLibTokens;
 };
 
 class SLuaMultiLineEditableText : public SMultiLineEditableText
