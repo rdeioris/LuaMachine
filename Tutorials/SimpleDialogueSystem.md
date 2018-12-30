@@ -264,11 +264,36 @@ To allow Lua opening and closing the dialogue widgets we need to expose two new 
 
 ![OpenDialogue](SimpleDialogueSystem_Data/OpenDialogue.PNG?raw=true "OpenDialogue")
 
+(Note: you need to add the variable 'CurrentDialogueScreen' as a DialogueScreen Widget reference)
+
 ![CloseDialogue](SimpleDialogueSystem_Data/CloseDialogue.PNG?raw=true "CloseDialogue")
 
 ![LuaStateTable3](SimpleDialogueSystem_Data/LuaStateTable3.PNG?raw=true "LuaStateTable3")
 
 We can now update the code to manage the dialogues when the 'Speak' event is triggered
+
+```lua
+function character:speak()
+
+  function page1()
+    open_dialogue('Go to page 2?', {
+      {'Yes', page2},
+      {'No', close_dialogue},
+    })  
+  end
+
+  function page2()
+    open_dialogue('Back to page 1?', {
+      {'Yes', page1},
+      {'No', close_dialogue},
+    }) 
+  end
+
+  
+  -- called by the 'Speak' event
+  page1()
+end
+```
 
 Note that the system will prevent multiple dialogues from opening concurrently. This will simplify scripting too as we just need to call
 open_dialogue() again from the callback to change the content.
