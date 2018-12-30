@@ -140,6 +140,11 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 
 	if (CodeAsset->bCooked && CodeAsset->bCookAsBytecode)
 	{
+#if PLATFORM_ANDROID
+		// fix size_t of the bytecode
+		if (CodeAsset->ByteCode.Num() >= 14)
+			CodeAsset->ByteCode[13] = sizeof(size_t);
+#endif
 		return RunCode(CodeAsset->ByteCode, CodeAsset->GetPathName(), NRet);
 	}
 

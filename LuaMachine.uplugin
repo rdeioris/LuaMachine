@@ -20,7 +20,8 @@
       "LoadingPhase": "Default",
       "WhitelistPlatforms": [
         "Mac",
-        "Win64"
+        "Win64",
+        "Android"
       ]
     },
     {
