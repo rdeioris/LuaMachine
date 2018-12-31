@@ -322,6 +322,7 @@ We will add two more blueprint functions to the TalkingCharacter Blueprint (reme
 
 Now refactor the code to change the camera when starting a dialogue session and resetting it when exiting:
 
+```lua
 function character:speak()
 
   -- set camera to the character's one
@@ -364,6 +365,7 @@ What do you want to do ?
   -- called by the 'Speak' event
   page1()
 end
+```
 
 When going to page3 the facial expression of Twinblast should change to the 'angry' one:
 
