@@ -275,6 +275,10 @@ The projects includes various functional tests (all written as blueprints, so th
 
 Just enable the plugin content visualization from the content browser and from the Automator tool execute the Project related tests.
 
+## Tutorials
+
+https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/SimpleDialogueSystem.md
+
 ## Commercial Support
 
 Commercial support is offered by Unbit (based in Rome, Italy), just contact info at unbit dot it or follow/direct message @unbit on twitter
