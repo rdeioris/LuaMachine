@@ -579,3 +579,75 @@ We first check for a Lua file, if it is not available (returns nil in such a cas
 
 ### Using C++ instead of Blueprint Nodes
 
+Instead of exposing Blueprint functions to Lua, you can expose Cpp functions.
+
+This is the code for a CppDialogueLuaState class that you can use in place of the DialogueLuaState one:
+
+```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaState.h"
+#include "CppDialogueLuaState.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class TUTORIALLUADIALOGUE_API UCppDialogueLuaState : public ULuaState
+{
+	GENERATED_BODY()
+
+public:
+	UCppDialogueLuaState();
+
+	UFUNCTION()
+	FLuaValue GetPlayer();
+
+	UFUNCTION()
+	void Quit();
+
+	UFUNCTION()
+	void Print(FLuaValue Message);
+	
+};
+```
+
+```cpp
+#include "CppDialogueLuaState.h"
+#include "Engine/World.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
+#include "Engine/GameEngine.h"
+
+UCppDialogueLuaState::UCppDialogueLuaState()
+{
+	Table.Add("get_player", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UCppDialogueLuaState, GetPlayer)));
+	Table.Add("quit", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UCppDialogueLuaState, Quit)));
+	Table.Add("print", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UCppDialogueLuaState, Print)));
+
+	Table.Add("current_target", FLuaValue());
+	Table.Add("player_gold", FLuaValue(4));
+}
+
+FLuaValue UCppDialogueLuaState::GetPlayer()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	return PlayerController ? FLuaValue(PlayerController->GetPawn()) : FLuaValue();
+}
+
+void UCppDialogueLuaState::Quit()
+{
+	APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+	if (PlayerController)
+	{
+		PlayerController->ConsoleCommand("quit");
+	}
+}
+
+void UCppDialogueLuaState::Print(FLuaValue Message)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, *Message.ToString());
+}
+
+```
