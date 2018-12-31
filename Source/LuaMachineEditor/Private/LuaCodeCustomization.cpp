@@ -2,7 +2,9 @@
 
 #include "LuaCodeCustomization.h"
 #include "LuaMachineEditor.h"
-#include "Runtime/Slate/Public/Widgets/Text/SMultiLineEditableText.h"
+#include "Runtime/SlateCore/Public/Widgets/SBoxPanel.h"
+#include "Runtime/Slate/Public/Widgets/Layout/SScaleBox.h"
+#include "Runtime/Slate/Public/Widgets/Input/SMultiLineEditableTextBox.h"
 #include "Editor/PropertyEditor/Public/PropertyHandle.h"
 #include "Editor/PropertyEditor/Public/DetailLayoutBuilder.h"
 #include "Editor/PropertyEditor/Public/DetailCategoryBuilder.h"
@@ -322,10 +324,10 @@ protected:
 	TArray<const TCHAR *> StdLibTokens;
 };
 
-class SLuaMultiLineEditableText : public SMultiLineEditableText
+class SLuaMultiLineEditableTextBox : public SMultiLineEditableTextBox
 {
 public:
-	SLATE_BEGIN_ARGS(SLuaMultiLineEditableText) {}
+	SLATE_BEGIN_ARGS(SLuaMultiLineEditableTextBox) {}
 
 	SLATE_ARGUMENT(TWeakObjectPtr<ULuaCode>, LuaCodeOwner);
 
@@ -337,13 +339,15 @@ public:
 
 		SyntaxHighlighter = FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create();
 
-		SMultiLineEditableText::Construct(
-			SMultiLineEditableText::FArguments()
+		SMultiLineEditableTextBox::Construct(
+			SMultiLineEditableTextBox::FArguments()
 			.AutoWrapText(false)
 			.Margin(0.0f)
 			.Text(LuaCode->Code)
 			.Marshaller(SyntaxHighlighter)
-			.OnTextChanged(this, &SLuaMultiLineEditableText::UpdateLuaCode)
+			.OnTextChanged(this, &SLuaMultiLineEditableTextBox::UpdateLuaCode)
+			.BackgroundColor(FSlateColor(FLinearColor::Black))
+			.ForegroundColor(FSlateColor(FLinearColor::White))
 		);
 
 	}
@@ -364,11 +368,14 @@ protected:
 
 	virtual FVector2D ComputeDesiredSize(float LayoutScaleMultiplier) const override
 	{
-		// assume a 80*25 vt100 terminal
-		float MinimumHeight = GetFontHeight(EditableTextLayout->GetTextStyle().Font) * 25;
-		FVector2D Size = SMultiLineEditableText::ComputeDesiredSize(LayoutScaleMultiplier);
+		float MinimumHeight = 500;
+		float MaxHeight = 800;
+		
+		FVector2D Size = SMultiLineEditableTextBox::ComputeDesiredSize(LayoutScaleMultiplier);
 		if (Size.Y < MinimumHeight)
 			Size.Y = MinimumHeight;
+		if (Size.Y > MaxHeight)
+			Size.Y = MaxHeight;
 		return Size;
 	}
 
@@ -380,7 +387,7 @@ protected:
 			InsertTextAtCursor(FString("  "));
 			return FReply::Handled();
 		}
-		return SMultiLineEditableText::OnKeyChar(InGeometry, InCharacterEvent);
+		return SMultiLineEditableTextBox::OnKeyChar(InGeometry, InCharacterEvent);
 	}
 
 	virtual FReply OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override
@@ -390,7 +397,7 @@ protected:
 		{
 			return FReply::Handled();
 		}
-		return SMultiLineEditableText::OnKeyDown(InGeometry, InKeyEvent);
+		return SMultiLineEditableTextBox::OnKeyDown(InGeometry, InKeyEvent);
 	}
 
 private:
@@ -413,15 +420,12 @@ public:
 
 		BackgroundColor = FSlateColorBrush(FLinearColor::Black);
 
-		ChildSlot.VAlign(VAlign_Fill).HAlign(HAlign_Fill)[
+		ChildSlot.Padding(4) [
 			SNew(SBorder).BorderImage(&BackgroundColor).BorderBackgroundColor(FSlateColor(FLinearColor::White))
 				[
-					SNew(SGridPanel).FillColumn(0, 1.0f).FillRow(0, 2.0f)
-					+ SGridPanel::Slot(0, 0)
-				[
-					SNew(SLuaMultiLineEditableText)
+
+					SNew(SLuaMultiLineEditableTextBox)
 					.LuaCodeOwner(LuaCode)
-				]
 
 				]
 		];
@@ -449,9 +453,12 @@ void FLuaCodeCustomization::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder
 	TSharedRef<IPropertyHandle> Prop = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(ULuaCode, Code));
 	DetailBuilder.HideProperty(Prop);
 
+
 	IDetailCategoryBuilder& Category = DetailBuilder.EditCategory("Code");
 	Category.AddCustomRow(FText::FromString("Code")).WholeRowContent()[
+
 		SNew(SLuaEditor).LuaCodeOwner(LuaCode)
+
 	];
 
 }
