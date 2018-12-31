@@ -10,7 +10,7 @@ If you want modders to customize your game/project, or you need to allow game de
 
 Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
 
-Currently only Windows 64bit and Mac are supported.
+Currently Windows 64bit, Mac (both Runtime and Editor) and Android (Runtime only) are supported.
 
 ## Quickstart
 
