@@ -314,13 +314,64 @@ If all goes well you should end with something very similar:
 
 ## More Lua functions: change the current camera and Character's face
 
-We will add two more blueprint functions to the DialogueLuaState (remember to add the to the Table property)
+We will add two more blueprint functions to the TalkingCharacter Blueprint (remember to expose them the to the Table property of the LuaComponent)
 
 ![SetCamera](SimpleDialogueSystem_Data/SetCamera.PNG?raw=true "SetCamera")
 
 ![SetFace](SimpleDialogueSystem_Data/SetFace.PNG?raw=true "SetFace")
 
+Now refactor the code to change the camera when starting a dialogue session and resetting it when exiting:
+
+function character:speak()
+
+  -- set camera to the character's one
+  self.set_camera(self.owner)
+
+  -- implement a close callback that will reset both camera and face
+  function close()
+    close_dialogue()
+    -- we can use self here as we are in a closure
+    self.set_camera(get_player())
+    self.set_face(0.0)
+  end
+
+  function page1()
+    open_dialogue('Go to page 2?', {
+      {'Yes', page2},
+      {'No', close},
+    })  
+  end
+
+  function page2()
+    open_dialogue('Back to page 1?', {
+      {'Yes', page1},
+      {'No', close},
+      {'Go to page 3, please...', page3}
+    }) 
+  end
+
+  function page3()
+    self.set_face(1.0)
+    open_dialogue([[
+This is the last page,
+What do you want to do ?
+    ]], {
+      {'Quit Game', quit},
+      {'Close Dialogue', close},      
+    })
+  end
+
+  -- called by the 'Speak' event
+  page1()
+end
+
+When going to page3 the facial expression of Twinblast should change to the 'angry' one:
+
+![Page3](SimpleDialogueSystem_Data/Page3.PNG?raw=true "Page3")
+
 Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
+
+Note: is it better to place set_camera() as a global function in the DialogueLuaState ?
 
 ## More Talking Characters
 
