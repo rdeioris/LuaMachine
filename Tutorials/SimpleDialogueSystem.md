@@ -286,9 +286,20 @@ function character:speak()
     open_dialogue('Back to page 1?', {
       {'Yes', page1},
       {'No', close_dialogue},
+      {'Go to page 3, please...', page3}
     }) 
   end
-  
+
+  function page3()
+    open_dialogue([[
+This is the last page,
+What do you want to do ?
+    ]], {
+      {'Quit Game', quit},
+      {'Close Dialogue', close_dialogue},      
+    })
+  end
+
   -- called by the 'Speak' event
   page1()
 end
@@ -296,6 +307,10 @@ end
 
 Note that the system will prevent multiple dialogues from opening concurrently. This will simplify scripting too as we just need to call
 open_dialogue() again from the callback to change the content.
+
+If all goes well you should end with something very similar:
+
+![Page2](SimpleDialogueSystem_Data/Page2.PNG?raw=true "Page2")
 
 ## More Lua functions: change the current camera and Character's face
 
