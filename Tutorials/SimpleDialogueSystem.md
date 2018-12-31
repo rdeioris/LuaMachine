@@ -456,7 +456,7 @@ function merchant:speak()
     local items = {}
     for k,v in pairs(merchant.items) do
       -- v is the item name, k is its index (we use it as in lua we can only remove efficiently by index)
-      table.insert(items, {v, buy(k)})
+      table.insert(items, {'Buy ' .. v, buy(k)})
     end
     table.insert(items, {'Nothing, Thanks', close})
 
