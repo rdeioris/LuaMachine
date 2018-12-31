@@ -261,6 +261,14 @@ This is for allowing easy customization of your scripts after the packaging. Bas
 
 ![Packaging2](Docs/Screenshots/Packaging2.PNG?raw=true "Packaging2")
 
+## Android deployment
+
+The plugin supports Android systems starting from api 24. Before deployng ensure you have force the right minimal api version:
+
+![Android24](Docs/Screenshots/Android24.PNG?raw=true "Android24")
+
+Cooked LuaCode assets are converted to 32bit size_t at runtime.
+
 ## Functional Tests
 
 The projects includes various functional tests (all written as blueprints, so they could be useful as examples too).
