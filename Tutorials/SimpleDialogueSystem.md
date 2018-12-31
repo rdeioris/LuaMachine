@@ -4,7 +4,7 @@ In this tutorial we will see how to use the LuaMachine plugin to create a dialog
 
 The Lua scripts will be part of the final build (they will be cooked in the pak file as bytecode) so you will not be able to change them after the game is packaged (check the 'Variations' section at the end of the tutorial for alternative approaches like using normal scripts in the filesystem).
 
-The tutorial has beed tested on Unreal Engine 4.21 and LuaMachine 20181229 starting from the 'Third Person' Blueprint Template.
+The tutorial has beed tested on Unreal Engine 4.21 and LuaMachine 20181230 starting from the 'Third Person' Blueprint Template.
 
 ## Installing the LuaMachine plugin
 
