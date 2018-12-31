@@ -406,7 +406,71 @@ return character
 
 ## Inventory/Shop system
 
-We can easily implement a shop for each character by simply generating the questions from a Lua table:
+We can easily implement shops/inventories:
+
+```lua
+local merchant = {}
+
+merchant.shop_sign = string.format('Shop managed by %s', _VERSION)
+
+merchant.items = {'Shotgun', 'Granade', 'Guns', 'LaserGun', 'Bazooka'}
+
+function merchant:begin_play()
+  self.flash(merchant.shop_sign)
+end
+
+function merchant:begin_overlap(other)
+  if get_player() == other then
+    self.flash('Buy something')
+    current_target = self.owner
+  end
+end
+
+function merchant:end_overlap(other)
+  if get_player() == other then
+    self.flash(merchant.shop_sign)
+    current_target = nil
+  end
+end
+
+function merchant:speak()
+
+  -- reset when closing the shop
+  function close()
+    self.set_camera(get_player())
+    close_dialogue()
+  end
+
+  -- special closure for generating a callback with the index of the item to buy
+  function buy(index)
+    return function()
+        table.remove(merchant.items, index)
+        show_items()
+    end
+  end
+
+  function show_items()
+    self.set_camera(self.owner)
+
+    -- build the list of items (and the related callbacks)
+    local items = {}
+    for k,v in pairs(merchant.items) do
+      -- v is the item name, k is its index (we use it as in lua we can only remove efficiently by index)
+      table.insert(items, {v, buy(k)})
+    end
+    table.insert(items, {'Nothing, Thanks', close})
+
+    open_dialogue('Welcome to my humble shop', items)
+  end
+
+  -- triggered by 'Speak' event
+  show_items()
+end
+
+return merchant
+```
+
+![Shop](SimpleDialogueSystem_Data/Shop.PNG?raw=true "Shop")
 
 Let's improve it by adding the 'gold/money' concept:
 
