@@ -8,6 +8,8 @@ The Lua scripts will be part of the final build (they will be cooked in the pak 
 
 The tutorial has beed tested on Unreal Engine 4.21 and LuaMachine 20181230 starting from the 'Third Person' Blueprint Template.
 
+Blueprints will be used for the whole tutorial, at the end of the page you will find a C++ implementation too.
+
 ## Installing the LuaMachine plugin
 
 Download the latest zip file for your specific Unreal Engine version and operating system from the releases page: (https://github.com/rdeioris/LuaMachine/releases) and unzip it into the Plugins/ directory of your project (create it if it does not exist).
