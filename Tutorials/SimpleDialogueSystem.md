@@ -34,7 +34,9 @@ It is a perfect choice as it includes facial morph targets that will give more e
 
 ![ContentBrowser](SimpleDialogueSystem_Data/ContentBrowser.PNG?raw=true "ContentBrowser")
 
-Create a new Character Blueprint and add a camera component pointing to the face of Twinblast, A Sphere Collider for detecting when the player is near enough, a Text Render for simple in-world messages and (obviously) a LuaComponent. Add a variable of type 'LuaValue' named 'TalkingTable' (i will explain it later)
+Create a new Character Blueprint and add a camera component pointing to the face of Twinblast, a Sphere Collider for detecting when the player is near enough, a Text Render for simple in-world messages and (obviously) a LuaComponent.
+
+Finally, add a variable of type 'LuaValue' named 'TalkingTable' (i will explain it later)
 
 ![TalkingCharacter](SimpleDialogueSystem_Data/TalkingCharacter.PNG?raw=true "TalkingCharacter")
 
