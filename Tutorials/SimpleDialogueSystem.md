@@ -316,17 +316,21 @@ If all goes well you should end with something very similar:
 
 Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
 
+## More Talking Characters
+
 ## Inventory/Shop system
 
 We can easily implement a shop for each character by simply generating the questions from a Lua table:
 
 Let's improve it by adding the 'gold/money' concept:
 
-## More Talking Characters
+
 
 ## Cooking and Packaging
 
 ## Variations
 
 ### From LuaCode Asset to filesystem-based scripts
+
+### Using C++ instead of Blueprint Nodes
 
