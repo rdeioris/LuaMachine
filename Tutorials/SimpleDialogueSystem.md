@@ -474,13 +474,102 @@ return merchant
 
 Let's improve it by adding the 'gold/money' concept:
 
+First, add a player_gold Integer item in the Table of the DialogueLuaState and set to something like '4'. In this
+way the merchant will be able to access the amount of player gold.
 
+```lua
+local merchant = {}
+
+merchant.shop_sign = string.format('Shop managed by %s', _VERSION)
+
+merchant.items = {'Shotgun', 'Granade', 'Guns', 'LaserGun', 'Bazooka'}
+
+-- increases whenever the merchant sells something
+merchant.gold = 0
+
+function merchant:begin_play()
+  self.flash(merchant.shop_sign)
+end
+
+function merchant:begin_overlap(other)
+  if get_player() == other then
+    self.flash('Buy something')
+    current_target = self.owner
+  end
+end
+
+function merchant:end_overlap(other)
+  if get_player() == other then
+    self.flash(merchant.shop_sign)
+    current_target = nil
+  end
+end
+
+function merchant:speak()
+
+  -- reset when closing the shop
+  function close()
+    self.set_camera(get_player())
+    close_dialogue()
+  end
+
+  -- special closure for generating a callback with the index of the item to buy
+  function buy(index)
+    return function()
+        if player_gold <= 0 then
+          open_dialogue('Not enough gold', {{'Sorry', show_items}})
+        else
+          table.remove(merchant.items, index)
+          merchant.gold = merchant.gold + 1
+          player_gold = player_gold - 1
+          show_items()
+        end
+    end
+  end
+
+  function show_items()
+    self.set_camera(self.owner)
+
+    -- build the list of items (and the related callbacks)
+    local items = {}
+    for k,v in pairs(merchant.items) do
+      -- v is the item name, k is its index (we use it as in lua we can only remove efficiently by index)
+      table.insert(items, {'Buy ' .. v, buy(k)})
+    end
+    table.insert(items, {'Nothing, Thanks', close})
+
+    open_dialogue([[Welcome to my humble shop,
+      You have ]] .. player_gold .. ' gold', items)
+  end
+
+  -- triggered by 'Speak' event
+  show_items()
+end
+
+return merchant
+```
 
 ## Cooking and Packaging
 
+One of the advantages of using LuaCode assets, is that they will be built as normal assets and they will be converted to bytecode by default. The cooking system is smart enough to adapt the bytecode even if you want to build the project for systems (like android) having low level differences (that would break on bytecode generated on another system).
+
 ## Variations
 
+The tutorial aims at showing a simple approach, but you can obviously using various techinques. The following variations could be of interest:
+
 ### From LuaCode Asset to filesystem-based scripts
+
+If you want to allow the user to modify/hack your game after it has been built, you can use normal filesystem-based lua scripts.
+
+Just place them in the Content directory (it is added by default to the Lua package search path) and change the TalkingCharacter Blueprint to use the filename as the source script:
+
+![FromFile](SimpleDialogueSystem_Data/FromFile.PNG?raw=true "FromFile")
+
+Eventually you can use both (to allow some form of modding):
+
+![Modding](SimpleDialogueSystem_Data/Modding.PNG?raw=true "Modding")
+
+We first check for a Lua file, if it is not available (returns nil in such a case), we use the LuaCode asset.
 
 ### Using C++ instead of Blueprint Nodes
 
