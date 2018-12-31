@@ -305,7 +305,7 @@ What do you want to do ?
 end
 ```
 
-Note that the system will prevent multiple dialogues from opening concurrently. This will simplify scripting too as we just need to call
+Note that the open/close dialogue logic implemented in the Blueprint will prevent multiple dialogues from opening concurrently. This will simplify scripting too as we just need to call
 open_dialogue() again from the callback to change the content.
 
 If all goes well you should end with something very similar:
