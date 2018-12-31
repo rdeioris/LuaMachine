@@ -314,6 +314,12 @@ If all goes well you should end with something very similar:
 
 ## More Lua functions: change the current camera and Character's face
 
+We will add two more blueprint functions to the DialogueLuaState (remember to add the to the Table property)
+
+![SetCamera](SimpleDialogueSystem_Data/SetCamera.PNG?raw=true "SetCamera")
+
+![SetFace](SimpleDialogueSystem_Data/SetFace.PNG?raw=true "SetFace")
+
 Challenge: improve the set_camera() function to allow for custom blend time specified from Lua.
 
 ## More Talking Characters
