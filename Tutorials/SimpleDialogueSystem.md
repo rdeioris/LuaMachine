@@ -375,6 +375,35 @@ Note: is it better to place set_camera() as a global function in the DialogueLua
 
 ## More Talking Characters
 
+We can now refactor the TalkingCharacter Blueprint to allow to map a different script to each instance:
+
+![MultipleCharacters](SimpleDialogueSystem_Data/MultipleCharacters.PNG?raw=true "MultipleCharacters")
+
+Just create two more simple scripts (you are not required to implement all the events):
+
+```lua
+local character = {}
+
+function character:begin_play()
+  self.flash('I am another begin_play() function...')
+end
+
+return character
+```
+
+```lua
+local character = {}
+
+function character:begin_play()
+  self.flash('Too far to see my name...')
+  self.set_face(1.0)
+end
+
+return character
+```
+
+![ThreeScripts](SimpleDialogueSystem_Data/ThreeScripts.PNG?raw=true "ThreeScripts")
+
 ## Inventory/Shop system
 
 We can easily implement a shop for each character by simply generating the questions from a Lua table:
