@@ -13,6 +13,29 @@ Note that is has been tested with LuaMachine 20190122 and Unreal Engine 4.21 usi
 
 ## Getting the list of UProperties
 
+```cpp
+FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
+{
+	if (Object.Type != ELuaValueType::UObject)
+		return FLuaValue();
+
+	UStruct* Class = Cast<UStruct>(Object.Object);
+	if (!Class)
+		Class = Object.Object->GetClass();
+
+	FLuaValue PropertiesArray = CreateLuaTable();
+	int32 Index = 0;
+
+	for (TFieldIterator<UProperty> PropsIterator(Class); PropsIterator; ++PropsIterator)
+	{
+		UProperty* Property = *PropsIterator;
+		PropertiesArray.SetFieldByIndex(Index++, FLuaValue(Property->GetName()));
+	}
+
+	return PropertiesArray;
+}
+```
+
 ## Getting/Setting Properties
 
 ## Syntactic Sugar
