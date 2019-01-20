@@ -24,3 +24,11 @@ Note that is has been tested with LuaMachine 20190122 and Unreal Engine 4.21 usi
 ## Bonus: calling UObject's methods
 
 ## Bonus: binding lua functions to UObject's events
+
+## Bonus: converting USTRUCTs to FLuaValues
+
+## What to do now ?
+
+* try implementing a TMap wrapper
+
+* Add more USTRUCTs conversions
