@@ -199,8 +199,7 @@ public:
 // Sets default values for this component's properties
 ULuaReflectionComponent::ULuaReflectionComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
+	// no need to tick
 	PrimaryComponentTick.bCanEverTick = false;
 }
 
@@ -233,6 +232,8 @@ void ULuaReflectionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 ```
+
+## Adding the Runtime Shell
 
 ## Managing ArrayProperties
 
