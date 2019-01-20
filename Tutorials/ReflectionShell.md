@@ -11,9 +11,19 @@ Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using
 
 ## Creating the LuaReflectionState
 
+As always, we start by creating a new ULuaState. This will be the Lua VM targeted at reflection.
+
+Just create a new C++ class named 'LuaReflectionState' inheriting from 'LuaState'
+
 ## Getting the list of UProperties
 
 ```cpp
+ULuaReflectionState::ULuaReflectionState()
+{
+	Table.Add("get_properties", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(ULuaReflectionState, GetProperties)));
+}
+
+
 FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
 {
 	if (Object.Type != ELuaValueType::UObject)
@@ -34,7 +44,13 @@ FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
 
 	return PropertiesArray;
 }
+
+Please py attention to the weird naming scheme as i am casting to UStruct but i am calling it 'Class'. This will be able to support USTRUCT's too if you want to improve the system.
 ```
+
+Now let's test it by calling Lua's get_properties() from the Mannequin's graph:
+
+
 
 ## Getting/Setting Properties
 
