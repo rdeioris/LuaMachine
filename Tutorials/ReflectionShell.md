@@ -17,6 +17,61 @@ Note that is has been tested with LuaMachine 20190122 and Unreal Engine 4.21 usi
 
 ## Syntactic Sugar
 
+```lua
+local reflection = {}
+
+function reflection.__index(t, key)
+  property_type = get_property_type(t.uobject, key)
+
+  if property_type == 'ArrayProperty' then
+    local new_table = {uobject=t.uobject, array_key=key}
+    setmetatable(new_table, {
+      __index = function(array, array_index)
+        return wrap_uobject(get_array_property(array.uobject, array.array_key, array_index-1))
+      end,
+      __newindex = function(array, array_index, array_value)
+        return wrap_uobject(set_array_property(array.uobject, array.array_key, array_index-1, array_value))
+      end,
+      __len = function(array)
+         return get_array_property_len(array.uobject, array.array_key)
+      end
+    })
+    return new_table
+
+  elseif not property_type then
+    ufunction_ref = get_function(t.uobject, key)
+    if ufunction_ref then
+      new_ufunction = { uobject=t.uobject, ufunction=ufunction_ref }
+      setmetatable(new_ufunction, {
+        __call = function(vtable, ...)
+          return call_uobject_method(vtable.uobject, vtable.ufunction, arg)
+        end
+      })
+      return new_ufunction
+    end
+    return nil
+  end
+
+  return wrap_uobject(get_property(t.uobject, key))
+end
+
+function reflection.__newindex(t, key, value)
+  set_property(t.uobject, key, value)
+end
+
+function wrap_uobject(uobject)
+  if type(uobject) == 'userdata' then
+    local new_table = {}
+    new_table.uobject = uobject
+    setmetatable(new_table, reflection)
+    return new_table
+  end
+  return uobject
+end
+
+return wrap_uobject
+```
+
 ## Managing ArrayProperties
 
 ## The LuaReflectionComponent
