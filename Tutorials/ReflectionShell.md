@@ -39,7 +39,7 @@ FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
 ## Getting/Setting Properties
 
 ```cpp
-FLuaValue UShellLuaState::GetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Index)
+FLuaValue ULuaReflectionState::GetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Index)
 {
 	if (Object.Type != ELuaValueType::UObject)
 		return FLuaValue();
@@ -61,7 +61,7 @@ FLuaValue UShellLuaState::GetProperty(FLuaValue Object, FLuaValue Name, FLuaValu
 	return FLuaValue();
 }
 
-void UShellLuaState::SetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Value, FLuaValue Index)
+void ULuaReflectionState::SetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Value, FLuaValue Index)
 {
 	if (Object.Type != ELuaValueType::UObject)
 		return;
