@@ -38,6 +38,50 @@ FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
 
 ## Getting/Setting Properties
 
+```cpp
+FLuaValue UShellLuaState::GetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Index)
+{
+	if (Object.Type != ELuaValueType::UObject)
+		return FLuaValue();
+
+	if (Name.Type != ELuaValueType::String)
+		return FLuaValue();
+
+	UStruct* Class = Cast<UStruct>(Object.Object);
+	if (!Class)
+		Class = Object.Object->GetClass();
+
+	UProperty* Property = Class->FindPropertyByName(Name.ToName());
+	if (Property)
+	{
+		bool bSuccess;
+		return FromUProperty(Object.Object, Property, bSuccess, Index.ToInteger());
+	}
+
+	return FLuaValue();
+}
+
+void UShellLuaState::SetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Value, FLuaValue Index)
+{
+	if (Object.Type != ELuaValueType::UObject)
+		return;
+
+	if (Name.Type != ELuaValueType::String)
+		return;
+
+	UStruct* Class = Cast<UStruct>(Object.Object);
+	if (!Class)
+		Class = Object.Object->GetClass();
+
+	UProperty* Property = Class->FindPropertyByName(Name.ToName());
+	if (Property)
+	{
+		bool bSuccess;
+		ToUProperty(Object.Object, Property, Value, bSuccess, Index.ToInteger());
+	}
+}
+```
+
 ## Syntactic Sugar
 
 ```lua
