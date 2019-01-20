@@ -229,7 +229,59 @@ void ULuaReflectionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 ## Bonus: calling UObject's methods
 
-## Bonus: binding lua functions to UObject's events
+## Bonus: binding Lua functions to UObject's events
+
+```cpp
+void ULuaReflectionState::BindEvent(FLuaValue Object, FLuaValue Name, FLuaValue Callable)
+{
+	if (Object.Type != ELuaValueType::UObject)
+		return;
+
+	if (Name.Type != ELuaValueType::String)
+		return;
+
+	UStruct* Class = Cast<UStruct>(Object.Object);
+	if (!Class)
+		Class = Object.Object->GetClass();
+
+	UProperty* Property = Class->FindPropertyByName(Name.ToName());
+	if (Property)
+	{
+		UMulticastDelegateProperty* MulticastDelegateProperty = Cast<UMulticastDelegateProperty>(Property);
+		if (MulticastDelegateProperty)
+		{
+			FMulticastScriptDelegate* MulticastDelegate = MulticastDelegateProperty->GetPropertyValuePtr_InContainer(Object.Object);
+			ULuaDelegate *LuaDelegate = NewObject<ULuaDelegate>();
+			LuaDelegate->SetLuaCallableAndSignature(Callable, MulticastDelegateProperty->SignatureFunction);
+			FScriptDelegate Delegate;
+			Delegate.BindUFunction(LuaDelegate, "LuaFakeUFunction");
+			MulticastDelegate->Add(Delegate);
+		}
+	}
+}
+
+void ULuaDelegate::ProcessEvent(UFunction *Function, void *Parms)
+{
+	if (!Callable.LuaState)
+		return;
+
+	// arguments
+	TArray<FLuaValue> Args;
+	for (TFieldIterator<UProperty> FArgs(CallableSignature); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	{
+		UProperty *Prop = *FArgs;
+		bool bSuccess;
+		Args.Add(Callable.LuaState->FromUProperty((UObject *)Parms, Prop, bSuccess));
+	}
+
+	ULuaBlueprintFunctionLibrary::LuaValueCall(Callable, Args);
+}
+
+void ULuaDelegate::LuaFakeUFunction()
+{
+
+}
+```
 
 ## Bonus: converting USTRUCTs to FLuaValues
 
