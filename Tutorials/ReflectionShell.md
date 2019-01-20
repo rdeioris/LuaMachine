@@ -7,7 +7,7 @@ If you know what you are doing, you can implement UObject's reflection easily in
 
 This tutorial will show you how with a bunch of C++ lines you can inspect/modify UObject's at runtime (and obviously make mess eveywhere).
 
-Note that is has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using the ThirdPersonCharacter template.
+Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using the ThirdPersonCharacter template.
 
 ## Creating the LuaReflectionState
 
