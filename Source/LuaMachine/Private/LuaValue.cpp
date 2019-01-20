@@ -26,7 +26,60 @@ FString FLuaValue::ToString()
 	case ELuaValueType::Thread:
 		return FString::Printf(TEXT("thread: %d"), LuaRef);
 	}
-	return FString(TEXT("None"));
+	return FString(TEXT("nil"));
+}
+
+FName FLuaValue::ToName()
+{
+	return FName(*ToString());
+}
+
+int32 FLuaValue::ToInteger()
+{
+	switch (Type)
+	{
+	case ELuaValueType::Bool:
+		return Bool ? 1 : 0;
+	case ELuaValueType::Integer:
+		return Integer;
+	case ELuaValueType::Number:
+		return Number;
+	case ELuaValueType::String:
+		return FCString::Atoi(*String);
+	}
+	return 0;
+}
+
+float FLuaValue::ToFloat()
+{
+	switch (Type)
+	{
+	case ELuaValueType::Bool:
+		return Bool ? 1.0f : 0.0f;
+	case ELuaValueType::Integer:
+		return Integer;
+	case ELuaValueType::Number:
+		return Number;
+	case ELuaValueType::String:
+		return FCString::Atof(*String);
+	}
+	return 0.0f;
+}
+
+bool FLuaValue::ToBool()
+{
+	switch (Type)
+	{
+	case ELuaValueType::Nil:
+		return false;
+	case ELuaValueType::Bool:
+		return Bool;
+	case ELuaValueType::Integer:
+		return Integer != 0;
+	case ELuaValueType::Number:
+		return Number != 0;
+	}
+	return true;
 }
 
 FLuaValue::~FLuaValue()

@@ -84,10 +84,7 @@ UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(FLuaValue Value)
 
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
 {
-	FLuaValue LuaValue;
-	LuaValue.Type = ELuaValueType::UObject;
-	LuaValue.Object = Object;
-	return LuaValue;
+	return FLuaValue(Object);
 }
 
 
@@ -103,48 +100,17 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_BoolToLuaValue(bool Value)
 
 int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 {
-	switch (Value.Type)
-	{
-	case ELuaValueType::Bool:
-		return Value.Bool ? 1 : 0;
-	case ELuaValueType::Integer:
-		return Value.Integer;
-	case ELuaValueType::Number:
-		return Value.Number;
-	case ELuaValueType::String:
-		return FCString::Atoi(*Value.String);
-	}
-	return 0;
+	return Value.ToInteger();
 }
 
 float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(FLuaValue Value)
 {
-	switch (Value.Type)
-	{
-	case ELuaValueType::Bool:
-		return Value.Bool ? 1.0f : 0.0f;
-	case ELuaValueType::Integer:
-		return Value.Integer;
-	case ELuaValueType::Number:
-		return Value.Number;
-	case ELuaValueType::String:
-		return FCString::Atof(*Value.String);
-	}
-	return 0.0f;
+	return Value.ToFloat();
 }
 
 bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(FLuaValue Value)
 {
-	switch (Value.Type)
-	{
-	case ELuaValueType::Bool:
-		return Value.Bool;
-	case ELuaValueType::Integer:
-		return Value.Integer != 0;
-	case ELuaValueType::Number:
-		return Value.Number != 0;
-	}
-	return true;
+	return Value.ToBool();
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)

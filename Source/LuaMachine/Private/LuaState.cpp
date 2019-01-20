@@ -7,6 +7,7 @@
 #include "Runtime/Core/Public/Misc/FileHelper.h"
 #include "Runtime/Core/Public/Misc/Paths.h"
 #include "Runtime/Core/Public/Serialization/BufferArchive.h"
+#include "Runtime/CoreUObject/Public/UObject/TextProperty.h"
 
 ULuaState::ULuaState()
 {
@@ -971,5 +972,96 @@ ULuaState::~ULuaState()
 		lua_close(L);
 
 	FLuaMachineModule::Get().UnregisterLuaState(this);
+}
+
+
+#define LUAVALUE_PROP_CAST(Type, Type2) Type* _##Type## = Cast<Type>(Property);\
+	if (_##Type##)\
+	{\
+		return FLuaValue((Type2)_##Type##->GetPropertyValue_InContainer(Object, Index));\
+	}
+
+#define LUAVALUE_PROP_CAST_TOSTRING(Type) Type* _##Type## = Cast<Type>(Property);\
+	if (_##Type##)\
+	{\
+		return FLuaValue(_##Type##->GetPropertyValue_InContainer(Object, Index).ToString());\
+	}
+
+#define LUAVALUE_PROP_SET(Type, Value) Type* _##Type## = Cast<Type>(Property);\
+	if (_##Type##)\
+	{\
+		_##Type##->SetPropertyValue_InContainer(Object, Value, Index);\
+		return;\
+	}
+
+FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, int32 Index)
+{
+	LUAVALUE_PROP_CAST(UBoolProperty, bool);
+	LUAVALUE_PROP_CAST(UFloatProperty, float);
+	LUAVALUE_PROP_CAST(UIntProperty, int32);
+	LUAVALUE_PROP_CAST(UUInt32Property, int32);
+	LUAVALUE_PROP_CAST(UInt16Property, int32);
+	LUAVALUE_PROP_CAST(UInt8Property, int32);
+	LUAVALUE_PROP_CAST(UByteProperty, int32);
+	LUAVALUE_PROP_CAST(UUInt16Property, int32);
+
+	LUAVALUE_PROP_CAST(UStrProperty, FString);
+	LUAVALUE_PROP_CAST_TOSTRING(UNameProperty);
+	LUAVALUE_PROP_CAST_TOSTRING(UTextProperty);
+
+	LUAVALUE_PROP_CAST(UClassProperty, UObject*);
+	LUAVALUE_PROP_CAST(UObjectProperty, UObject*);
+
+
+	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
+	if (ObjectPropertyBase)
+	{
+		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Object, Index));
+	}
+
+	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
+	if (WeakObjectProperty)
+	{
+		const FWeakObjectPtr& WeakPtr = WeakObjectProperty->GetPropertyValue_InContainer(Object, Index);
+		return FLuaValue(WeakPtr.Get());
+	}
+
+	UE_LOG(LogLuaMachine, Error, TEXT("Unsupported UProperty class: %s"), *Property->GetClass()->GetName());
+	return FLuaValue();
+}
+
+void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Value, int32 Index)
+{
+	LUAVALUE_PROP_SET(UBoolProperty, Value.ToBool());
+	LUAVALUE_PROP_SET(UFloatProperty, Value.ToFloat());
+	LUAVALUE_PROP_SET(UIntProperty, Value.ToInteger());
+	LUAVALUE_PROP_SET(UUInt32Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(UInt16Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(UInt8Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(UByteProperty, Value.ToInteger());
+	LUAVALUE_PROP_SET(UUInt16Property, Value.ToInteger());
+
+	LUAVALUE_PROP_SET(UStrProperty, Value.ToString());
+	LUAVALUE_PROP_SET(UNameProperty, Value.ToName());
+	LUAVALUE_PROP_SET(UTextProperty, FText::FromString(Value.ToString()));
+
+	LUAVALUE_PROP_SET(UClassProperty, Value.Object);
+	LUAVALUE_PROP_SET(UObjectProperty, Value.Object);
+
+	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
+	if (ObjectPropertyBase)
+	{
+		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Object, Value.Object, Index);
+	}
+
+	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
+	if (WeakObjectProperty)
+	{
+		FWeakObjectPtr WeakPtr(Value.Object);
+		WeakObjectProperty->SetPropertyValue_InContainer(Object, WeakPtr, Index);
+		return;
+	}
+
+	UE_LOG(LogLuaMachine, Error, TEXT("Unsupported UProperty class: %s"), *Property->GetClass()->GetName());
 }
 

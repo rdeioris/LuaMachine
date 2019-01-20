@@ -7,6 +7,7 @@
 #include "LuaState.h"
 #include "LuaValue.h"
 #include "UObject/TextProperty.h"
+#include "Runtime/Engine/Classes/Engine/World.h"
 #include "LuaBlueprintFunctionLibrary.generated.h"
 
 /**

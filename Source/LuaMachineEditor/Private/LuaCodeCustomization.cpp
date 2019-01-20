@@ -76,6 +76,7 @@ public:
 
 		ADD_RULE("nil");
 		ADD_RULE("self");
+		ADD_RULE("arg");
 		ADD_RULE("_G");
 		ADD_RULE("_VERSION");
 
@@ -91,6 +92,7 @@ public:
 		ADD_RULE("for");
 		ADD_RULE("then");
 		ADD_RULE("else");
+		ADD_RULE("elseif");
 		ADD_RULE("function");
 		ADD_RULE("not");
 		ADD_RULE("true");
@@ -234,7 +236,7 @@ protected:
 							}
 							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar) && NextChar != TCHAR('_') && PrevChar != TCHAR('_'))
 							{
-								if (TokenString == TEXT("nil") || TokenString == TEXT("self") || TokenString == TEXT("_G") || TokenString == TEXT("_VERSION"))
+								if (TokenString == TEXT("nil") || TokenString == TEXT("self") || TokenString == TEXT("_G") || TokenString == TEXT("_VERSION") || TokenString == TEXT("arg"))
 								{
 									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
 									CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;

@@ -78,8 +78,11 @@ struct LUAMACHINE_API FLuaValue
 
 	FLuaValue(UObject* InObject) : FLuaValue()
 	{
-		Type = ELuaValueType::UObject;
-		Object = InObject;
+		if (InObject)
+		{
+			Type = ELuaValueType::UObject;
+			Object = InObject;
+		}
 	}
 
 	~FLuaValue();
@@ -93,6 +96,10 @@ struct LUAMACHINE_API FLuaValue
 	}
 
 	FString ToString();
+	FName ToName();
+	int32 ToInteger();
+	float ToFloat();
+	bool ToBool();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	ELuaValueType Type;
