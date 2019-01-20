@@ -994,8 +994,10 @@ ULuaState::~ULuaState()
 		return;\
 	}
 
-FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, int32 Index)
+FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, bool& bSuccess, int32 Index)
 {
+	bSuccess = true;
+
 	LUAVALUE_PROP_CAST(UBoolProperty, bool);
 	LUAVALUE_PROP_CAST(UFloatProperty, float);
 	LUAVALUE_PROP_CAST(UIntProperty, int32);
@@ -1026,12 +1028,14 @@ FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, int32 I
 		return FLuaValue(WeakPtr.Get());
 	}
 
-	UE_LOG(LogLuaMachine, Error, TEXT("Unsupported UProperty class: %s"), *Property->GetClass()->GetName());
+	bSuccess = false;
 	return FLuaValue();
 }
 
-void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Value, int32 Index)
+void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
+	bSuccess = true;
+
 	LUAVALUE_PROP_SET(UBoolProperty, Value.ToBool());
 	LUAVALUE_PROP_SET(UFloatProperty, Value.ToFloat());
 	LUAVALUE_PROP_SET(UIntProperty, Value.ToInteger());
@@ -1062,6 +1066,6 @@ void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Valu
 		return;
 	}
 
-	UE_LOG(LogLuaMachine, Error, TEXT("Unsupported UProperty class: %s"), *Property->GetClass()->GetName());
+	bSuccess = false;
 }
 
