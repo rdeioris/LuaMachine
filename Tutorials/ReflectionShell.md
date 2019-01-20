@@ -229,6 +229,53 @@ void ULuaReflectionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 ## Bonus: calling UObject's methods
 
+```cpp
+FLuaValue ULuaReflectionState::CallUObjectMethod(FLuaValue Object, FLuaValue Method, FLuaValue Args)
+{
+	if (Object.Type != ELuaValueType::UObject)
+		return FLuaValue();
+
+	if (Method.Type != ELuaValueType::UObject)
+		return FLuaValue();
+
+	UFunction* Function = (UFunction *)Method.Object;
+
+	FScopeCycleCounterUObject ObjectScope(Object.Object);
+	FScopeCycleCounterUObject FunctionScope(Function);
+
+	void* Parameters = FMemory_Alloca(Function->ParmsSize);
+	FMemory::Memzero(Parameters, Function->ParmsSize);
+
+	// arguments
+	if (Args.Type == ELuaValueType::Table)
+	{
+		int32 NArgs = 1;
+		for (TFieldIterator<UProperty> FArgs(Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+		{
+			UProperty *Prop = *FArgs;
+
+			FLuaValue Parameter = Args.GetFieldByIndex(NArgs++);
+			bool bSuccess;
+			ToUProperty((UObject *)Parameters, Prop, Parameter, bSuccess);
+		}
+	}
+
+	Object.Object->ProcessEvent(Function, Parameters);
+
+	// get return value
+	for (TFieldIterator<UProperty> FArgs(Function); FArgs; ++FArgs)
+	{
+		UProperty *Prop = *FArgs;
+		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
+			continue;
+		bool bSuccess;
+		return FromUProperty((UObject *)Parameters, Prop, bSuccess);
+	}
+
+	return FLuaValue();
+}
+```
+
 ## Bonus: binding Lua functions to UObject's events
 
 ```cpp
