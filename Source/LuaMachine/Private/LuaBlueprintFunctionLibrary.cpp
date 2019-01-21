@@ -147,38 +147,45 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
 {
+	FLuaValue ReturnValue;
+
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
-		return FLuaValue();
+		return ReturnValue;
 
-	bool bError = false;
-	if (!L->RunFile(Filename, bIgnoreNonExistent, bError, 1))
+	if (!L->RunFile(Filename, bIgnoreNonExistent, 1))
 	{
 		if (L->bLogError)
 			L->LogError(L->LastError);
 		L->ReceiveLuaError(L->LastError);
 	}
+	else
+	{
+		ReturnValue = L->ToLuaValue(-1);
+	}
 
-	FLuaValue ReturnValue = L->ToLuaValue(-1);
 	L->Pop();
 	return ReturnValue;
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString)
 {
+	FLuaValue ReturnValue;
+
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
-		return FLuaValue();
+		return ReturnValue;
 
-	bool bError = false;
 	if (!L->RunCode(CodeString, CodeString, 1))
 	{
 		if (L->bLogError)
 			L->LogError(L->LastError);
 		L->ReceiveLuaError(L->LastError);
 	}
-
-	FLuaValue ReturnValue = L->ToLuaValue(-1);
+	else
+	{
+		ReturnValue = L->ToLuaValue(-1);
+	}
 	L->Pop();
 	return ReturnValue;
 }
@@ -200,8 +207,9 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 			L->LogError(L->LastError);
 		L->ReceiveLuaError(L->LastError);
 	}
-
-	ReturnValue = L->ToLuaValue(-1);
+	else {
+		ReturnValue = L->ToLuaValue(-1);
+	}
 	L->Pop();
 	return ReturnValue;
 }

@@ -30,12 +30,21 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	TArray<TSubclassOf<ULuaState>> LuaStatesKeys;
 	LuaStates.GetKeys(LuaStatesKeys);
 
+	TMap<TSubclassOf<ULuaState>, ULuaState*> PersistentLuaStates;
+
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
-		LuaStates[LuaStateClass]->RemoveFromRoot();
+		if (LuaStates[LuaStateClass]->bPersistent)
+		{
+			PersistentLuaStates.Add(LuaStateClass, LuaStates[LuaStateClass]);
+		}
+		else
+		{
+			LuaStates[LuaStateClass]->RemoveFromRoot();
+		}
 	}
 
-	LuaStates.Empty();
+	LuaStates = PersistentLuaStates;
 }
 
 ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly)

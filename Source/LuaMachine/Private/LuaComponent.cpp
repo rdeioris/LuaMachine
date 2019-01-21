@@ -4,8 +4,6 @@
 #include "LuaMachine.h"
 #include "GameFramework/Actor.h"
 
-DEFINE_LOG_CATEGORY(LogLuaMachine);
-
 
 // Sets default values for this component's properties
 ULuaComponent::ULuaComponent()

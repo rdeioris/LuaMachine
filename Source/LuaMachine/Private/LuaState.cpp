@@ -9,6 +9,8 @@
 #include "Runtime/Core/Public/Serialization/BufferArchive.h"
 #include "Runtime/CoreUObject/Public/UObject/TextProperty.h"
 
+LUAMACHINE_API DEFINE_LOG_CATEGORY(LogLuaMachine);
+
 ULuaState::ULuaState()
 {
 	L = nullptr;
@@ -16,6 +18,7 @@ ULuaState::ULuaState()
 	bDisabled = false;
 	bLogError = true;
 	bAddProjectContentDirToPackagePath = true;
+	bPersistent = false;
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -120,8 +123,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	if (!LuaFilename.IsEmpty())
 	{
-		bool bHasError = false;
-		if (!RunFile(LuaFilename, true, bHasError))
+		if (!RunFile(LuaFilename, true))
 		{
 			if (bLogError)
 				LogError(LastError);
@@ -153,7 +155,7 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 
 }
 
-bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasError, int NRet)
+bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet)
 {
 	TArray<uint8> Code;
 	FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), Filename);
@@ -163,6 +165,8 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasErr
 		if (bIgnoreNonExistent)
 			return true;
 		LastError = FString::Printf(TEXT("Unable to open file %s"), *Filename);
+		FLuaValue LuaLastError = FLuaValue(LastError);
+		FromLuaValue(LuaLastError);
 		return false;
 	}
 
@@ -172,12 +176,12 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasErr
 		{
 			return true;
 		}
-		bHasError = true;
 		return false;
 	}
 
-	bHasError = true;
 	LastError = FString::Printf(TEXT("Unable to open file %s"), *Filename);
+	FLuaValue LuaLastError = FLuaValue(LastError);
+	FromLuaValue(LuaLastError);
 	return false;
 }
 
@@ -710,26 +714,21 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
-		bool bLuaError = false;
-		if (LuaState->bAddProjectContentDirToPackagePath && LuaState->RunFile(Key + ".lua", true, bLuaError, 1))
+		if (LuaState->bAddProjectContentDirToPackagePath && LuaState->RunFile(Key + ".lua", true, 1))
 		{
 			return 1;
 		}
-		if (bLuaError)
-		{
-			return luaL_error(L, "%s", lua_tostring(L, -1));
-		}
+		return luaL_error(L, "%s", lua_tostring(L, -1));
+
 		// now search in additional paths
 		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
 		{
-			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, bLuaError, 1))
+			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, 1))
 			{
 				return 1;
 			}
-			if (bLuaError)
-			{
-				return luaL_error(L, "%s", lua_tostring(L, -1));
-			}
+			return luaL_error(L, "%s", lua_tostring(L, -1));
+
 		}
 		return luaL_error(L, "unable to find package %s", TCHAR_TO_UTF8(*Key));
 	}

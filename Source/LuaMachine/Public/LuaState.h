@@ -10,7 +10,7 @@
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "LuaState.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
+LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
 
 /**
  *
@@ -86,6 +86,10 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool bLogError;
 
+	/* Enable it if you want this Lua state to not be destroyed during PIE. Useful for editor scripting */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bPersistent;
+
 	int32 GetTop();
 
 	FString LastError;
@@ -150,7 +154,7 @@ public:
 
 	FLuaValue CreateLuaTable();
 
-	bool RunFile(FString Filename, bool bIgnoreNonExistent, bool& bHasError, int NRet = 0);
+	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0);
 
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);
 	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
