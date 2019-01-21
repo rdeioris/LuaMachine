@@ -978,23 +978,23 @@ ULuaState::~ULuaState()
 #define LUAVALUE_PROP_CAST(Type, Type2) Type* _##Type## = Cast<Type>(Property);\
 	if (_##Type##)\
 	{\
-		return FLuaValue((Type2)_##Type##->GetPropertyValue_InContainer(Object, Index));\
+		return FLuaValue((Type2)_##Type##->GetPropertyValue_InContainer(Buffer, Index));\
 	}
 
 #define LUAVALUE_PROP_CAST_TOSTRING(Type) Type* _##Type## = Cast<Type>(Property);\
 	if (_##Type##)\
 	{\
-		return FLuaValue(_##Type##->GetPropertyValue_InContainer(Object, Index).ToString());\
+		return FLuaValue(_##Type##->GetPropertyValue_InContainer(Buffer, Index).ToString());\
 	}
 
 #define LUAVALUE_PROP_SET(Type, Value) Type* _##Type## = Cast<Type>(Property);\
 	if (_##Type##)\
 	{\
-		_##Type##->SetPropertyValue_InContainer(Object, Value, Index);\
+		_##Type##->SetPropertyValue_InContainer(Buffer, Value, Index);\
 		return;\
 	}
 
-FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index)
 {
 	bSuccess = true;
 
@@ -1018,13 +1018,13 @@ FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, bool& b
 	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
 	if (ObjectPropertyBase)
 	{
-		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Object, Index));
+		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Buffer, Index));
 	}
 
 	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
 	if (WeakObjectProperty)
 	{
-		const FWeakObjectPtr& WeakPtr = WeakObjectProperty->GetPropertyValue_InContainer(Object, Index);
+		const FWeakObjectPtr& WeakPtr = WeakObjectProperty->GetPropertyValue_InContainer(Buffer, Index);
 		return FLuaValue(WeakPtr.Get());
 	}
 
@@ -1032,7 +1032,7 @@ FLuaValue ULuaState::FromUProperty(UObject* Object, UProperty* Property, bool& b
 	return FLuaValue();
 }
 
-void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
 	bSuccess = true;
 
@@ -1055,14 +1055,14 @@ void ULuaState::ToUProperty(UObject* Object, UProperty* Property, FLuaValue Valu
 	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
 	if (ObjectPropertyBase)
 	{
-		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Object, Value.Object, Index);
+		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Buffer, Value.Object, Index);
 	}
 
 	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
 	if (WeakObjectProperty)
 	{
 		FWeakObjectPtr WeakPtr(Value.Object);
-		WeakObjectProperty->SetPropertyValue_InContainer(Object, WeakPtr, Index);
+		WeakObjectProperty->SetPropertyValue_InContainer(Buffer, WeakPtr, Index);
 		return;
 	}
 

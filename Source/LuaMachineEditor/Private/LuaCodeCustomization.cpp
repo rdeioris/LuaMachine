@@ -76,7 +76,7 @@ public:
 
 		ADD_RULE("nil");
 		ADD_RULE("self");
-		ADD_RULE("arg");
+		ADD_RULE("...");
 		ADD_RULE("_G");
 		ADD_RULE("_VERSION");
 
@@ -96,7 +96,6 @@ public:
 		ADD_RULE("function");
 		ADD_RULE("not");
 		ADD_RULE("true");
-		ADD_RULE("elseif");
 		ADD_RULE("if");
 		ADD_RULE("or");
 		ADD_RULE("until");
@@ -106,7 +105,7 @@ public:
 		ADD_RULE_BASIC("collectgarbage");
 		ADD_RULE_BASIC("require");
 		ADD_RULE_BASIC("dofile");
-		ADD_RULE_BASIC("error ");
+		ADD_RULE_BASIC("error");
 		ADD_RULE_BASIC("getmetatable");
 		ADD_RULE_BASIC("ipairs");
 		ADD_RULE_BASIC("load");
@@ -136,6 +135,10 @@ public:
 		ADD_RULE_STDLIB("file");
 		ADD_RULE_STDLIB("os");
 		ADD_RULE_STDLIB("debug");
+
+		TokenizerRules.Sort([](const FSyntaxTokenizer::FRule& A, const FSyntaxTokenizer::FRule& B) {
+			return A.MatchText.Len() > B.MatchText.Len();
+		});
 
 
 		return MakeShareable(new FLuaMachineSyntaxHighlighterTextLayoutMarshaller(FSyntaxTokenizer::Create(TokenizerRules), BasicTokens, StdLibTokens, FSyntaxTextStyle()));
@@ -236,7 +239,7 @@ protected:
 							}
 							else if (!TChar<WIDECHAR>::IsAlpha(NextChar) && !TChar<WIDECHAR>::IsDigit(NextChar) && !TChar<WIDECHAR>::IsAlpha(PrevChar) && !TChar<WIDECHAR>::IsDigit(PrevChar) && NextChar != TCHAR('_') && PrevChar != TCHAR('_'))
 							{
-								if (TokenString == TEXT("nil") || TokenString == TEXT("self") || TokenString == TEXT("_G") || TokenString == TEXT("_VERSION") || TokenString == TEXT("arg"))
+								if (TokenString == TEXT("nil") || TokenString == TEXT("self") || TokenString == TEXT("_G") || TokenString == TEXT("_VERSION") || TokenString == TEXT("..."))
 								{
 									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Nil");
 									CurrentBlockStyle = SyntaxTextStyle.NilTextStyle;

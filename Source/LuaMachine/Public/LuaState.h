@@ -169,8 +169,8 @@ public:
 
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 
-	FLuaValue FromUProperty(UObject* Object, UProperty* Property, bool& bSuccess, int32 Index=0);
-	void ToUProperty(UObject* Object, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index=0);
+	void ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
 
 	static ULuaState* GetFromExtraSpace(lua_State *L)
 	{
