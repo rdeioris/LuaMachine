@@ -344,6 +344,6 @@ void ULuaDelegate::LuaFakeUFunction()
 
 ## Bonus: working with USTRUCTs
 
-## What to do now ?
+## Super Bonus: running lua scripts from the Unreal Editor
 
-* try implementing a TMap wrapper
+
