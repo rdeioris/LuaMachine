@@ -87,7 +87,7 @@ public:
 	bool bLogError;
 
 	/* Enable it if you want this Lua state to not be destroyed during PIE. Useful for editor scripting */
-	UPROPERTY(EditAnywhere, Category = "Lua")
+	UPROPERTY(EditAnywhere)
 	bool bPersistent;
 
 	int32 GetTop();
