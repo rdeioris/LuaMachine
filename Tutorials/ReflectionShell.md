@@ -98,6 +98,8 @@ void ULuaReflectionState::SetProperty(FLuaValue Object, FLuaValue Name, FLuaValu
 }
 ```
 
+## Lua scripting
+
 ## Syntactic Sugar
 
 ```lua
