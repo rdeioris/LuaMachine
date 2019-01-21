@@ -20,6 +20,7 @@
 #include "Runtime/Slate/Public/Framework/Text/SyntaxTokenizer.h"
 #include "Runtime/Slate/Public/Framework/Text/TextLayout.h"
 #include "Runtime/Slate/Public/Framework/Text/SlateTextRun.h"
+#include "Runtime/Slate/Public/Framework/MultiBox/MultiBoxBuilder.h"
 #include "LuaMachine/Public/LuaCode.h"
 
 #define ADD_RULE(rule) TokenizerRules.Add(FSyntaxTokenizer::FRule(TEXT(rule)))
@@ -341,8 +342,19 @@ public:
 		void Construct(const FArguments& InArgs)
 	{
 		LuaCode = InArgs._LuaCodeOwner;
+		CurrentLine = 1;
+		CurrentColumn = 1;
 
 		SyntaxHighlighter = FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create();
+
+		FMenuExtensionDelegate Delegate;
+		Delegate.BindLambda([&](FMenuBuilder &Builder)
+		{
+			Builder.AddWidget(SNew(STextBlock).Text_Lambda([&]() {
+				return FText::FromString(FString::Printf(TEXT("Line: %d Column: %d"), CurrentLine, CurrentColumn));
+			}), FText::GetEmpty());
+
+		});
 
 		SMultiLineEditableTextBox::Construct(
 			SMultiLineEditableTextBox::FArguments()
@@ -353,6 +365,11 @@ public:
 			.OnTextChanged(this, &SLuaMultiLineEditableTextBox::UpdateLuaCode)
 			.BackgroundColor(FSlateColor(FLinearColor::Black))
 			.ForegroundColor(FSlateColor(FLinearColor::White))
+			.ContextMenuExtender(Delegate)
+			.OnCursorMoved_Lambda([&](const FTextLocation& Location) {
+				CurrentLine = Location.GetLineIndex() + 1;
+				CurrentColumn = Location.GetOffset() + 1;
+			})
 		);
 
 	}
@@ -364,6 +381,9 @@ public:
 	}
 
 protected:
+
+	int32 CurrentLine;
+	int32 CurrentColumn;
 
 	float GetFontHeight(const FSlateFontInfo& FontInfo) const
 	{
