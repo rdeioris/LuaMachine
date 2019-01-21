@@ -286,6 +286,8 @@ FLuaValue ULuaReflectionState::CallUObjectMethod(FLuaValue Object, FLuaValue Met
 }
 ```
 
+## Bonus: calling static methods from Blueprint Function Libraries
+
 ## Bonus: binding Lua functions to UObject's events
 
 ```cpp
@@ -340,10 +342,8 @@ void ULuaDelegate::LuaFakeUFunction()
 }
 ```
 
-## Bonus: converting USTRUCTs to FLuaValues
+## Bonus: working with USTRUCTs
 
 ## What to do now ?
 
 * try implementing a TMap wrapper
-
-* Add more USTRUCTs conversions
