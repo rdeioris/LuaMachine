@@ -677,3 +677,11 @@ void ULuaBlueprintFunctionLibrary::LuaGCRestart(UObject* WorldContextObject, TSu
 
 	L->GC(LUA_GCRESTART);
 }
+
+void ULuaBlueprintFunctionLibrary::LuaSetUserDataMetaTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue MetaTable)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+	L->SetUserDataMetaTable(MetaTable);
+}

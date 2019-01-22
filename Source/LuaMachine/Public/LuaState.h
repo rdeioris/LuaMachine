@@ -77,6 +77,9 @@ public:
 	UPROPERTY(EditAnywhere)
 	FString OverridePackageCPath;
 
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "UserData MetaTable from CodeAsset"))
+	ULuaCode* UserDataMetaTableFromCodeAsset;
+
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);
 
@@ -101,6 +104,7 @@ public:
 	void NewTable();
 
 	void SetMetaTable(int Index);
+	void GetMetaTable(int Index);
 
 	void SetField(int Index, const char* FieldName);
 
@@ -197,9 +201,13 @@ public:
 		UE_LOG(LogLuaMachine, Error, TEXT("%s"), *Message);
 	}
 
+	void SetUserDataMetaTable(FLuaValue MetaTable);
+
 protected:
 	lua_State* L;
 	bool bDisabled;
 
 	UWorld* CurrentWorld;
+
+	FLuaValue UserDataMetaTable;
 };

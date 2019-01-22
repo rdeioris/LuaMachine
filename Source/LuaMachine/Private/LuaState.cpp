@@ -135,6 +135,22 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		}
 	}
 
+	if (UserDataMetaTableFromCodeAsset)
+	{
+		if (!RunCodeAsset(UserDataMetaTableFromCodeAsset, 1))
+		{
+			if (bLogError)
+				LogError(LastError);
+			ReceiveLuaError(LastError);
+			bDisabled = true;
+			lua_close(L);
+			L = nullptr;
+			return nullptr;
+		}
+		UserDataMetaTable = ToLuaValue(-1);
+		Pop();
+	}
+
 	return this;
 }
 
@@ -317,11 +333,30 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 			}
 		}
 		else {
+			bool bHasMetaTable = false;
+			if (UserDataMetaTable.Type == ELuaValueType::Table)
+			{
+				FromLuaValue(UserDataMetaTable);
+				SetMetaTable(-2);
+				GetMetaTable(-1);
+				bHasMetaTable = true;
+			}
+			else
+			{
+				NewTable();
+			}
 			// allow comparison between userdata/UObject/UFunction
-			NewTable();
 			PushCFunction(ULuaState::MetaTableFunctionUserData__eq);
 			SetField(-2, "__eq");
-			SetMetaTable(-2);
+			
+			if (bHasMetaTable)
+			{
+				Pop();
+			}
+			else
+			{
+				SetMetaTable(-2);
+			}
 		}
 	}
 	break;
@@ -757,6 +792,11 @@ void ULuaState::SetMetaTable(int Index)
 	lua_setmetatable(L, Index);
 }
 
+void ULuaState::GetMetaTable(int Index)
+{
+	lua_getmetatable(L, Index);
+}
+
 void ULuaState::SetField(int Index, const char* FieldName)
 {
 	lua_setfield(L, Index, FieldName);
@@ -1066,5 +1106,10 @@ void ULuaState::ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, 
 	}
 
 	bSuccess = false;
+}
+
+void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
+{
+	UserDataMetaTable = MetaTable;
 }
 
