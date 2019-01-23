@@ -58,19 +58,21 @@ public class LuaMachine : ModuleRules
             });
         }
 
+        string ThirdPartyDirectory = System.IO.Path.Combine(ModuleDirectory, "..", "ThirdParty");
+
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53_win64.lib"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_win64.lib"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53_mac.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_mac.a"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.Android)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ModuleDirectory, "lua53_android.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_android.a"));
         }
 
     }
