@@ -1014,22 +1014,22 @@ ULuaState::~ULuaState()
 }
 
 
-#define LUAVALUE_PROP_CAST(Type, Type2) Type* _##Type## = Cast<Type>(Property);\
-	if (_##Type##)\
+#define LUAVALUE_PROP_CAST(Type, Type2) Type* __##Type##__ = Cast<Type>(Property);\
+	if (__##Type##__)\
 	{\
-		return FLuaValue((Type2)_##Type##->GetPropertyValue_InContainer(Buffer, Index));\
+		return FLuaValue((Type2)__##Type##__->GetPropertyValue_InContainer(Buffer, Index));\
 	}
 
-#define LUAVALUE_PROP_CAST_TOSTRING(Type) Type* _##Type## = Cast<Type>(Property);\
-	if (_##Type##)\
+#define LUAVALUE_PROP_CAST_TOSTRING(Type) Type* __##Type##__ = Cast<Type>(Property);\
+	if (__##Type##__)\
 	{\
-		return FLuaValue(_##Type##->GetPropertyValue_InContainer(Buffer, Index).ToString());\
+		return FLuaValue(__##Type##__->GetPropertyValue_InContainer(Buffer, Index).ToString());\
 	}
 
-#define LUAVALUE_PROP_SET(Type, Value) Type* _##Type## = Cast<Type>(Property);\
-	if (_##Type##)\
+#define LUAVALUE_PROP_SET(Type, Value) Type* __##Type##__ = Cast<Type>(Property);\
+	if (__##Type##__)\
 	{\
-		_##Type##->SetPropertyValue_InContainer(Buffer, Value, Index);\
+		__##Type##__->SetPropertyValue_InContainer(Buffer, Value, Index);\
 		return;\
 	}
 
