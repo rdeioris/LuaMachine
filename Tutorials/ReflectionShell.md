@@ -13,7 +13,15 @@ Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using
 
 As always, we start by creating a new ULuaState. This will be the base (we will work on an inherited Blueprint class) for the Lua VM targeted at reflection.
 
-Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaState'
+Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaState', and create a blueprint subclass of it named 'LuaReflectionState'
+
+## Assigning a 'Lua name' to an Actor
+
+Next step is creating a component that will automatically assign a Lua global name to an actor:
+
+* Create a new Blueprint Class of type ActorComponent and name it 'LuaReflectionComponent'
+* Add a public variable of type 'class of LuaReflectionStateBase' named 'State'
+
 
 ## Getting the list of UProperties
 
