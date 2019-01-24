@@ -40,6 +40,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaCreateObject(UObject* InObject);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
+	static FLuaValue LuaCreateObjectInState(UObject* WorldContextObject, TSubclassOf<ULuaState> State, UObject* InObject);
+
 	UFUNCTION(BlueprintCallable, meta=(WorldContext="WorldContextObject"))
 	static FLuaValue LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name);
 

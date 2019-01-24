@@ -44,6 +44,20 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 	return L->CreateLuaTable();
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObjectInState(UObject* WorldContextObject, TSubclassOf<ULuaState> State, UObject* InObject)
+{
+	FLuaValue LuaValue;
+	if (!InObject)
+		return LuaValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return LuaValue;
+
+	LuaValue = FLuaValue(InObject);
+	LuaValue.LuaState = L;
+	return LuaValue;
+}
+
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 {
 	return Value.ToString();
