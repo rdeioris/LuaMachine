@@ -11,9 +11,9 @@ Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using
 
 ## Creating the LuaReflectionState
 
-As always, we start by creating a new ULuaState. This will be the Lua VM targeted at reflection.
+As always, we start by creating a new ULuaState. This will be the base (we will work on an inherited Blueprint class) for the Lua VM targeted at reflection.
 
-Just create a new C++ class named 'LuaReflectionState' inheriting from 'LuaState'
+Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaState'
 
 ## Getting the list of UProperties
 
