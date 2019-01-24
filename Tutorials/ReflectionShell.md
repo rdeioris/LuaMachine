@@ -20,7 +20,9 @@ Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaS
 Next step is creating a component that will automatically assign a Lua global name to an actor:
 
 * Create a new Blueprint Class of type ActorComponent and name it 'LuaReflectionComponent'
-* Add a public variable of type 'class of LuaReflectionStateBase' named 'State'
+* Add a variable of type 'class of LuaReflectionStateBase' named 'State', and assign it a default value of 'LuaReflectionState'
+* Add a public variable of type 'String' (this will be the name exposed to the Lua VM)
+* Finally assign the 'self' UObject to the Lua name (in the 'Begin Play' event)
 
 
 ## Getting the list of UProperties
