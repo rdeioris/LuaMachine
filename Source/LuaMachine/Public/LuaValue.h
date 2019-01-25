@@ -1,10 +1,10 @@
-// Copyright 2018 - Roberto De Ioris
+// Copyright 2019 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "lua/lua.hpp"
+#include "ThirdParty/lua/lua.hpp"
 #include "LuaValue.generated.h"
 
 // required for Mac

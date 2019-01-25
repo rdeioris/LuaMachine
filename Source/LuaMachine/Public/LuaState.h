@@ -1,10 +1,10 @@
-// Copyright 2018 - Roberto De Ioris
+// Copyright 2019 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/Blueprint.h"
-#include "lua/lua.hpp"
+#include "ThirdParty/lua/lua.hpp"
 #include "LuaValue.h"
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"

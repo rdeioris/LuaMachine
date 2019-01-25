@@ -1,4 +1,4 @@
-// Copyright 2018 - Roberto De Ioris
+// Copyright 2019 - Roberto De Ioris
 
 #include "LuaMachine.h"
 #if WITH_EDITOR

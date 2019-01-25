@@ -1,4 +1,4 @@
-// Copyright 2018 - Roberto De Ioris
+// Copyright 2019 - Roberto De Ioris
 
 #include "LuaValueCustomization.h"
 #include "LuaMachine/Public/LuaValue.h"
