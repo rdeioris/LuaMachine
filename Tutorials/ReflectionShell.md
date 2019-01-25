@@ -1,4 +1,4 @@
-# Implementing a Lua Reflection Shell
+# Implementing a Lua Reflection Shell (WORK IN PROGRESS)
 
 The main objective of the LuaMachine project is to safely expose Lua apis to scripters (and modders), so the Unreal Engine reflection system is
 completely hidden by default.
@@ -47,6 +47,24 @@ FLuaValue ULuaReflectionStateBase::UnrealGetName(FLuaValue Value)
 
 	return FLuaValue(Value.Object->GetName());
 }
+```
+
+```lua
+local reflection = {}
+
+function reflection:__tostring()
+  return string.format('uobject: %s', unreal_get_name(self))
+end
+
+function reflection:__index(key)
+  return unreal_get_property(self, key)
+end
+
+function reflection:__newindex(key, value)
+  return unreal_set_property(self, key, value)
+end
+
+return reflection
 ```
 
 ## Getting the list of UProperties
