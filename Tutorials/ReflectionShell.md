@@ -22,13 +22,15 @@ Next step is creating a component that will automatically assign an actor to a L
 * Create a new Blueprint Class of type ActorComponent and name it 'LuaReflectionComponent'
 * Add a variable of type 'class of LuaReflectionStateBase' named 'State', and assign it a default value of 'LuaReflectionState'
 * Add a public variable of type 'String' (this will be the name exposed to the Lua VM)
-* Finally assign the 'self' UObject to the Lua name (in the 'Begin Play' event)
+* Finally assign the 'GetOwner()' return value to the Lua name (in the 'Begin Play' event)
 
 Note the usage of 'Lua Create Object in State' that will enforce this LuaValue to be mapped to a specific state (this will avoid mess in case of various Lua VM running in the same process)
 
 ## Adding the Runtime Shell
 
 Time to add the 'overlay shell' to our screen. From this Multiline Editable Text we will issue lua commands
+
+## The core of our reflection system: adding a MetaTable to a UObject
 
 ## Getting the list of UProperties
 
