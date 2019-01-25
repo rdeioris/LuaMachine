@@ -32,26 +32,38 @@ Time to add the 'overlay shell' to our screen. From this Multiline Editable Text
 
 ## The core of our reflection system: adding a MetaTable to a UObject
 
+```cpp
+LuaReflectionStateBase::ULuaReflectionStateBase()
+{
+	Table.Add("unreal_get_name", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(ULuaReflectionStateBase, UnrealGetName)));
+}
+```
+
+```cpp
+FLuaValue ULuaReflectionStateBase::UnrealGetName(FLuaValue Value)
+{
+	if (!Value.Object)
+		return FLuaValue();
+
+	return FLuaValue(Value.Object->GetName());
+}
+```
+
 ## Getting the list of UProperties
 
 ```cpp
-ULuaReflectionState::ULuaReflectionState()
+FLuaValue ULuaReflectionStateBase::UnrealGetProperties(FLuaValue Value)
 {
-	Table.Add("get_properties", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(ULuaReflectionState, GetProperties)));
-}
-
-
-FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
-{
-	if (Object.Type != ELuaValueType::UObject)
+	if (!Value.Object)
 		return FLuaValue();
 
-	UStruct* Class = Cast<UStruct>(Object.Object);
+	UStruct* Class = Cast<UStruct>(Value.Object);
 	if (!Class)
-		Class = Object.Object->GetClass();
+		Class = Value.Object->GetClass();
 
 	FLuaValue PropertiesArray = CreateLuaTable();
-	int32 Index = 0;
+	// remember that Lua starts counting from 1
+	int32 Index = 1;
 
 	for (TFieldIterator<UProperty> PropsIterator(Class); PropsIterator; ++PropsIterator)
 	{
@@ -65,116 +77,49 @@ FLuaValue ULuaReflectionState::GetProperties(FLuaValue Object)
 
 Please py attention to the weird naming scheme as i am casting to UStruct but i am calling it 'Class'. This will be able to support USTRUCT's too if you want to improve the system.
 
-Now let's test it by calling Lua's get_properties() from the Mannequin's graph:
+Now let's test it by calling Lua's unreal_get_properties() from the Mannequin's graph:
 
 
 
 ## Getting/Setting Properties
 
 ```cpp
-FLuaValue ULuaReflectionState::GetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Index)
+FLuaValue ULuaReflectionStateBase::UnrealGetProperty(FLuaValue Value, FLuaValue Name, FLuaValue Index)
 {
-	if (Object.Type != ELuaValueType::UObject)
+	if (!Value.Object)
 		return FLuaValue();
-
-	if (Name.Type != ELuaValueType::String)
-		return FLuaValue();
-
-	UStruct* Class = Cast<UStruct>(Object.Object);
+	
+	UStruct* Class = Cast<UStruct>(Value.Object);
 	if (!Class)
-		Class = Object.Object->GetClass();
+		Class = Value.Object->GetClass();
 
 	UProperty* Property = Class->FindPropertyByName(Name.ToName());
 	if (Property)
 	{
 		bool bSuccess;
-		return FromUProperty(Object.Object, Property, bSuccess, Index.ToInteger());
+		return FromUProperty(Value.Object, Property, bSuccess, Index.ToInteger());
 	}
 
 	return FLuaValue();
 }
 
-void ULuaReflectionState::SetProperty(FLuaValue Object, FLuaValue Name, FLuaValue Value, FLuaValue Index)
+void ULuaReflectionStateBase::UnrealSetProperty(FLuaValue Value, FLuaValue Name, FLuaValue NewValue, FLuaValue Index)
 {
-	if (Object.Type != ELuaValueType::UObject)
+	if (!Value.Object)
 		return;
 
-	if (Name.Type != ELuaValueType::String)
-		return;
-
-	UStruct* Class = Cast<UStruct>(Object.Object);
+	UStruct* Class = Cast<UStruct>(Value.Object);
 	if (!Class)
-		Class = Object.Object->GetClass();
+		Class = Value.Object->GetClass();
 
 	UProperty* Property = Class->FindPropertyByName(Name.ToName());
 	if (Property)
 	{
 		bool bSuccess;
-		ToUProperty(Object.Object, Property, Value, bSuccess, Index.ToInteger());
+		ToUProperty(Value.Object, Property, NewValue, bSuccess, Index.ToInteger());
 	}
 }
 ```
-
-## Lua scripting
-
-## Syntactic Sugar
-
-```lua
-local reflection = {}
-
-function reflection.__index(t, key)
-  property_type = get_property_type(t.uobject, key)
-
-  if property_type == 'ArrayProperty' then
-    local new_table = {uobject=t.uobject, array_key=key}
-    setmetatable(new_table, {
-      __index = function(array, array_index)
-        return wrap_uobject(get_array_property(array.uobject, array.array_key, array_index-1))
-      end,
-      __newindex = function(array, array_index, array_value)
-        return wrap_uobject(set_array_property(array.uobject, array.array_key, array_index-1, array_value))
-      end,
-      __len = function(array)
-         return get_array_property_len(array.uobject, array.array_key)
-      end
-    })
-    return new_table
-
-  elseif not property_type then
-    ufunction_ref = get_function(t.uobject, key)
-    if ufunction_ref then
-      new_ufunction = { uobject=t.uobject, ufunction=ufunction_ref }
-      setmetatable(new_ufunction, {
-        __call = function(vtable, ...)
-          return call_uobject_method(vtable.uobject, vtable.ufunction, arg)
-        end
-      })
-      return new_ufunction
-    end
-    return nil
-  end
-
-  return wrap_uobject(get_property(t.uobject, key))
-end
-
-function reflection.__newindex(t, key, value)
-  set_property(t.uobject, key, value)
-end
-
-function wrap_uobject(uobject)
-  if type(uobject) == 'userdata' then
-    local new_table = {}
-    new_table.uobject = uobject
-    setmetatable(new_table, reflection)
-    return new_table
-  end
-  return uobject
-end
-
-return wrap_uobject
-```
-
-
 
 
 ## Managing ArrayProperties
