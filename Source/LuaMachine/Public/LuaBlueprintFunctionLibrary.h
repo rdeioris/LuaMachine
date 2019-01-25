@@ -142,6 +142,12 @@ public:
 	static bool LuaValueIsNil(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool LuaValueIsOwned(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static TSubclassOf<ULuaState> LuaValueGetOwner(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool LuaValueIsNotNil(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)

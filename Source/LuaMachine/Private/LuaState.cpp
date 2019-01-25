@@ -361,6 +361,16 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 	}
 	break;
 	case ELuaValueType::UFunction:
+		// if no context is assigned to the function, own it !
+		if (!LuaValue.LuaState)
+		{
+			LuaValue.LuaState = this;
+		}
+		if (this != LuaValue.LuaState)
+		{
+			lua_pushnil(L);
+			break;
+		}
 		// first time we should have a CallContext, then we cache it in the Object field
 		if (!CallContext)
 		{
@@ -393,7 +403,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 FLuaValue ULuaState::ToLuaValue(int Index)
 {
 	FLuaValue LuaValue;
-	LuaValue.LuaState = this;
 
 	if (lua_isboolean(L, Index))
 	{
@@ -419,18 +428,21 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Table;
+		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isthread(L, Index))
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Thread;
+		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isfunction(L, Index))
 	{
 		lua_pushvalue(L, Index);
 		LuaValue.Type = ELuaValueType::Function;
+		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isuserdata(L, Index))
@@ -443,6 +455,7 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 			{
 				LuaValue.Type = UserData->Type;
 				LuaValue.Object = UserData->Context.Get();
+				LuaValue.LuaState = this;
 			}
 			break;
 		case(ELuaValueType::UFunction):
@@ -451,6 +464,7 @@ FLuaValue ULuaState::ToLuaValue(int Index)
 				LuaValue.Type = UserData->Type;
 				LuaValue.FunctionName = UserData->Function->GetFName();
 				LuaValue.Object = UserData->Context.Get();
+				LuaValue.LuaState = this;
 			}
 			break;
 		}

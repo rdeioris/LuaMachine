@@ -267,6 +267,18 @@ bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(FLuaValue Value)
 	return Value.Type == ELuaValueType::Nil;
 }
 
+bool ULuaBlueprintFunctionLibrary::LuaValueIsOwned(FLuaValue Value)
+{
+	return Value.LuaState != nullptr;
+}
+
+TSubclassOf<ULuaState> ULuaBlueprintFunctionLibrary::LuaValueGetOwner(FLuaValue Value)
+{
+	if (!Value.LuaState)
+		return nullptr;
+	return Value.LuaState->GetClass();
+}
+
 bool ULuaBlueprintFunctionLibrary::LuaValueIsNotNil(FLuaValue Value)
 {
 	return Value.Type != ELuaValueType::Nil;
