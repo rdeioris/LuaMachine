@@ -13,7 +13,22 @@ Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using
 
 As always, we start by creating a new ULuaState. This will be the base (we will work on an inherited Blueprint class) for the Lua VM targeted at reflection.
 
-Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaState'
+Just create a new C++ class named 'LuaReflectionStateBase' inheriting from 'LuaState', and create a blueprint subclass of it named 'LuaReflectionState'
+
+## Assigning a 'Lua name' to an Actor
+
+Next step is creating a component that will automatically assign an actor to a Lua global name:
+
+* Create a new Blueprint Class of type ActorComponent and name it 'LuaReflectionComponent'
+* Add a variable of type 'class of LuaReflectionStateBase' named 'State', and assign it a default value of 'LuaReflectionState'
+* Add a public variable of type 'String' (this will be the name exposed to the Lua VM)
+* Finally assign the 'self' UObject to the Lua name (in the 'Begin Play' event)
+
+Note the usage of 'Lua Create Object in State' that will enforce this LuaValue to be mapped to a specific state (this will avoid mess in case of various Lua VM running in the same process)
+
+## Adding the Runtime Shell
+
+Time to add the 'overlay shell' to our screen. From this Multiline Editable Text we will issue lua commands
 
 ## Getting the list of UProperties
 
@@ -157,85 +172,8 @@ end
 return wrap_uobject
 ```
 
-## The LuaReflectionComponent
-
-```cpp
-#pragma once
-
-#include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "LuaCode.h"
-#include "LuaReflectionComponent.generated.h"
 
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class LUATEST421_API ULuaReflectionComponent : public UActorComponent
-{
-	GENERATED_BODY()
-
-public:	
-	// Sets default values for this component's properties
-	ULuaReflectionComponent();
-
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	ULuaCode* ShellSetupCode;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	FString ShellName;
-};
-```
-
-```cpp
-#include "LuaReflectionComponent.h"
-#include "LuaBlueprintFunctionLibrary.h"
-#include "LuaReflectionState.h"
-
-// Sets default values for this component's properties
-ULuaReflectionComponent::ULuaReflectionComponent()
-{
-	// no need to tick
-	PrimaryComponentTick.bCanEverTick = false;
-}
-
-
-// Called when the game starts
-void ULuaReflectionComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	
-	if (!ShellName.IsEmpty())
-	{
-		FLuaValue Value = FLuaValue(GetOwner());
-		if (ShellSetupCode)
-		{
-			FLuaValue SetupFunction = ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(GetWorld(), ULuaReflectionState::StaticClass(), ShellSetupCode);
-			if (SetupFunction.Type == ELuaValueType::Function)
-			{
-				TArray<FLuaValue> LuaArgs = { Value };
-				Value = ULuaBlueprintFunctionLibrary::LuaValueCall(SetupFunction, LuaArgs);
-			}
-		}
-		ULuaBlueprintFunctionLibrary::LuaSetGlobal(GetWorld(), ULuaReflectionState::StaticClass(), ShellName, Value);
-	}
-}
-
-
-// Called every frame
-void ULuaReflectionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-}
-```
-
-## Adding the Runtime Shell
 
 ## Managing ArrayProperties
 
