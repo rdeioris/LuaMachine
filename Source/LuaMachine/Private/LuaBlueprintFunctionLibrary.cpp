@@ -365,6 +365,77 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, FStrin
 	return Table.SetField(Key, Value);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentAsLuaValue(AActor* Actor)
+{
+	if (!Actor)
+		return FLuaValue();
+
+	return FLuaValue(Actor->GetComponentByClass(ULuaComponent::StaticClass()));
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State)
+{
+	if (!Actor)
+		return FLuaValue();
+
+	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+	for (UActorComponent* Component : Components)
+	{
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+		if (LuaComponent)
+		{
+			if (LuaComponent->LuaState == State)
+			{
+				return FLuaValue(LuaComponent);
+			}
+		}
+	}
+
+	return FLuaValue();
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* Actor, FString Name)
+{
+	if (!Actor)
+		return FLuaValue();
+
+	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+	for (UActorComponent* Component : Components)
+	{
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+		if (LuaComponent)
+		{
+			if (LuaComponent->GetName() == Name)
+			{
+				return FLuaValue(LuaComponent);
+			}
+		}
+	}
+
+	return FLuaValue();
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, FString Name)
+{
+	if (!Actor)
+		return FLuaValue();
+
+	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+	for (UActorComponent* Component : Components)
+	{
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+		if (LuaComponent)
+		{
+			if (LuaComponent->LuaState == State && LuaComponent->GetName() == Name)
+			{
+				return FLuaValue(LuaComponent);
+			}
+		}
+	}
+
+	return FLuaValue();
+}
+
 int32 ULuaBlueprintFunctionLibrary::LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());

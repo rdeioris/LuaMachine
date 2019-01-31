@@ -59,6 +59,18 @@ public:
 	static FLuaValue LuaTableGetField(FLuaValue Table, FString Key);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue GetLuaComponentAsLuaValue(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue GetLuaComponentByStateAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue GetLuaComponentByNameAsLuaValue(AActor* Actor, FString Name);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static FLuaValue GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, FString Name);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static FLuaValue LuaComponentGetField(FLuaValue LuaComponent, FString Key);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
