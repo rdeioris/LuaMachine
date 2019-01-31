@@ -6,6 +6,8 @@ If you want modders to customize your game/project, or you need to allow game de
 
 ![LuaMachine](Docs/Screenshots/SyntaxColor.PNG?raw=true "LuaMachine")
 
+Join the LuaMachine Discord channel: https://discord.gg/eTXDfEU
+
 ## How it works
 
 Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
