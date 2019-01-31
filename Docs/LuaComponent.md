@@ -43,11 +43,12 @@ you can get a meaningful value:
 
 ## LuaComponent Interactions
 
-When passing a UObject to Lua, it will check if the UObject is a LuaComponent or an Actor containing a LuaComponent in the same LuaState. In such a case the related userdata will be used instead.
+When passing UObject's as LuaValue, they are incapsulated as userdata, so technically (by default) you cannot do anything relevant via Lua (except for passing them as arguments to functions). LuaComponents instead, get a proper metatable exposing the values set in the Table property. A Common pattern is to return the LuaComponent of an Actor to Lua, instead of the actor itself:
 
-As an example immagine a collision system where the 'other actor' is passed as the argument to a lua function.
+![PlayerToLuaComponent](Screenshots/PlayerToLuaComponent.PNG?raw=true "PlayerToLuaComponent")
 
-If the actor has no LuaComponent's attached it, the function will get a raw userdata (it cannot do anythn relevant with it). If instead it has a LuaComponent attached to it (of the same LuaState of the calling one), the userdata will be the LuaComponent one with the related table/metatable
+Note that you can eventually assign an automatic metatable to UObjects too, using the LuaState UserData MetaTable features:
+https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/ReflectionShell.md
 
 ## Exposed Functions
 
