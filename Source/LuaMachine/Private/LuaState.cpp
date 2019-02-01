@@ -687,13 +687,11 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 					FLuaValue LuaValue = LuaState->ToLuaValue(i);
 					*LuaProp->ContainerPtrToValuePtr<FLuaValue>(ArrayHelper.GetRawPtr(i - StackPointer)) = LuaValue;
 				}
-
-				break;
 			}
-			continue;
+			break;
 		}
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
-			continue;
+			break;
 
 		FLuaValue LuaValue = LuaState->ToLuaValue(StackPointer++);
 		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
@@ -738,6 +736,10 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
 			continue;
 
+		// avoid input args (at all costs !)
+		if (Prop->HasAnyPropertyFlags(CPF_ConstParm | CPF_ReferenceParm))
+			continue;
+
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
 		{
@@ -758,13 +760,13 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 					LuaState->FromLuaValue(*LuaValue);
 				}
 
-				break;
+
 			}
-			continue;
+			break;
 		}
 
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
-			continue;
+			break;
 
 		FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters);
 		if (LuaValue)
