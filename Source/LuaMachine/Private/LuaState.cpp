@@ -348,7 +348,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 			// allow comparison between userdata/UObject/UFunction
 			PushCFunction(ULuaState::MetaTableFunctionUserData__eq);
 			SetField(-2, "__eq");
-			
+
 			if (bHasMetaTable)
 			{
 				Pop();
@@ -652,6 +652,8 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		return luaL_error(L, "invalid state for lua UFunction");
 	}
 
+	int NArgs = lua_gettop(L);
+
 	FScopeCycleCounterUObject ObjectScope(LuaCallContext->Context.Get());
 	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function.Get());
 
@@ -665,7 +667,31 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		UProperty *Prop = *FArgs;
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
+		{
+			UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+			if (ArrayProp)
+			{
+				LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+				if (!LuaProp)
+					break;
+				if (LuaProp->Struct != FLuaValue::StaticStruct())
+					break;
+				// start filling the array with the rest of arguments
+				int ArgsToProcess = NArgs - StackPointer + 1;
+				if (ArgsToProcess < 1)
+					break;
+				FScriptArrayHelper_InContainer ArrayHelper(ArrayProp, LuaProp->ContainerPtrToValuePtr<uint8>(Parameters));
+				ArrayHelper.AddValues(ArgsToProcess);
+				for (int i = StackPointer; i < StackPointer + ArgsToProcess; i++)
+				{
+					FLuaValue LuaValue = LuaState->ToLuaValue(i);
+					*LuaProp->ContainerPtrToValuePtr<FLuaValue>(ArrayHelper.GetRawPtr(i - StackPointer)) = LuaValue;
+				}
+
+				break;
+			}
 			continue;
+		}
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			continue;
 
@@ -703,6 +729,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		}
 	}
 
+	int ReturnedValues = 0;
 
 	// get return value
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
@@ -713,7 +740,28 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
+		{
+			UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+			if (ArrayProp)
+			{
+				LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+				if (!LuaProp)
+					break;
+				if (LuaProp->Struct != FLuaValue::StaticStruct())
+					break;
+
+				FScriptArrayHelper_InContainer ArrayHelper(ArrayProp, LuaProp->ContainerPtrToValuePtr<uint8>(Parameters));
+				for (int i = 0; i < ArrayHelper.Num(); i++)
+				{
+					FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(ArrayHelper.GetRawPtr(i));
+					ReturnedValues++;
+					LuaState->FromLuaValue(*LuaValue);
+				}
+
+				break;
+			}
 			continue;
+		}
 
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			continue;
@@ -721,10 +769,13 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters);
 		if (LuaValue)
 		{
+			ReturnedValues++;
 			LuaState->FromLuaValue(*LuaValue);
-			return 1;
 		}
 	}
+
+	if (ReturnedValues > 0)
+		return ReturnedValues;
 
 	LuaState->PushNil();
 	return 1;

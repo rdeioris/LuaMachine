@@ -146,8 +146,21 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 			UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 			if (!LuaProp)
 			{
-				bIsValid = false;
-				break;
+				// check for array ?
+				UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+				if (ArrayProp)
+				{
+					LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+					if (!LuaProp)
+					{
+						bIsValid = false;
+						break;
+					}
+				}
+				else {
+					bIsValid = false;
+					break;
+				}
 			}
 			if (LuaProp->Struct != FLuaValue::StaticStruct())
 			{
