@@ -50,34 +50,34 @@ public:
 
 	virtual UWorld* GetWorld() const override { return CurrentWorld; }
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	ULuaCode* LuaCodeAsset;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	FString LuaFilename;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	TMap<FString, FLuaValue> Table;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	TMap<FString, ULuaCode*> RequireTable;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bLuaOpenLibs;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bAddProjectContentDirToPackagePath;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	TArray<FString> AppendProjectContentDirSubDir;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	FString OverridePackagePath;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	FString OverridePackageCPath;
 
-	UPROPERTY(EditAnywhere, meta = (DisplayName = "UserData MetaTable from CodeAsset"))
+	UPROPERTY(EditAnywhere, meta = (DisplayName = "UserData MetaTable from CodeAsset"), Category="Lua")
 	ULuaCode* UserDataMetaTableFromCodeAsset;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
@@ -86,11 +86,11 @@ public:
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr);
 	FLuaValue ToLuaValue(int Index);
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bLogError;
 
 	/* Enable it if you want this Lua state to not be destroyed during PIE. Useful for editor scripting */
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bPersistent;
 
 	int32 GetTop();

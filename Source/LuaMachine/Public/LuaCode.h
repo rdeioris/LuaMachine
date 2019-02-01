@@ -18,10 +18,10 @@ public:
 
 	ULuaCode();
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere)
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Lua")
 	FText Code;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bCookAsBytecode;
 
 	UPROPERTY()
