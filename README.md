@@ -1,4 +1,5 @@
 # LuaMachine
+![LuaMachine Logo](Docs/LuaMachine_Logo.png?raw=true "LuaMachine Logo")
 
 Unreal Engine 4 Plugin for adding Lua scripting to your projects.
 
