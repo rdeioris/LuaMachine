@@ -75,5 +75,10 @@ public class LuaMachine : ModuleRules
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_android.a"));
         }
 
+        if (Target.Platform == UnrealTargetPlatform.IOS)
+        {
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_ios.a"));
+        }
+
     }
 }
