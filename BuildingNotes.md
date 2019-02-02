@@ -24,3 +24,13 @@ rm lua.o
 rm luac.o
  ~/ndk/bin/arm-linux-androideabi-ar.exe rcu lua53_android.a *.o
 ```
+
+# Building Lua static library for iOS
+
+Comment the os_execute function in loslib.c and its mapping in the syslib array
+
+```sh
+clang -arch arm64 -mios-version-min=7.0 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/ -O2 -Wall -Werror -Wextra -DLUA_USE_POSIX -DLUA_USEDLOPEN -DLUA_COMPAT_5_2 -std=gnu99 -c *.c
+rm lua.o luac.o
+ ar rcu lua53_ios.a *.o
+```
