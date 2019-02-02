@@ -10,7 +10,7 @@ If you want modders to customize your game/project, or you need to allow game de
 
 Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
 
-Currently Windows 64bit, Mac (both Runtime and Editor) and Android (Runtime only) are supported.
+Currently Windows 64bit, Mac (both Runtime and Editor), Android and iOS are supported.
 
 ## Discord Channel
 
@@ -233,7 +233,7 @@ As an example the LuaGetGlobal node, can access the package.path item by simply 
 
 ## LuaComponent
 
-ULuaComponent allows to use an Actor as a Lua userdata.
+ULuaComponent allows to map a table to an ActorComponent
 
 Check its docs here: [LuaComponent](Docs/LuaComponent.md)
 
@@ -272,6 +272,10 @@ The plugin supports Android systems starting from api 24. Before deployng ensure
 ![Android24](Docs/Screenshots/Android24.PNG?raw=true "Android24")
 
 Cooked LuaCode assets are converted to 32bit size_t at runtime.
+
+## iOS deployment
+
+Nothing special, just ensure to package script files (instead of simply including them)
 
 ## Functional Tests
 
