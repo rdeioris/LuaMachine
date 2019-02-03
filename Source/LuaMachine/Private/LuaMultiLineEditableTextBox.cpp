@@ -17,6 +17,8 @@ ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 
 	TabSize = 2;
 
+	bIsReadonly = false;
+
 	CodeStyle = FTextBlockStyle()
 		.SetFont(WidgetStyle.Font)
 		.SetColorAndOpacity(FLinearColor::White)
@@ -65,6 +67,15 @@ FReply ULuaMultiLineEditableTextBox::OnKeyChar(const FGeometry& InGeometry, cons
 	return EditableTextBoxPtr->SMultiLineEditableTextBox::OnKeyChar(InGeometry, InCharacterEvent);
 }
 
+void ULuaMultiLineEditableTextBox::SynchronizeProperties()
+{
+	Super::SynchronizeProperties();
+
+	EditableTextBoxPtr->SetStyle(&WidgetStyle);
+	
+	Super::SynchronizeTextLayoutProperties(*EditableTextBoxPtr);
+}
+
 #if WITH_EDITOR
 const FText ULuaMultiLineEditableTextBox::GetPaletteCategory()
 {
@@ -87,6 +98,7 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 		.Marshaller(FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create(Style))
 		.TextStyle(&CodeStyle)
 		.OnKeyCharHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyChar)
+		.IsReadOnly(bIsReadonly)
 		.Style(&WidgetStyle);
 	return EditableTextBoxPtr.ToSharedRef();
 }
