@@ -794,11 +794,11 @@ int ULuaState::TableFunction_print(lua_State *L)
 	{
 		lua_pushvalue(L, -1);
 		lua_pushvalue(L, i);
-		FLuaValue Value;
-		if (!LuaState->Call(1, Value))
-		{
-			return luaL_error(L, "%s", TCHAR_TO_UTF8(*LuaState->LastError));
-		}
+		lua_call(L, 1, 1);
+		const char *s = lua_tostring(L, -1);
+		if (!s)
+			return luaL_error(L, "'tostring must return a string to 'print'");
+		FLuaValue Value(FString(UTF8_TO_TCHAR(s)));
 		LuaState->Pop();
 		Messages.Add(Value.ToString());
 	}
