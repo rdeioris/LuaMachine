@@ -48,6 +48,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Appearance")
 	bool bIsReadonly;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua Code")
+	bool bHandleTab;
+
 	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "GetText (Lua Code Box)"))
 	FText GetText() const;
 
@@ -55,6 +58,8 @@ public:
 	void SetText(FText InText);
 
 	virtual FReply OnKeyChar(const FGeometry& InGeometry, const FCharacterEvent& InCharacterEvent);
+
+	virtual FReply OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent);
 
 	virtual void SynchronizeProperties() override;
 

@@ -18,6 +18,7 @@ ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 	TabSize = 2;
 
 	bIsReadonly = false;
+	bHandleTab = true;
 
 	CodeStyle = FTextBlockStyle()
 		.SetFont(WidgetStyle.Font)
@@ -67,12 +68,21 @@ FReply ULuaMultiLineEditableTextBox::OnKeyChar(const FGeometry& InGeometry, cons
 	return EditableTextBoxPtr->SMultiLineEditableTextBox::OnKeyChar(InGeometry, InCharacterEvent);
 }
 
+FReply ULuaMultiLineEditableTextBox::OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	if (bHandleTab && InKeyEvent.GetKeyCode() == 9)
+	{
+		return FReply::Handled();
+	}
+	return EditableTextBoxPtr->SMultiLineEditableTextBox::OnKeyDown(InGeometry, InKeyEvent);
+}
+
 void ULuaMultiLineEditableTextBox::SynchronizeProperties()
 {
 	Super::SynchronizeProperties();
 
 	EditableTextBoxPtr->SetStyle(&WidgetStyle);
-	
+
 	Super::SynchronizeTextLayoutProperties(*EditableTextBoxPtr);
 }
 
@@ -98,8 +108,10 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 		.Marshaller(FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create(Style))
 		.TextStyle(&CodeStyle)
 		.OnKeyCharHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyChar)
+		.OnKeyDownHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyDown)
 		.IsReadOnly(bIsReadonly)
 		.Style(&WidgetStyle);
+
 	return EditableTextBoxPtr.ToSharedRef();
 }
 

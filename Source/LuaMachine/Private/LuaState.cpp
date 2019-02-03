@@ -264,61 +264,71 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 	return Output;
 }
 
-void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
+void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_State* State)
 {
+	if (!State)
+		State = this->L;
+
 	switch (LuaValue.Type)
 	{
 	case ELuaValueType::Bool:
-		lua_pushboolean(L, LuaValue.Bool ? 1 : 0);
+		lua_pushboolean(State, LuaValue.Bool ? 1 : 0);
 		break;
 	case ELuaValueType::Integer:
-		lua_pushinteger(L, LuaValue.Integer);
+		lua_pushinteger(State, LuaValue.Integer);
 		break;
 	case ELuaValueType::Number:
-		lua_pushnumber(L, LuaValue.Number);
+		lua_pushnumber(State, LuaValue.Number);
 		break;
 	case ELuaValueType::String:
-		lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
+		lua_pushstring(State, TCHAR_TO_UTF8(*LuaValue.String));
 		break;
 	case ELuaValueType::Table:
 		if (LuaValue.LuaRef == LUA_NOREF)
 		{
-			lua_newtable(L);
-			lua_pushvalue(L, -1);
-			LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+			lua_newtable(State);
+			lua_pushvalue(State, -1);
+			// hold references in the main state
+			LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 			LuaValue.LuaState = this;
 			break;
 		}
 		if (this != LuaValue.LuaState)
 		{
-			lua_pushnil(L);
+			lua_pushnil(State);
 			break;
 		}
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		lua_rawgeti(this->L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		if (this->L != State)
+			lua_xmove(this->L, State, 1);
 		break;
 	case ELuaValueType::Thread:
 		if (LuaValue.LuaRef == LUA_NOREF)
 		{
-			lua_newthread(L);
-			lua_pushvalue(L, -1);
-			LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+			lua_newthread(State);
+			lua_pushvalue(State, -1);
+			LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 			LuaValue.LuaState = this;
 			break;
 		}
 		if (this != LuaValue.LuaState)
 		{
-			lua_pushnil(L);
+			lua_pushnil(State);
 			break;
 		}
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		lua_rawgeti(this->L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		if (this->L != State)
+			lua_xmove(this->L, State, 1);
 		break;
 	case ELuaValueType::Function:
 		if (this != LuaValue.LuaState)
 		{
-			lua_pushnil(L);
+			lua_pushnil(State);
 			break;
 		}
-		lua_rawgeti(L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		lua_rawgeti(this->L, LUA_REGISTRYINDEX, LuaValue.LuaRef);
+		if (this->L != State)
+			lua_xmove(this->L, State, 1);
 		break;
 	case ELuaValueType::UObject:
 	{
@@ -329,33 +339,33 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 			// ensure we are in the same LuaState
 			if (LuaComponent->LuaState == GetClass())
 			{
-				LuaComponent->SetupMetatable();
+				LuaComponent->SetupMetatable(State);
 			}
 		}
 		else {
 			bool bHasMetaTable = false;
 			if (UserDataMetaTable.Type == ELuaValueType::Table)
 			{
-				FromLuaValue(UserDataMetaTable);
-				SetMetaTable(-2);
-				GetMetaTable(-1);
+				FromLuaValue(UserDataMetaTable, nullptr, State);
+				lua_setmetatable(State, -2);
+				lua_getmetatable(State, -1);
 				bHasMetaTable = true;
 			}
 			else
 			{
-				NewTable();
+				lua_newtable(State);
 			}
 			// allow comparison between userdata/UObject/UFunction
-			PushCFunction(ULuaState::MetaTableFunctionUserData__eq);
-			SetField(-2, "__eq");
+			lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__eq);
+			lua_setfield(State, -2, "__eq");
 
 			if (bHasMetaTable)
 			{
-				Pop();
+				lua_pop(State, 1);
 			}
 			else
 			{
-				SetMetaTable(-2);
+				lua_setmetatable(State, -2);
 			}
 		}
 	}
@@ -368,7 +378,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 		}
 		if (this != LuaValue.LuaState)
 		{
-			lua_pushnil(L);
+			lua_pushnil(State);
 			break;
 		}
 		// first time we should have a CallContext, then we cache it in the Object field
@@ -383,71 +393,83 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext)
 			{
 				// cache it for context-less calls
 				LuaValue.Object = CallContext;
-				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
 				LuaCallContext->Type = ELuaValueType::UFunction;
 				LuaCallContext->Context = CallContext;
 				LuaCallContext->Function = Function;
-				NewTable();
-				PushCFunction(ULuaState::MetaTableFunction__call);
-				SetField(-2, "__call");
-				SetMetaTable(-2);
+				lua_newtable(State);
+				lua_pushcfunction(State, ULuaState::MetaTableFunction__call);
+				lua_setfield(State, -2, "__call");
+				lua_setmetatable(State, -2);
 				return;
 			}
 		}
 
 	default:
-		lua_pushnil(L);
+		lua_pushnil(State);
 	}
 }
 
-FLuaValue ULuaState::ToLuaValue(int Index)
+FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 {
+	if (!State)
+		State = this->L;
+
 	FLuaValue LuaValue;
 
-	if (lua_isboolean(L, Index))
+	if (lua_isboolean(State, Index))
 	{
 		LuaValue.Type = ELuaValueType::Bool;
-		LuaValue.Bool = lua_toboolean(L, Index) != 0;
+		LuaValue.Bool = lua_toboolean(State, Index) != 0;
 	}
-	else if (lua_type(L, Index) == LUA_TSTRING)
+	else if (lua_type(State, Index) == LUA_TSTRING)
 	{
 		LuaValue.Type = ELuaValueType::String;
-		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, Index)));
+		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(State, Index)));
 	}
-	else if (lua_isinteger(L, Index))
+	else if (lua_isinteger(State, Index))
 	{
 		LuaValue.Type = ELuaValueType::Integer;
-		LuaValue.Integer = lua_tointeger(L, Index);
+		LuaValue.Integer = lua_tointeger(State, Index);
 	}
-	else if (lua_type(L, Index) == LUA_TNUMBER)
+	else if (lua_type(State, Index) == LUA_TNUMBER)
 	{
 		LuaValue.Type = ELuaValueType::Number;
-		LuaValue.Number = lua_tonumber(L, Index);
+		LuaValue.Number = lua_tonumber(State, Index);
 	}
-	else if (lua_istable(L, Index))
+	else if (lua_istable(State, Index))
 	{
-		lua_pushvalue(L, Index);
+		if (State != this->L)
+			lua_xmove(State, this->L, 1);
+		else
+			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Table;
 		LuaValue.LuaState = this;
-		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 	}
-	else if (lua_isthread(L, Index))
+	else if (lua_isthread(State, Index))
 	{
-		lua_pushvalue(L, Index);
+		if (State != this->L)
+			lua_xmove(State, this->L, 1);
+		else
+			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Thread;
 		LuaValue.LuaState = this;
-		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 	}
-	else if (lua_isfunction(L, Index))
+	else if (lua_isfunction(State, Index))
 	{
-		lua_pushvalue(L, Index);
+		if (State != this->L)
+			lua_xmove(State, this->L, 1);
+		else
+			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.LuaState = this;
-		LuaValue.LuaRef = luaL_ref(L, LUA_REGISTRYINDEX);
+		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 	}
-	else if (lua_isuserdata(L, Index))
+	else if (lua_isuserdata(State, Index))
 	{
-		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, Index);
+		FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(State, Index);
 		switch (UserData->Type)
 		{
 		case(ELuaValueType::UObject):
@@ -480,7 +502,6 @@ int32 ULuaState::GetTop()
 
 int ULuaState::MetaTableFunctionState__index(lua_State *L)
 {
-
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
@@ -488,7 +509,7 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
 	{
-		LuaState->FromLuaValue(*LuaValue, LuaState);
+		LuaState->FromLuaValue(*LuaValue, LuaState, L);
 		return 1;
 	}
 
@@ -505,7 +526,7 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
 	{
-		*LuaValue = LuaState->ToLuaValue(3);
+		*LuaValue = LuaState->ToLuaValue(3, L);
 	}
 	else
 	{
@@ -539,12 +560,12 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
 	{
-		LuaState->FromLuaValue(*LuaValue, LuaComponent->GetOwner());
+		LuaState->FromLuaValue(*LuaValue, LuaComponent->GetOwner(), L);
 		return 1;
 
 	}
 
-	LuaState->PushNil();
+	lua_pushnil(L);
 	return 1;
 }
 
@@ -571,11 +592,11 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
 	{
-		*LuaValue = LuaState->ToLuaValue(3);
+		*LuaValue = LuaState->ToLuaValue(3, L);
 	}
 	else
 	{
-		LuaComponent->Table.Add(Key, LuaState->ToLuaValue(3));
+		LuaComponent->Table.Add(Key, LuaState->ToLuaValue(3, L));
 	}
 
 	return 0;
@@ -684,7 +705,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 				ArrayHelper.AddValues(ArgsToProcess);
 				for (int i = StackPointer; i < StackPointer + ArgsToProcess; i++)
 				{
-					FLuaValue LuaValue = LuaState->ToLuaValue(i);
+					FLuaValue LuaValue = LuaState->ToLuaValue(i, L);
 					*LuaProp->ContainerPtrToValuePtr<FLuaValue>(ArrayHelper.GetRawPtr(i - StackPointer)) = LuaValue;
 				}
 			}
@@ -693,7 +714,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			break;
 
-		FLuaValue LuaValue = LuaState->ToLuaValue(StackPointer++);
+		FLuaValue LuaValue = LuaState->ToLuaValue(StackPointer++, L);
 		*LuaProp->ContainerPtrToValuePtr<FLuaValue>(Parameters) = LuaValue;
 	}
 
@@ -757,7 +778,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 				{
 					FLuaValue* LuaValue = LuaProp->ContainerPtrToValuePtr<FLuaValue>(ArrayHelper.GetRawPtr(i));
 					ReturnedValues++;
-					LuaState->FromLuaValue(*LuaValue);
+					LuaState->FromLuaValue(*LuaValue, nullptr, L);
 				}
 
 
@@ -772,14 +793,14 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 		if (LuaValue)
 		{
 			ReturnedValues++;
-			LuaState->FromLuaValue(*LuaValue);
+			LuaState->FromLuaValue(*LuaValue, nullptr, L);
 		}
 	}
 
 	if (ReturnedValues > 0)
 		return ReturnedValues;
 
-	LuaState->PushNil();
+	lua_pushnil(L);
 	return 1;
 }
 
@@ -798,9 +819,9 @@ int ULuaState::TableFunction_print(lua_State *L)
 		const char *s = lua_tostring(L, -1);
 		if (!s)
 			return luaL_error(L, "'tostring must return a string to 'print'");
-		FLuaValue Value(FString(UTF8_TO_TCHAR(s)));
-		LuaState->Pop();
-		Messages.Add(Value.ToString());
+		FString Value = FString(UTF8_TO_TCHAR(s));
+		lua_pop(L, 1);
+		Messages.Add(Value);
 	}
 	LuaState->Log(FString::Join(Messages, TEXT("\t")));
 	return 0;

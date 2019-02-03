@@ -82,6 +82,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
 	FLuaComponentError OnLuaError;
 
-	void SetupMetatable();
+	void SetupMetatable(lua_State* State);
 	
 };
