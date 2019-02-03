@@ -22,6 +22,7 @@
       "WhitelistPlatforms": [
         "Mac",
         "Win64",
+        "Linux",
         "Android",
         "IOS"
       ]
@@ -31,6 +32,7 @@
       "Type": "Editor",
       "LoadingPhase": "Default",
       "WhitelistPlatforms": [
+        "Linux",
         "Mac",
         "Win64"
       ]

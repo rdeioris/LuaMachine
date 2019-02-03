@@ -88,7 +88,10 @@ FLuaValue::~FLuaValue()
 	{
 		if (LuaRef != LUA_NOREF)
 		{
-			LuaState->Unref(LuaRef);
+			// the lua state could be already destroyed when the engine is shutting down,
+			// so check for it before unref'ing lua objects
+			if (!GIsRequestingExit)
+				LuaState->Unref(LuaRef);
 		}
 	}
 }

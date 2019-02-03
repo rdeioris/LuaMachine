@@ -27,8 +27,8 @@ public:
 protected:
 	virtual void ParseTokens(const FString& SourceString, FTextLayout& TargetTextLayout, TArray<FSyntaxTokenizer::FTokenizedLine> TokenizedLines) override;
 
-	FLuaSyntaxTextStyle SyntaxTextStyle;
-
 	TArray<const TCHAR *> BasicTokens;
 	TArray<const TCHAR *> StdLibTokens;
+
+	FLuaSyntaxTextStyle SyntaxTextStyle;
 };
