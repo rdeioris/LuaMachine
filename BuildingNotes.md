@@ -5,6 +5,12 @@
 make macosx
 ```
 
+# Building Lua static library for Linux 64bit
+
+```sh
+make linux
+```
+
 # Building Lua static library for Win64
 
 ```sh
