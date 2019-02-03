@@ -246,6 +246,15 @@ ULuaComponent allows to map a table to an ActorComponent
 
 Check its docs here: [LuaComponent](Docs/LuaComponent.md)
 
+## LuaCodeBox/ULuaMultiLineEditableTextBox
+
+This is a UMG widget for showing/editing lua code with syntax colouring:
+
+![LuaCodeBox](Docs/Screenshots/LuaCodeBox.PNG?raw=true "LuaCodeBox")
+
+The syntax highlighter is available in the FLuaMachineSyntaxHighlighterTextLayoutMarshaller class (so you can reuse it
+for building more advanced Slate/UMG widgets)
+
 ## Lua Threads/Coroutines
 
 Lua Threads/Coroutines are fully supported
