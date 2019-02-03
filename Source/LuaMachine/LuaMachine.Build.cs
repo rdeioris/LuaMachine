@@ -1,4 +1,4 @@
-// Copyright 2018 - Roberto De Ioris
+// Copyright 2019 - Roberto De Ioris
 
 using UnrealBuildTool;
 
@@ -38,6 +38,7 @@ public class LuaMachine : ModuleRules
                 "Engine",
                 "Slate",
                 "SlateCore",
+                "UMG"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );

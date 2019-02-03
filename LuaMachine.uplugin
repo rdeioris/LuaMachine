@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "1.0",
+  "VersionName": "20190203",
   "FriendlyName": "LuaMachine",
   "Description": "Expose a Lua api for your project",
   "Category": "Scripting",
@@ -12,7 +12,7 @@
   "SupportURL": "https://github.com/rdeioris/LuaMachine",
   "CanContainContent": true,
   "EngineVersion": "4.21.0",
-  "IsBetaVersion": true,
+  "IsBetaVersion": false,
   "Installed": false,
   "Modules": [
     {
