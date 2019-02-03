@@ -833,6 +833,9 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 
 	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 1));
 
+	if (LuaState->L != L)
+		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", TCHAR_TO_UTF8(*Key));
+
 	// first check for code assets
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
