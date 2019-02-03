@@ -1,4 +1,5 @@
 # LuaMachine
+![LuaMachine Logo](Docs/LuaMachine_Logo.png?raw=true "LuaMachine Logo")
 
 Unreal Engine 4 Plugin for adding Lua scripting to your projects.
 
@@ -295,7 +296,7 @@ Commercial support is offered by Unbit (based in Rome, Italy), just contact info
 
 AIV, Accademia Italiana Videogiochi (http://www.aiv01.it). They are using it for Lua lessons in the Game Design classes.
 
-
+The LuaMachine logo has been designed by Nicolas Martel (aka. Nogitsu)
 
 
 
