@@ -138,6 +138,8 @@ public:
 	void GetRef(int Ref);
 	int Next(int Index);
 
+	bool Resume(int Index, int NArgs);
+
 	int GC(int What, int Data = 0);
 
 	int32 ToInteger(int Index);

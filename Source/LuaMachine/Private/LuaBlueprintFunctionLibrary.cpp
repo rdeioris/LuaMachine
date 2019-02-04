@@ -685,6 +685,45 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Valu
 	return ReturnValue;
 }
 
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueResumeMulti(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	if (Value.Type != ELuaValueType::Thread)
+		return ReturnValue;
+
+	ULuaState* L = Value.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(Value);
+
+	int32 StackTop = L->GetTop();
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	L->Resume(-1 - NArgs, NArgs);
+
+	int32 NumOfReturnValues = (L->GetTop() - StackTop);
+	if (NumOfReturnValues > 0)
+	{
+		for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+		{
+			ReturnValue.Insert(L->ToLuaValue(i), 0);
+		}
+		L->Pop(NumOfReturnValues);
+	}
+
+	L->Pop();
+
+	return ReturnValue;
+}
+
 int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)
 {
 

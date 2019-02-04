@@ -1073,6 +1073,34 @@ int ULuaState::Next(int Index)
 	return lua_next(L, Index);
 }
 
+bool ULuaState::Resume(int Index, int NArgs)
+{
+	lua_State* Coroutine = lua_tothread(L, Index);
+	if (!Coroutine)
+		return false;
+
+	if (lua_status(Coroutine) == LUA_OK && lua_gettop(Coroutine) == 0)
+	{
+		lua_pushboolean(L, 0);
+		lua_pushstring(L, "Lua error: cannot resume dead coroutine");
+		return false;
+	}
+
+	lua_xmove(L, Coroutine, NArgs);
+	int Ret = lua_resume(Coroutine, L, NArgs);
+	if (Ret != LUA_OK && Ret != LUA_YIELD)
+	{
+		lua_pushboolean(L, 0);
+		lua_xmove(Coroutine, L, 1);
+		return false;
+	}
+
+	int NRet = lua_gettop(Coroutine);
+	lua_pushboolean(L, 1);
+	lua_xmove(Coroutine, L, NRet);
+	return true;
+}
+
 int ULuaState::GC(int What, int Data)
 {
 	return lua_gc(L, What, Data);

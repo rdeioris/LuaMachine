@@ -123,6 +123,10 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category="Lua")
 	static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
 
+	/* Resume a lua coroutine/thread with multiple return values (must be callable) */
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
+	static TArray<FLuaValue> LuaValueResumeMulti(FLuaValue Value, TArray<FLuaValue> Args);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static int32 LuaValueLength(FLuaValue Value);
 
