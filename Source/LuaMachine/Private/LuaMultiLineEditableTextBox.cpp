@@ -19,6 +19,7 @@ ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 
 	bIsReadonly = false;
 	bHandleTab = true;
+	bHandleArrows = true;
 
 	CodeStyle = FTextBlockStyle()
 		.SetFont(WidgetStyle.Font)
@@ -70,11 +71,84 @@ FReply ULuaMultiLineEditableTextBox::OnKeyChar(const FGeometry& InGeometry, cons
 
 FReply ULuaMultiLineEditableTextBox::OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
-	if (bHandleTab && InKeyEvent.GetKeyCode() == 9)
+	FKey Key = InKeyEvent.GetKey();
+	if (bHandleTab && Key == EKeys::Tab)
 	{
 		return FReply::Handled();
 	}
+
+	if (bHandleArrows)
+	{
+		if (Key == EKeys::Up)
+		{
+			MoveCursorUp();
+			return FReply::Handled();
+		}
+
+		if (Key == EKeys::Down)
+		{
+			MoveCursorDown();
+			return FReply::Handled();
+		}
+
+		if (Key == EKeys::Right)
+		{
+			MoveCursorRight();
+			return FReply::Handled();
+		}
+
+		if (Key == EKeys::Left)
+		{
+			MoveCursorLeft();
+			return FReply::Handled();
+		}
+	}
+
 	return EditableTextBoxPtr->SMultiLineEditableTextBox::OnKeyDown(InGeometry, InKeyEvent);
+}
+
+void ULuaMultiLineEditableTextBox::OnCursorMoved(const FTextLocation& Location)
+{
+	CursorLocation = Location;
+}
+
+int32 ULuaMultiLineEditableTextBox::GetCursorLine() const
+{
+	return CursorLocation.GetLineIndex();
+}
+
+int32 ULuaMultiLineEditableTextBox::GetCursorColumn() const
+{
+	return CursorLocation.GetOffset();
+}
+
+void ULuaMultiLineEditableTextBox::CursorGoTo(int32 Line, int32 Column)
+{
+	if (Line < 0)
+		Line = 0;
+	if (Column < 0)
+		Column = 0;
+	return EditableTextBoxPtr->GoTo(FTextLocation(Line, Column));
+}
+
+void ULuaMultiLineEditableTextBox::MoveCursorUp()
+{
+	return CursorGoTo(CursorLocation.GetLineIndex() - 1, 0);
+}
+
+void ULuaMultiLineEditableTextBox::MoveCursorDown()
+{
+	return CursorGoTo(CursorLocation.GetLineIndex() + 1, 0);
+}
+
+void ULuaMultiLineEditableTextBox::MoveCursorRight()
+{
+	return CursorGoTo(CursorLocation.GetLineIndex(), CursorLocation.GetOffset() + 1);
+}
+
+void ULuaMultiLineEditableTextBox::MoveCursorLeft()
+{
+	return CursorGoTo(CursorLocation.GetLineIndex(), CursorLocation.GetOffset() - 1);
 }
 
 void ULuaMultiLineEditableTextBox::SynchronizeProperties()
@@ -110,6 +184,8 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 		.OnKeyCharHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyChar)
 		.OnKeyDownHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyDown)
 		.IsReadOnly(bIsReadonly)
+		.AllowContextMenu(false)
+		.OnCursorMoved_UObject(this, &ULuaMultiLineEditableTextBox::OnCursorMoved)
 		.Style(&WidgetStyle);
 
 	return EditableTextBoxPtr.ToSharedRef();

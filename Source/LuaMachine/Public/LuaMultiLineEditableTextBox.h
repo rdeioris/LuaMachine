@@ -51,15 +51,41 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua Code")
 	bool bHandleTab;
 
-	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "GetText (Lua Code Box)"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua Code")
+	bool bHandleArrows;
+
+	UFUNCTION(BlueprintPure, Category = "Widget", meta = (DisplayName = "GetText (Lua Code Box)"))
 	FText GetText() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "SetText (Lua Code Box)"))
 	void SetText(FText InText);
 
+	UFUNCTION(BlueprintPure, Category = "Widget", meta = (DisplayName = "GetCursorLine (Lua Code Box)"))
+	int32 GetCursorLine() const;
+
+	UFUNCTION(BlueprintPure, Category = "Widget", meta = (DisplayName = "GetCursorColumn (Lua Code Box)"))
+	int32 GetCursorColumn() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "MoveCursorUp (Lua Code Box)"))
+	void MoveCursorUp();
+
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "MoveCursorDown (Lua Code Box)"))
+	void MoveCursorDown();
+
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "MoveCursorRight (Lua Code Box)"))
+	void MoveCursorRight();
+
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "MoveCursorLeft (Lua Code Box)"))
+	void MoveCursorLeft();
+
+	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "CursorGoTo (Lua Code Box)"))
+	void CursorGoTo(int32 Line, int32 Column);
+
 	virtual FReply OnKeyChar(const FGeometry& InGeometry, const FCharacterEvent& InCharacterEvent);
 
 	virtual FReply OnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent);
+
+	virtual void OnCursorMoved(const FTextLocation& Location);
 
 	virtual void SynchronizeProperties() override;
 
@@ -71,4 +97,6 @@ protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	
 	TSharedPtr<SMultiLineEditableTextBox> EditableTextBoxPtr;
+
+	FTextLocation CursorLocation;
 };
