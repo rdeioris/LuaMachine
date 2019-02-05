@@ -107,6 +107,7 @@ protected:
 		const TCHAR Character = InCharacterEvent.GetCharacter();
 		if (Character == TEXT('\t'))
 		{
+			ClearSelection();
 			InsertTextAtCursor(FString("  "));
 			return FReply::Handled();
 		}

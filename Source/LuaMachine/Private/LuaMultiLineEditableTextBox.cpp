@@ -63,6 +63,7 @@ FReply ULuaMultiLineEditableTextBox::OnKeyChar(const FGeometry& InGeometry, cons
 		// using Max here for avoiding negative values
 		for (int32 i = 0; i < FMath::Max(TabSize, 0); i++)
 			Spaces = Spaces.AppendChar(TEXT(" ")[0]);
+		EditableTextBoxPtr->ClearSelection();
 		EditableTextBoxPtr->InsertTextAtCursor(Spaces);
 		return FReply::Handled();
 	}
