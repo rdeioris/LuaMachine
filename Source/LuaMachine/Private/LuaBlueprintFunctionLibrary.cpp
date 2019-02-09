@@ -3,6 +3,7 @@
 #include "LuaBlueprintFunctionLibrary.h"
 #include "LuaComponent.h"
 #include "LuaMachine.h"
+#include "Runtime/Online/HTTP/Public/Interfaces/IHttpResponse.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -226,6 +227,41 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	}
 	L->Pop();
 	return ReturnValue;
+}
+
+void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FLuaHttpSuccess Completed)
+{
+	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
+	HttpRequest->SetURL(URL);
+	for (TPair<FString, FString> Header : Headers)
+	{
+		HttpRequest->AppendToHeader(Header.Key, Header.Value);
+	}
+	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpRequestDone, State, TWeakObjectPtr<UWorld>(WorldContextObject->GetWorld()), Completed);
+	HttpRequest->ProcessRequest();
+}
+
+void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpSuccess Completed)
+{
+	FLuaValue ReturnValue;
+	int32 StatusCode = -1;
+
+	if (!bWasSuccessful)
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("HTTP session failed for \"%s %s\""), *Request->GetVerb(), *Request->GetURL());
+	}
+
+	else if (!World.IsValid())
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Unable to access LuaState as the World object is no more available (\"%s %s\")"), *Request->GetVerb(), *Request->GetURL());
+	}
+	else
+	{
+		ReturnValue = LuaRunString(World.Get(), LuaState, Response->GetContentAsString());
+		StatusCode = Response->GetResponseCode();
+	}
+
+	Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)

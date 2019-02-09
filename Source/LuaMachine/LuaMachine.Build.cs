@@ -39,7 +39,8 @@ public class LuaMachine : ModuleRules
                 "Slate",
                 "SlateCore",
                 "UMG",
-                "InputCore"
+                "InputCore",
+                "HTTP"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );

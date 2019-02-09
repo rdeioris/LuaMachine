@@ -8,11 +8,16 @@
 #include "LuaValue.h"
 #include "UObject/TextProperty.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
+#include "Runtime/Online/HTTP/Public/HttpModule.h"
 #include "LuaBlueprintFunctionLibrary.generated.h"
 
 /**
  * 
  */
+
+DECLARE_DYNAMIC_DELEGATE_ThreeParams(FLuaHttpSuccess, FLuaValue, ReturnValue, bool, bWasSuccessful, int32, StatusCode);
+
+
 UCLASS()
 class LUAMACHINE_API ULuaBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 {
@@ -142,6 +147,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static FLuaValue LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Headers"), Category = "Lua")
+	static void LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FLuaHttpSuccess Completed);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
@@ -231,5 +239,8 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Bool)", BlueprintAutocast), Category="Lua")
 	static FLuaValue Conv_BoolToLuaValue(bool Value);
+
+private:
+	static void HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpSuccess Completed);
 	
 };
