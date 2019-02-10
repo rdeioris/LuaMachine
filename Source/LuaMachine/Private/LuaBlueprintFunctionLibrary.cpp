@@ -4,6 +4,9 @@
 #include "LuaComponent.h"
 #include "LuaMachine.h"
 #include "Runtime/Online/HTTP/Public/Interfaces/IHttpResponse.h"
+#include "Runtime/Core/Public/Math/BigInt.h"
+#include "Runtime/Core/Public/Misc/Base64.h"
+#include "Runtime/Core/Public/Misc/SecureHash.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -229,19 +232,29 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
-void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FLuaHttpSuccess Completed)
+void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
 {
+
+	// Security CHECK
+	if (!SecurityHeader.IsEmpty() || !SignaturePublicExponent.IsEmpty() || !SignatureModulus.IsEmpty())
+	{
+		if (SecurityHeader.IsEmpty() || SignaturePublicExponent.IsEmpty() || SignatureModulus.IsEmpty())
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("For secure LuaRunURL() you need to specify the Security HTTP Header, the Signature Public Exponent and the Signature Modulus"));
+			return;
+		}
+	}
 	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
 	HttpRequest->SetURL(URL);
 	for (TPair<FString, FString> Header : Headers)
 	{
 		HttpRequest->AppendToHeader(Header.Key, Header.Value);
 	}
-	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpRequestDone, State, TWeakObjectPtr<UWorld>(WorldContextObject->GetWorld()), Completed);
+	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpRequestDone, State, TWeakObjectPtr<UWorld>(WorldContextObject->GetWorld()), SecurityHeader, SignaturePublicExponent, SignatureModulus, Completed);
 	HttpRequest->ProcessRequest();
 }
 
-void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpSuccess Completed)
+void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
 {
 	FLuaValue ReturnValue;
 	int32 StatusCode = -1;
@@ -257,6 +270,70 @@ void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHtt
 	}
 	else
 	{
+		// Check signature
+		if (!SecurityHeader.IsEmpty())
+		{
+			// check code size
+			if (Response->GetContentLength() <= 0)
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Invalid Content Size"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+			FString EncryptesSignatureBase64 = Response->GetHeader(SecurityHeader);
+			if (EncryptesSignatureBase64.IsEmpty())
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Invalid Security HTTP Header"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+
+			const uint32 KeySize = 64;
+
+			TArray<uint8> Signature;
+			FBase64::Decode(EncryptesSignatureBase64, Signature);
+
+			if (Signature.Num() != KeySize)
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Invalid Signature"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+			TEncryptionInt SignatureValue = TEncryptionInt((uint32 *)&Signature[0]);
+
+			TArray<uint8> PublicExponent;
+			FBase64::Decode(SignaturePublicExponent, PublicExponent);
+			if (PublicExponent.Num() != KeySize)
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Invalid Signature Public Exponent"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+
+			TArray<uint8> Modulus;
+			FBase64::Decode(SignatureModulus, Modulus);
+			if (Modulus.Num() != KeySize)
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Invalid Signature Modulus"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+
+			TEncryptionInt PublicKey = TEncryptionInt((uint32 *)&PublicExponent[0]);
+			TEncryptionInt ModulusValue = TEncryptionInt((uint32 *)&Modulus[0]);
+
+			TEncryptionInt ShaHash;
+			FSHA1::HashBuffer(Response->GetContent().GetData(), Response->GetContentLength(), (uint8*)&ShaHash);
+
+			TEncryptionInt DecryptedSignature = FEncryption::ModularPow(SignatureValue, PublicKey, ModulusValue);
+			if (DecryptedSignature != ShaHash)
+			{
+				UE_LOG(LogLuaMachine, Error, TEXT("[Security] Signature check failed"));
+				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
+				return;
+			}
+		}
+
 		ReturnValue = LuaRunString(World.Get(), LuaState, Response->GetContentAsString());
 		StatusCode = Response->GetResponseCode();
 	}
