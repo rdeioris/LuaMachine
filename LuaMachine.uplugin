@@ -11,7 +11,6 @@
   "MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/48a58a495c3f4d788fc9195bceff2ec8",
   "SupportURL": "https://github.com/rdeioris/LuaMachine",
   "CanContainContent": true,
-  "EngineVersion": "4.22.0",
   "IsBetaVersion": false,
   "Installed": false,
   "Modules": [
