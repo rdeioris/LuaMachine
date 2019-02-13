@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "20190203",
+  "VersionName": "20190213",
   "FriendlyName": "LuaMachine",
   "Description": "Expose a Lua api for your project",
   "Category": "Scripting",
@@ -11,7 +11,7 @@
   "MarketplaceURL": "com.epicgames.launcher://ue/marketplace/content/48a58a495c3f4d788fc9195bceff2ec8",
   "SupportURL": "https://github.com/rdeioris/LuaMachine",
   "CanContainContent": true,
-  "EngineVersion": "4.21.0",
+  "EngineVersion": "4.22.0",
   "IsBetaVersion": false,
   "Installed": false,
   "Modules": [
