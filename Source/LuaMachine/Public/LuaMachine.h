@@ -6,8 +6,9 @@
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewLuaState, ULuaState*);
 
-class FLuaMachineModule : public IModuleInterface
+class LUAMACHINE_API FLuaMachineModule : public IModuleInterface
 {
 public:
 
@@ -15,7 +16,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	static inline FLuaMachineModule& Get();
+	static FLuaMachineModule& Get();
 
 	void CleanupLuaStates(bool bIsSimulating);
 	void UnregisterLuaState(ULuaState* LuaState);
@@ -23,6 +24,8 @@ public:
 	ULuaState* GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly=false);
 
 	TArray<ULuaState*> GetRegisteredLuaStates();
+
+	FOnNewLuaState OnNewLuaState;
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;

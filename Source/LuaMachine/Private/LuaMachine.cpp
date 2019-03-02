@@ -62,8 +62,10 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 	{
 		if (bCheckOnly)
 			return nullptr;
-		LuaStates.Add(LuaStateClass, NewObject<ULuaState>((UObject *)GetTransientPackage(), LuaStateClass));
+		ULuaState* NewLuaState = NewObject<ULuaState>((UObject *)GetTransientPackage(), LuaStateClass);
+		LuaStates.Add(LuaStateClass, NewLuaState);
 		LuaStates[LuaStateClass]->AddToRoot();
+		OnNewLuaState.Broadcast(NewLuaState);
 	}
 	return LuaStates[LuaStateClass]->GetLuaState(InWorld);
 }

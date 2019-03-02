@@ -41,6 +41,8 @@ public class LuaMachineEditor : ModuleRules
 				// ... add private dependencies that you statically link with here ...
                 "UnrealEd",
                 "Projects",
+                "InputCore",
+                "EditorStyle",
                 "LuaMachine"
             }
             );

@@ -21,4 +21,5 @@ public:
 
 private:
 	TSharedPtr<FSlateStyleSet> StyleSet;
+	static TSharedRef<SDockTab> CreateLuaMachineDebugger(const FSpawnTabArgs& Args);
 };
