@@ -6,6 +6,7 @@
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
 #include "SlateCore/Public/Styling/SlateStyle.h"
+#include "Runtime/Slate/Public/Widgets/Docking/SDockTab.h"
 
 class FLuaMachineEditorModule : public IModuleInterface
 {
@@ -15,7 +16,7 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 
-	static inline FLuaMachineEditorModule& Get();
+	static FLuaMachineEditorModule& Get();
 
 	TSharedPtr<FSlateStyleSet> GetStyleSet();
 

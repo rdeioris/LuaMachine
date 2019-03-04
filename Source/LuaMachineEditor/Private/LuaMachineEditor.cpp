@@ -9,7 +9,6 @@
 #include "LuaValueCustomization.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructureModule.h"
-#include "Runtime/Slate/Public/Widgets/Docking/SDockTab.h"
 #include "Runtime/Slate/Public/Widgets/Text/STextBlock.h"
 #include "Runtime/Slate/Public/Widgets/Views/STreeView.h"
 #include "Runtime/Slate/Public/Widgets/Input/SButton.h"
