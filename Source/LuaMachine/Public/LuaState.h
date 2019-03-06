@@ -38,6 +38,27 @@ struct FLuaUserData
 	}
 };
 
+USTRUCT(BlueprintType)
+struct FLuaDebug
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
+	int32 CurrentLine;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
+	FString Source;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
+	FString Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
+	FString NameWhat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
+	FString What;
+};
+
 
 UCLASS(Abstract, Blueprintable, HideDropdown)
 class LUAMACHINE_API ULuaState : public UObject
@@ -83,6 +104,15 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Line Hook"))
+	void ReceiveLuaLineHook(const FLuaDebug& LuaDebug);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Call Hook"))
+	void ReceiveLuaCallHook(const FLuaDebug& LuaDebug);
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Lua", meta = (DisplayName = "Lua Return Hook"))
+	void ReceiveLuaReturnHook(const FLuaDebug& LuaDebug);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
@@ -92,6 +122,18 @@ public:
 	/* Enable it if you want this Lua state to not be destroyed during PIE. Useful for editor scripting */
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bPersistent;
+
+	/* Enable debug of each Lua line. The LuaLineHook event will be triggered */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bEnableLineHook;
+
+	/* Enable debug of each Lua call. The LuaCallHook event will be triggered */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bEnableCallHook;
+
+	/* Enable debug of each Lua return. The LuaReturnHook event will be triggered */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bEnableReturnHook;
 
 	int32 GetTop();
 
@@ -176,6 +218,8 @@ public:
 	static int MetaTableFunctionUserData__eq(lua_State *L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
+
+	static void Debug_Hook(lua_State* L, lua_Debug* ar);
 
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 

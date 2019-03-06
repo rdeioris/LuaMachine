@@ -19,6 +19,9 @@ ULuaState::ULuaState()
 	bLogError = true;
 	bAddProjectContentDirToPackagePath = true;
 	bPersistent = false;
+	bEnableLineHook = false;
+	bEnableCallHook = false;
+	bEnableReturnHook = false;
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -106,6 +109,26 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	// pop global table
 	Pop();
+
+	int DebugMask = 0;
+	// install hooks
+	if (bEnableLineHook)
+	{
+		DebugMask |= LUA_MASKLINE;
+	}
+	if (bEnableCallHook)
+	{
+		DebugMask |= LUA_MASKCALL;
+	}
+	if (bEnableReturnHook)
+	{
+		DebugMask |= LUA_MASKRET;
+	}
+
+	if (DebugMask != 0)
+	{
+		lua_sethook(L, Debug_Hook, DebugMask, 0);
+	}
 
 	if (LuaCodeAsset)
 	{
@@ -600,6 +623,33 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
 	}
 
 	return 0;
+}
+
+void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+	FLuaDebug LuaDebug;
+	lua_getinfo(L, "lSn", ar);
+	LuaDebug.CurrentLine = ar->currentline;
+	LuaDebug.Source = UTF8_TO_TCHAR(ar->source);
+	LuaDebug.Name = UTF8_TO_TCHAR(ar->name);
+	LuaDebug.NameWhat = UTF8_TO_TCHAR(ar->namewhat);
+	LuaDebug.What = UTF8_TO_TCHAR(ar->what);
+
+	switch (ar->event)
+	{
+	case LUA_HOOKLINE:
+		LuaState->ReceiveLuaLineHook(LuaDebug);
+		break;
+	case LUA_HOOKCALL:
+		LuaState->ReceiveLuaCallHook(LuaDebug);
+		break;
+	case LUA_HOOKRET:
+		LuaState->ReceiveLuaReturnHook(LuaDebug);
+		break;
+	default:
+		break;
+	}
 }
 
 int ULuaState::MetaTableFunctionUserData__eq(lua_State *L)
