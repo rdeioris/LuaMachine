@@ -52,4 +52,3 @@ void ULuaCode::PreSave(const ITargetPlatform* TargetPlatform)
 		}
 	}
 }
-

@@ -344,7 +344,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			lua_xmove(this->L, State, 1);
 		break;
 	case ELuaValueType::Function:
-		if (this != LuaValue.LuaState)
+		if (this != LuaValue.LuaState || LuaValue.LuaRef == LUA_NOREF)
 		{
 			lua_pushnil(State);
 			break;
@@ -1007,16 +1007,16 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 
 void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal)
 {
-	int32 ItemsToPop = GetFieldFromTree(Tree, bGlobal);
-	// invalid key
-	if (ItemsToPop == 1 && bGlobal)
-	{
-		Pop();
-		return;
-	}
-
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
+
+	int32 ItemsToPop = GetFieldFromTree(Tree, bGlobal);
+	// invalid key
+	if (ItemsToPop != (Parts.Num() + (bGlobal ? 1 : 0)))
+	{
+		Pop(ItemsToPop);
+		return;
+	}
 
 	Pop();
 	FromLuaValue(Value);

@@ -124,6 +124,7 @@ struct LUAMACHINE_API FLuaValue
 
 	int LuaRef;
 
+	UPROPERTY()
 	ULuaState* LuaState;
 
 	FLuaValue GetField(FString Key);

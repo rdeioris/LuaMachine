@@ -136,7 +136,7 @@ class SLuaMachineDebugger : public SCompoundWidget
 
 	}
 
-	void OnNewLuaState(ULuaState* NewLuaState)
+	void OnRegisteredLuaStatesChanged()
 	{
 		DetectedLuaStates.Empty();
 		TArray<ULuaState *> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
@@ -148,6 +148,34 @@ class SLuaMachineDebugger : public SCompoundWidget
 		if (LuaStatesComboBox.IsValid())
 		{
 			LuaStatesComboBox->RefreshOptions();
+		}
+
+		RefreshDebugText();
+	}
+
+	void RefreshDebugText()
+	{
+		DebugTextContext.Empty();
+
+		for (TObjectIterator<ULuaState> StatesIterator; StatesIterator; ++StatesIterator)
+		{
+			ULuaState* LuaState = *StatesIterator;
+			if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+			{
+				if (LuaState->GetInternalLuaState())
+				{
+					DebugTextContext += FString::Printf(TEXT("%s (used memory: %dk) (top of the stack: %d)\n"), *LuaState->GetName(), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop());
+				}
+				else
+				{
+					DebugTextContext += FString::Printf(TEXT("%s (not initialized)\n"), *LuaState->GetName());
+				}
+			}
+		}
+
+		if (DebugText.IsValid())
+		{
+			DebugText->SetText(FText::FromString(DebugTextContext));
 		}
 	}
 
@@ -254,6 +282,8 @@ class SLuaMachineDebugger : public SCompoundWidget
 			RebuildLuaValues();
 			LuaTreeView->RequestTreeRefresh();
 		}
+
+		RefreshDebugText();
 		return FReply::Handled();
 	}
 
@@ -280,7 +310,7 @@ class SLuaMachineDebugger : public SCompoundWidget
 	void Construct(const FArguments& InArgs)
 	{
 		SelectedLuaState = nullptr;
-		OnNewLuaState(nullptr);
+		OnRegisteredLuaStatesChanged();
 		RebuildLuaValues();
 		ChildSlot[
 			SNew(SVerticalBox)
@@ -293,12 +323,19 @@ class SLuaMachineDebugger : public SCompoundWidget
 				[
 					SNew(SButton).Text(FText::FromString("Refresh")).OnClicked(this, &SLuaMachineDebugger::RefreshDebugger)
 				]
-			+ SVerticalBox::Slot()
+			+ SVerticalBox::Slot().AutoHeight()
 				[
 					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
 				]
+			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom)
+				[
+					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
+					[
+						SAssignNew(DebugText, STextBlock).Text(FText::FromString(DebugTextContext))
+					]
+				]
 		];
-		FLuaMachineModule::Get().OnNewLuaState.AddSP(this, &SLuaMachineDebugger::OnNewLuaState);
+		FLuaMachineModule::Get().OnRegisteredLuaStatesChanged.AddSP(this, &SLuaMachineDebugger::OnRegisteredLuaStatesChanged);
 	}
 
 protected:
@@ -307,6 +344,8 @@ protected:
 	ULuaState* SelectedLuaState;
 	TArray<TSharedPtr<FString>> DetectedLuaStates;
 	TSharedPtr<STextComboBox> LuaStatesComboBox;
+	TSharedPtr<STextBlock> DebugText;
+	FString DebugTextContext;
 };
 
 TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSpawnTabArgs& Args)

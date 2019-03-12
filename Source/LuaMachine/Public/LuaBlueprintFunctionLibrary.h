@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LuaState.h"
 #include "LuaValue.h"
+#include "LuaTableAsset.h"
 #include "UObject/TextProperty.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Runtime/Online/HTTP/Public/HttpModule.h"
@@ -162,6 +163,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static void LuaGCRestart(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
+
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
+	static FLuaValue LuaTableAssetToLuaTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaTableAsset* TableAsset);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static bool LuaValueIsNil(FLuaValue Value);

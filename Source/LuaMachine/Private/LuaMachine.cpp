@@ -45,6 +45,7 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	}
 
 	LuaStates = PersistentLuaStates;
+	OnRegisteredLuaStatesChanged.Broadcast();
 }
 
 ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly)
@@ -66,6 +67,7 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 		LuaStates.Add(LuaStateClass, NewLuaState);
 		LuaStates[LuaStateClass]->AddToRoot();
 		OnNewLuaState.Broadcast(NewLuaState);
+		OnRegisteredLuaStatesChanged.Broadcast();
 	}
 	return LuaStates[LuaStateClass]->GetLuaState(InWorld);
 }
@@ -99,6 +101,9 @@ void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
 		LuaStates[FoundLuaStateClass]->RemoveFromRoot();
 		LuaStates.Remove(FoundLuaStateClass);
 	}
+
+	// trick for waking up on low-level destuctor
+	OnRegisteredLuaStatesChanged.Broadcast();
 }
 
 FLuaMachineModule& FLuaMachineModule::Get()

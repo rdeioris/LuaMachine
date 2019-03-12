@@ -6,6 +6,7 @@
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnRegisteredLuaStatesChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewLuaState, ULuaState*);
 
 class LUAMACHINE_API FLuaMachineModule : public IModuleInterface
@@ -26,6 +27,7 @@ public:
 	TArray<ULuaState*> GetRegisteredLuaStates();
 
 	FOnNewLuaState OnNewLuaState;
+	FOnRegisteredLuaStatesChanged OnRegisteredLuaStatesChanged;
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
