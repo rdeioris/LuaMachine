@@ -25,6 +25,7 @@ void FLuaMachineEditorModule::StartupModule()
 	StyleSet = MakeShareable(new FSlateStyleSet("LuaMachineEditor"));
 	StyleSet->SetContentRoot(IPluginManager::Get().FindPlugin("LuaMachine")->GetBaseDir() / "Resources");
 	StyleSet->Set("ClassThumbnail.LuaCode", new FSlateImageBrush(StyleSet->RootToContentDir("Icon128.png"), FVector2D(128.0f, 128.0f)));
+	StyleSet->Set("ClassThumbnail.LuaTableAsset", new FSlateImageBrush(StyleSet->RootToContentDir("LuaTableAsset256.png"), FVector2D(256.0f, 256.0f)));
 
 	const FSlateFontInfo Consolas9 = FCoreStyle::GetDefaultFontStyle("Mono", 9);
 
