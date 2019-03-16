@@ -909,6 +909,47 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableAssetToLuaTable(UObject* WorldCo
 	return TableAsset->ToLuaTable(L);
 }
 
+bool ULuaBlueprintFunctionLibrary::LuaTableImplements(FLuaValue Table, ULuaTableAsset* TableAsset)
+{
+	if (Table.Type != ELuaValueType::Table)
+		return false;
+
+	ULuaState* L = Table.LuaState;
+	if (!L)
+		return false;
+
+	for (TPair<FString, FLuaValue>& Pair : TableAsset->Table)
+	{
+		FLuaValue Item = Table.GetField(Pair.Key);
+		if (Item.Type == ELuaValueType::Nil)
+			return false;
+		if (Item.Type != Pair.Value.Type)
+			return false;
+	}
+
+	return true;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaTableImplementsAll(FLuaValue Table, TArray<ULuaTableAsset*> TableAssets)
+{
+	for (ULuaTableAsset* TableAsset : TableAssets)
+	{
+		if (!LuaTableImplements(Table, TableAsset))
+			return false;
+	}
+	return true;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaTableImplementsAny(FLuaValue Table, TArray<ULuaTableAsset*> TableAssets)
+{
+	for (ULuaTableAsset* TableAsset : TableAssets)
+	{
+		if (LuaTableImplements(Table, TableAsset))
+			return true;
+	}
+	return false;
+}
+
 int32 ULuaBlueprintFunctionLibrary::LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());

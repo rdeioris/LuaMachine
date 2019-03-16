@@ -167,6 +167,15 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
 	static FLuaValue LuaTableAssetToLuaTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaTableAsset* TableAsset);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static bool LuaTableImplements(FLuaValue Table, ULuaTableAsset* TableAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static bool LuaTableImplementsAll(FLuaValue Table, TArray<ULuaTableAsset*> TableAssets);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static bool LuaTableImplementsAny(FLuaValue Table, TArray<ULuaTableAsset*> TableAssets);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static bool LuaValueIsNil(FLuaValue Value);
 
