@@ -7,6 +7,20 @@
 #include "Components/MultiLineEditableTextBox.h"
 #include "LuaMultiLineEditableTextBox.generated.h"
 
+USTRUCT(BlueprintType)
+struct FLuaCustomHighlighter
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	FLinearColor Color;
+
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	TArray<FString> Tokens;
+
+	FLuaCustomHighlighter();
+};
+
 /**
  * 
  */
@@ -53,6 +67,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua Code")
 	bool bHandleArrows;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Style")
+	TArray<FLuaCustomHighlighter> CustomTokensMapping;
 
 	UFUNCTION(BlueprintPure, Category = "Widget", meta = (DisplayName = "GetText (Lua Code Box)"))
 	FText GetText() const;

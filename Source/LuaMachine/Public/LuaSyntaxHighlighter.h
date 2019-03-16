@@ -13,6 +13,8 @@ struct FLuaSyntaxTextStyle
 	FTextBlockStyle NilTextStyle;
 	FTextBlockStyle BasicTextStyle;
 	FTextBlockStyle StdLibTextStyle;
+	TMap<FString, FLinearColor> CustomTextColorMapping;
+	TMap<FString, FTextBlockStyle> CustomTextStyleMapping;
 };
 
 

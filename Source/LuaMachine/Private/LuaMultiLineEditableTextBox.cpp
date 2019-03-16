@@ -7,6 +7,11 @@
 
 #define LOCTEXT_NAMESPACE "UMG"
 
+FLuaCustomHighlighter::FLuaCustomHighlighter()
+{
+	Color = FLinearColor::White;
+}
+
 ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 {
 
@@ -178,6 +183,13 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 	Style.BasicTextStyle = FTextBlockStyle(CodeStyle).SetColorAndOpacity(BasicColor);
 	Style.StdLibTextStyle = FTextBlockStyle(CodeStyle).SetColorAndOpacity(StdLibColor);
 	Style.StringTextStyle = FTextBlockStyle(CodeStyle).SetColorAndOpacity(StringColor);
+	for (FLuaCustomHighlighter& Highlighter : CustomTokensMapping)
+	{
+		for (FString& Token : Highlighter.Tokens)
+		{
+			Style.CustomTextColorMapping.Add(Token, Highlighter.Color);
+		}
+	}
 
 	EditableTextBoxPtr = SNew(SMultiLineEditableTextBox)
 		.Marshaller(FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create(Style))

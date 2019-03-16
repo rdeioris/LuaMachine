@@ -99,6 +99,16 @@ TSharedRef<FLuaMachineSyntaxHighlighterTextLayoutMarshaller> FLuaMachineSyntaxHi
 	ADD_RULE_STDLIB("os");
 	ADD_RULE_STDLIB("debug");
 
+	for (TPair<FString, FLinearColor>& Pair : LuaSyntaxTextStyle.CustomTextColorMapping)
+	{
+		LuaSyntaxTextStyle.CustomTextStyleMapping.Add(Pair.Key, FTextBlockStyle(LuaSyntaxTextStyle.NormalTextStyle).SetColorAndOpacity(Pair.Value));
+	}
+
+	for (TPair<FString, FTextBlockStyle>& Pair : LuaSyntaxTextStyle.CustomTextStyleMapping)
+	{
+		TokenizerRules.Add(FSyntaxTokenizer::FRule(*Pair.Key));
+	}
+
 	TokenizerRules.Sort([](const FSyntaxTokenizer::FRule& A, const FSyntaxTokenizer::FRule& B) {
 		return A.MatchText.Len() > B.MatchText.Len();
 	});
@@ -218,8 +228,16 @@ void FLuaMachineSyntaxHighlighterTextLayoutMarshaller::ParseTokens(const FString
 								CurrentBlockStyle = SyntaxTextStyle.StdLibTextStyle;
 							}
 							else {
-								RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
-								CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
+								if (SyntaxTextStyle.CustomTextStyleMapping.Contains(TokenString))
+								{
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Custom");
+									CurrentBlockStyle = SyntaxTextStyle.CustomTextStyleMapping[TokenString];
+								}
+								else
+								{
+									RunInfo.Name = TEXT("SyntaxHighlight.LuaMachine.Keyword");
+									CurrentBlockStyle = SyntaxTextStyle.KeywordTextStyle;
+								}
 							}
 							ParseState = EParseState::None;
 						}
