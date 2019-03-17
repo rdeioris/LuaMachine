@@ -909,6 +909,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableAssetToLuaTable(UObject* WorldCo
 	return TableAsset->ToLuaTable(L);
 }
 
+ULuaState* ULuaBlueprintFunctionLibrary::LuaGetState(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	return FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+}
+
 bool ULuaBlueprintFunctionLibrary::LuaTableImplements(FLuaValue Table, ULuaTableAsset* TableAsset)
 {
 	if (Table.Type != ELuaValueType::Table)
