@@ -923,6 +923,26 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 	return 1;
 }
 
+void ULuaState::ReceiveLuaError_Implementation(const FString& Message)
+{
+
+}
+
+void ULuaState::ReceiveLuaCallHook_Implementation(const FLuaDebug& LuaDebug)
+{
+
+}
+
+void ULuaState::ReceiveLuaReturnHook_Implementation(const FLuaDebug& LuaDebug)
+{
+
+}
+
+void ULuaState::ReceiveLuaLineHook_Implementation(const FLuaDebug& LuaDebug)
+{
+
+}
+
 void ULuaState::NewTable()
 {
 	lua_newtable(L);
