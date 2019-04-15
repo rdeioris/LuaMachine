@@ -84,6 +84,9 @@ public:
 	TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
+	TMap<FString, TSubclassOf<UBlueprintFunctionLibrary>> RequireBlueprintFunctionLibraryTable;
+
+	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLuaOpenLibs;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
@@ -210,6 +213,8 @@ public:
 	static int MetaTableFunctionState__index(lua_State *L);
 	static int MetaTableFunctionState__newindex(lua_State *L);
 
+	static int MetaTableBlueprintFunctionLibraryState__index(lua_State *L);
+	
 	static int TableFunction_print(lua_State *L);
 	static int TableFunction_package_preload(lua_State *L);
 

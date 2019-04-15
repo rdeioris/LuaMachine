@@ -8,6 +8,7 @@
 #include "Runtime/Core/Public/Misc/Paths.h"
 #include "Runtime/Core/Public/Serialization/BufferArchive.h"
 #include "Runtime/CoreUObject/Public/UObject/TextProperty.h"
+#include "Runtime/Engine/Classes/Kismet/BlueprintFunctionLibrary.h"
 
 LUAMACHINE_API DEFINE_LOG_CATEGORY(LogLuaMachine);
 
@@ -83,6 +84,11 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// manage RequireTable
 	GetField(-1, "preload");
 	for (TPair<FString, ULuaCode*>& Pair : RequireTable)
+	{
+		PushCFunction(ULuaState::TableFunction_package_preload);
+		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
+	}
+	for (TPair<FString, TSubclassOf<UBlueprintFunctionLibrary>>& Pair : RequireBlueprintFunctionLibraryTable)
 	{
 		PushCFunction(ULuaState::TableFunction_package_preload);
 		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
@@ -559,6 +565,45 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 	return 0;
 }
 
+int ULuaState::MetaTableBlueprintFunctionLibraryState__index(lua_State *L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+
+	if (!lua_isuserdata(L, 1))
+	{
+		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
+	}
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+
+	if (!UserData->Context.IsValid())
+	{
+		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
+	}
+
+	UBlueprintFunctionLibrary* FunctionLibrary = Cast<UBlueprintFunctionLibrary>(UserData->Context);
+	if (!FunctionLibrary)
+		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
+
+	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+
+	UFunction* Function = FunctionLibrary->FindFunction(FName(*Key));
+	if (Function)
+	{
+		FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+		LuaCallContext->Type = ELuaValueType::UFunction;
+		LuaCallContext->Context = FunctionLibrary;
+		LuaCallContext->Function = Function;
+		lua_newtable(L);
+		lua_pushcfunction(L, ULuaState::MetaTableFunction__call);
+		lua_setfield(L, -2, "__call");
+		lua_setmetatable(L, -2);
+		return 1;
+	}
+
+	lua_pushnil(L);
+	return 1;
+}
+
 int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
@@ -886,7 +931,19 @@ int ULuaState::TableFunction_package_preload(lua_State *L)
 	if (LuaState->L != L)
 		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", TCHAR_TO_UTF8(*Key));
 
-	// first check for code assets
+	// first check for BlueprintFunctionLibrary
+	TSubclassOf<UBlueprintFunctionLibrary>* FunctionLibrary = LuaState->RequireBlueprintFunctionLibraryTable.Find(Key);
+	if (FunctionLibrary)
+	{
+		LuaState->NewUObject(FunctionLibrary->GetDefaultObject());
+		// metatable
+		LuaState->NewTable();
+		LuaState->PushCFunction(MetaTableBlueprintFunctionLibraryState__index);
+		LuaState->SetField(-2, "__index");
+		LuaState->SetMetaTable(-2);
+		return 1;
+	}
+	// then check for code assets
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
