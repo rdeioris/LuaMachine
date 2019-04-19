@@ -62,6 +62,23 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObjectInState(UObject* WorldCon
 	return LuaValue;
 }
 
+void ULuaBlueprintFunctionLibrary::LuaStateDestroy(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+	FLuaMachineModule::Get().UnregisterLuaState(L);
+}
+
+void ULuaBlueprintFunctionLibrary::LuaStateReload(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+	FLuaMachineModule::Get().UnregisterLuaState(L);
+	FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+}
+
 FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 {
 	return Value.ToString();
