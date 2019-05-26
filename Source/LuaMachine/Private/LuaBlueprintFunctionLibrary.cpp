@@ -758,6 +758,25 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, FStri
 	return LuaValueCall(Value, Args);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCallWithSelf(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	FLuaValue Value = InTable.GetField(Key);
+	if (Value.Type == ELuaValueType::Nil)
+		return ReturnValue;
+
+	Args.Insert(InTable, 0);
+
+	return LuaValueCall(Value, Args);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableIndexCall(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
