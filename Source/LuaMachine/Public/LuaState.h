@@ -216,6 +216,7 @@ public:
 	static int MetaTableBlueprintFunctionLibraryState__index(lua_State *L);
 	
 	static int TableFunction_print(lua_State *L);
+	static int TableFunction_thread_print(lua_State *L);
 	static int TableFunction_package_preload(lua_State *L);
 
 	static int MetaTableFunction__call(lua_State *L);
@@ -227,6 +228,8 @@ public:
 	static void Debug_Hook(lua_State* L, lua_Debug* ar);
 
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
+
+	static TArray<FLuaValue> StateLessSafeRun(FString Code, FString CodePath, bool bLuaOpenLibs, TArray<FLuaValue> Args, FString& ErrorString);
 
 	FLuaValue FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);

@@ -293,6 +293,147 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 	return Output;
 }
 
+TArray<FLuaValue> ULuaState::StateLessSafeRun(FString Code, FString CodePath, bool bLuaOpenLibs, TArray<FLuaValue> Args, FString& ErrorString)
+{
+	const TCHAR* CodeRaw = *Code;
+	FString FullCodePath = FString("@") + CodePath;
+	TArray<FLuaValue> Output;
+
+	ErrorString = "";
+
+	lua_State* L = luaL_newstate();
+	if (bLuaOpenLibs)
+		luaL_openlibs(L);
+	// get the global table
+	lua_pushglobaltable(L);
+	// override print
+	lua_pushcfunction(L, ULuaState::TableFunction_thread_print);
+	lua_setfield(L, -2, "print");
+
+	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*FullCodePath)))
+	{
+		ErrorString = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		lua_close(L);
+		return Output;
+	}
+
+	if (lua_pcall(L, 0, 1, 0))
+	{
+		ErrorString = FString::Printf(TEXT("Lua execution error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		lua_close(L);
+		return Output;
+	}
+
+	int32 StackTop = lua_gettop(L);
+
+	int NArgs = 0;
+	bool bValidArgs = true;
+	for (FLuaValue& LuaValue : Args)
+	{
+		switch (LuaValue.Type)
+		{
+		case ELuaValueType::Bool:
+			NArgs++;
+			lua_pushboolean(L, LuaValue.Bool ? 1 : 0);
+			break;
+		case ELuaValueType::Integer:
+			NArgs++;
+			lua_pushinteger(L, LuaValue.Integer);
+			break;
+		case ELuaValueType::Nil:
+			NArgs++;
+			lua_pushnil(L);
+			break;
+		case ELuaValueType::Number:
+			NArgs++;
+			lua_pushnumber(L, LuaValue.Number);
+			break;
+		case ELuaValueType::String:
+			NArgs++;
+			lua_pushstring(L, TCHAR_TO_UTF8(*LuaValue.String));
+			break;
+		default:
+			bValidArgs = false;
+			break;
+		}
+
+		if (!bValidArgs)
+			break;
+	}
+
+	if (!bValidArgs)
+	{
+		ErrorString = "Invalid arguments, they must be safe lua types";
+		lua_close(L);
+		return Output;
+	}
+
+	if (lua_pcall(L, NArgs, LUA_MULTRET, 0))
+	{
+		ErrorString = FString::Printf(TEXT("Lua error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		lua_close(L);
+		return Output;
+	}
+
+	int32 NumOfReturnValues = (lua_gettop(L) - StackTop) + 1;
+
+	bool bValidReturnValues = true;
+	if (NumOfReturnValues > 0)
+	{
+		for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+		{
+			FLuaValue LuaValue;
+			if (lua_isboolean(L, i))
+			{
+				LuaValue.Type = ELuaValueType::Bool;
+				LuaValue.Bool = lua_toboolean(L, i) != 0;
+			}
+			else if (lua_type(L, i) == LUA_TSTRING)
+			{
+				LuaValue.Type = ELuaValueType::String;
+				LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(L, i)));
+			}
+			else if (lua_isinteger(L, i))
+			{
+				LuaValue.Type = ELuaValueType::Integer;
+				LuaValue.Integer = lua_tointeger(L, i);
+			}
+			else if (lua_type(L, i) == LUA_TNUMBER)
+			{
+				LuaValue.Type = ELuaValueType::Number;
+				LuaValue.Number = lua_tonumber(L, i);
+			}
+			else if (lua_isnil(L, i))
+			{
+				LuaValue.Type = ELuaValueType::Nil;
+			}
+			else
+			{
+				bValidReturnValues = false;
+			}
+
+			if (bValidReturnValues)
+			{
+				Output.Insert(LuaValue, 0);
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+
+	if (!bValidReturnValues)
+	{
+		ErrorString = "Invalid return values, they must be safe lua types";
+		lua_close(L);
+		return Output;
+	}
+
+	lua_close(L);
+	return Output;
+}
+
 void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_State* State)
 {
 	if (!State)
@@ -919,6 +1060,30 @@ int ULuaState::TableFunction_print(lua_State *L)
 		Messages.Add(Value);
 	}
 	LuaState->Log(FString::Join(Messages, TEXT("\t")));
+	return 0;
+}
+
+int ULuaState::TableFunction_thread_print(lua_State *L)
+{
+	TArray<FString> Messages;
+
+	int n = lua_gettop(L);
+	lua_getglobal(L, "tostring");
+	for (int i = 1; i <= n; i++)
+	{
+		lua_pushvalue(L, -1);
+		lua_pushvalue(L, i);
+		lua_call(L, 1, 1);
+		const char *s = lua_tostring(L, -1);
+		if (!s)
+			return luaL_error(L, "'tostring must return a string to 'print'");
+		FString Value = FString(UTF8_TO_TCHAR(s));
+		lua_pop(L, 1);
+		Messages.Add(Value);
+	}
+	uint32 ThreadId = FPlatformTLS::GetCurrentThreadId();
+	FString ThreadName = FThreadManager::Get().GetThreadName(ThreadId);
+	UE_LOG(LogLuaMachine, Log, TEXT("[%s] %s"), *ThreadName, *FString::Join(Messages, TEXT("\t")));
 	return 0;
 }
 
