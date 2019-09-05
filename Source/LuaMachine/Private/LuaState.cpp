@@ -8,7 +8,6 @@
 #include "Runtime/Core/Public/Misc/Paths.h"
 #include "Runtime/Core/Public/Serialization/BufferArchive.h"
 #include "Runtime/CoreUObject/Public/UObject/TextProperty.h"
-#include "Runtime/Engine/Classes/Kismet/BlueprintFunctionLibrary.h"
 
 LUAMACHINE_API DEFINE_LOG_CATEGORY(LogLuaMachine);
 
