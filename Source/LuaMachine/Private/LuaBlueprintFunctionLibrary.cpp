@@ -316,7 +316,7 @@ void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHtt
 				Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
 				return;
 			}
-			TEncryptionInt SignatureValue = TEncryptionInt((uint32 *)&Signature[0]);
+			TEncryptionInt SignatureValue = TEncryptionInt((uint32*)&Signature[0]);
 
 			TArray<uint8> PublicExponent;
 			FBase64::Decode(SignaturePublicExponent, PublicExponent);
@@ -336,8 +336,8 @@ void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHtt
 				return;
 			}
 
-			TEncryptionInt PublicKey = TEncryptionInt((uint32 *)&PublicExponent[0]);
-			TEncryptionInt ModulusValue = TEncryptionInt((uint32 *)&Modulus[0]);
+			TEncryptionInt PublicKey = TEncryptionInt((uint32*)&PublicExponent[0]);
+			TEncryptionInt ModulusValue = TEncryptionInt((uint32*)&Modulus[0]);
 
 			TEncryptionInt ShaHash;
 			FSHA1::HashBuffer(Response->GetContent().GetData(), Response->GetContentLength(), (uint8*)&ShaHash);
@@ -507,8 +507,12 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 {
 	if (!Actor)
 		return FLuaValue();
-
-	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#if ENGINE_MINOR_VERSION < 24
+	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#else
+	TArray<UActorComponent*> Components;
+	Actor->GetComponents(Components);
+#endif
 	for (UActorComponent* Component : Components)
 	{
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
@@ -529,7 +533,12 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 	if (!Actor)
 		return FLuaValue();
 
-	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#if ENGINE_MINOR_VERSION < 24
+	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#else
+	TArray<UActorComponent*> Components;
+	Actor->GetComponents(Components);
+#endif
 	for (UActorComponent* Component : Components)
 	{
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
@@ -550,7 +559,12 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(
 	if (!Actor)
 		return FLuaValue();
 
-	TArray<UActorComponent *> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#if ENGINE_MINOR_VERSION < 24
+	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#else
+	TArray<UActorComponent*> Components;
+	Actor->GetComponents(Components);
+#endif
 	for (UActorComponent* Component : Components)
 	{
 		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
