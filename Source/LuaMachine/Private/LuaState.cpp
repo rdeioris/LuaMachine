@@ -54,6 +54,54 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		luaL_requiref(L, "package", luaopen_package, 1);
 		lua_pop(L, 1);
+
+		if (LuaLibsLoader.bLoadCoroutine)
+		{
+			luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadTable)
+		{
+			luaL_requiref(L, "table", luaopen_table, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadIO)
+		{
+			luaL_requiref(L, "io", luaopen_io, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadOS)
+		{
+			luaL_requiref(L, "os", luaopen_os, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadString)
+		{
+			luaL_requiref(L, "string", luaopen_string, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadMath)
+		{
+			luaL_requiref(L, "math", luaopen_math, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadUTF8)
+		{
+			luaL_requiref(L, "utf8", luaopen_utf8, 1);
+			lua_pop(L, 1);
+		}
+
+		if (LuaLibsLoader.bLoadDebug)
+		{
+			luaL_requiref(L, "debug", luaopen_debug, 1);
+			lua_pop(L, 1);
+		}
 	}
 
 	GetField(-1, "package");
@@ -185,10 +233,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		}
 		UserDataMetaTable = ToLuaValue(-1);
 		Pop();
-	}
+		}
 
 	return this;
-}
+	}
 
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 {
@@ -240,7 +288,7 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet)
 bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
 	TArray<uint8> Bytes;
-	Bytes.Append((uint8 *)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
+	Bytes.Append((uint8*)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
 	return RunCode(Bytes, CodePath, NRet);
 }
 
@@ -248,7 +296,7 @@ bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
 {
 	FString FullCodePath = FString("@") + CodePath;
 
-	if (luaL_loadbuffer(L, (const char *)Code.GetData(), Code.Num(), TCHAR_TO_UTF8(*FullCodePath)))
+	if (luaL_loadbuffer(L, (const char*)Code.GetData(), Code.Num(), TCHAR_TO_UTF8(*FullCodePath)))
 	{
 		LastError = FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
@@ -268,8 +316,8 @@ bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
 
 int ULuaState::ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData)
 {
-	TArray<uint8>* Output = (TArray<uint8> *)UserData;
-	Output->Append((uint8 *)Ptr, Size);
+	TArray<uint8>* Output = (TArray<uint8>*)UserData;
+	Output->Append((uint8*)Ptr, Size);
 	return 0;
 }
 
@@ -536,7 +584,7 @@ int32 ULuaState::GetTop()
 	return lua_gettop(L);
 }
 
-int ULuaState::MetaTableFunctionState__index(lua_State *L)
+int ULuaState::MetaTableFunctionState__index(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -553,7 +601,7 @@ int ULuaState::MetaTableFunctionState__index(lua_State *L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
+int ULuaState::MetaTableFunctionState__newindex(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -572,7 +620,7 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State *L)
 	return 0;
 }
 
-int ULuaState::MetaTableBlueprintFunctionLibraryState__index(lua_State *L)
+int ULuaState::MetaTableBlueprintFunctionLibraryState__index(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -611,7 +659,7 @@ int ULuaState::MetaTableBlueprintFunctionLibraryState__index(lua_State *L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
+int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -644,7 +692,7 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State *L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State *L)
+int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -704,7 +752,7 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 	}
 }
 
-int ULuaState::MetaTableFunctionUserData__eq(lua_State *L)
+int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -760,7 +808,7 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State *L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunction__call(lua_State *L)
+int ULuaState::MetaTableFunction__call(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
@@ -787,7 +835,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	// arguments
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
-		UProperty *Prop = *FArgs;
+		UProperty* Prop = *FArgs;
 		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 		if (!LuaProp)
 		{
@@ -855,7 +903,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	// get return value
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
-		UProperty *Prop = *FArgs;
+		UProperty* Prop = *FArgs;
 		if (!Prop->HasAnyPropertyFlags(CPF_ReturnParm | CPF_OutParm))
 			continue;
 
@@ -906,7 +954,7 @@ int ULuaState::MetaTableFunction__call(lua_State *L)
 	return 1;
 }
 
-int ULuaState::TableFunction_print(lua_State *L)
+int ULuaState::TableFunction_print(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 	TArray<FString> Messages;
@@ -918,7 +966,7 @@ int ULuaState::TableFunction_print(lua_State *L)
 		lua_pushvalue(L, -1);
 		lua_pushvalue(L, i);
 		lua_call(L, 1, 1);
-		const char *s = lua_tostring(L, -1);
+		const char* s = lua_tostring(L, -1);
 		if (!s)
 			return luaL_error(L, "'tostring must return a string to 'print'");
 		FString Value = FString(UTF8_TO_TCHAR(s));
@@ -929,7 +977,7 @@ int ULuaState::TableFunction_print(lua_State *L)
 	return 0;
 }
 
-int ULuaState::TableFunction_package_preload(lua_State *L)
+int ULuaState::TableFunction_package_preload(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 

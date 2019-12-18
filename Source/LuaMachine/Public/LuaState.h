@@ -39,6 +39,37 @@ struct FLuaUserData
 	}
 };
 
+USTRUCT()
+struct FLuaLibsLoader
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load coroutine"))
+	bool bLoadCoroutine;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load table"))
+	bool bLoadTable;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load io"))
+	bool bLoadIO;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load os"))
+	bool bLoadOS;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load string"))
+	bool bLoadString;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load math"))
+	bool bLoadMath;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load utf8"))
+	bool bLoadUTF8;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load debug"))
+	bool bLoadDebug;
+
+};
+
 USTRUCT(BlueprintType)
 struct FLuaDebug
 {
@@ -89,6 +120,9 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLuaOpenLibs;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load Specific Lua Libraries (only if \"Lua Open Libs\" is false)"))
+	FLuaLibsLoader LuaLibsLoader;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bAddProjectContentDirToPackagePath;
