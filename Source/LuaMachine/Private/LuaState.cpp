@@ -48,6 +48,14 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// override print
 	PushCFunction(ULuaState::TableFunction_print);
 	SetField(-2, "print");
+
+	// load "package" for allowing minimal setup
+	if (!bLuaOpenLibs)
+	{
+		luaL_requiref(L, "package", luaopen_package, 1);
+		lua_pop(L, 1);
+	}
+
 	GetField(-1, "package");
 	if (!OverridePackagePath.IsEmpty())
 	{
