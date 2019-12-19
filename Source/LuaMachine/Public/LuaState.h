@@ -44,6 +44,9 @@ struct FLuaLibsLoader
 {
 	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load base"))
+	bool bLoadBase;
+
 	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load coroutine"))
 	bool bLoadCoroutine;
 

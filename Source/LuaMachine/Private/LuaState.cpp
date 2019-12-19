@@ -55,6 +55,12 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		luaL_requiref(L, "package", luaopen_package, 1);
 		lua_pop(L, 1);
 
+		if (LuaLibsLoader.bLoadBase)
+		{
+			luaL_requiref(L, "_G", luaopen_base, 1);
+			lua_pop(L, 1);
+		}
+
 		if (LuaLibsLoader.bLoadCoroutine)
 		{
 			luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
@@ -233,10 +239,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		}
 		UserDataMetaTable = ToLuaValue(-1);
 		Pop();
-		}
+	}
 
 	return this;
-	}
+}
 
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 {
@@ -1308,10 +1314,10 @@ FLuaValue ULuaState::CreateLuaTable()
 
 ULuaState::~ULuaState()
 {
+	FLuaMachineModule::Get().UnregisterLuaState(this);
+
 	if (L)
 		lua_close(L);
-
-	FLuaMachineModule::Get().UnregisterLuaState(this);
 }
 
 

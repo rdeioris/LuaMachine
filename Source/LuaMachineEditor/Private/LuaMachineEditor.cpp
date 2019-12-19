@@ -72,7 +72,7 @@ struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
 	TArray<TSharedRef<FTableViewLuaValue>> Children;
 };
 
-class SLuaMachineDebugger : public SCompoundWidget
+class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 {
 	SLATE_BEGIN_ARGS(SLuaMachineDebugger)
 	{}
@@ -140,7 +140,7 @@ class SLuaMachineDebugger : public SCompoundWidget
 	void OnRegisteredLuaStatesChanged()
 	{
 		DetectedLuaStates.Empty();
-		TArray<ULuaState *> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
+		TArray<ULuaState*> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
 		for (ULuaState* State : States)
 		{
 			DetectedLuaStates.Add(MakeShared<FString>(State->GetClass()->GetName()));
@@ -154,6 +154,12 @@ class SLuaMachineDebugger : public SCompoundWidget
 		RefreshDebugText();
 	}
 
+	FReply CallGC()
+	{
+		GEngine->ForceGarbageCollection(true);
+		return FReply::Handled();
+	}
+
 	void RefreshDebugText()
 	{
 		DebugTextContext.Empty();
@@ -163,13 +169,17 @@ class SLuaMachineDebugger : public SCompoundWidget
 			ULuaState* LuaState = *StatesIterator;
 			if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
 			{
+				TArray<UObject*> Referencers;
+				FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
+				Collector.FindReferences(LuaState);
+
 				if (LuaState->GetInternalLuaState())
 				{
-					DebugTextContext += FString::Printf(TEXT("%s (used memory: %dk) (top of the stack: %d)\n"), *LuaState->GetName(), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop());
+					DebugTextContext += FString::Printf(TEXT("%s (used memory: %dk) (top of the stack: %d) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num());
 				}
 				else
 				{
-					DebugTextContext += FString::Printf(TEXT("%s (not initialized)\n"), *LuaState->GetName());
+					DebugTextContext += FString::Printf(TEXT("%s (inactive) (uobject refs: %d)\n"), *LuaState->GetName(), Referencers.Num());
 				}
 			}
 		}
@@ -269,7 +279,7 @@ class SLuaMachineDebugger : public SCompoundWidget
 				TSharedPtr<FString> SelectedText = LuaStatesComboBox->GetSelectedItem();
 				if (SelectedText.IsValid())
 				{
-					TArray<ULuaState *> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
+					TArray<ULuaState*> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
 					for (ULuaState* State : States)
 					{
 						if (State->GetClass()->GetName() == *SelectedText.Get())
@@ -317,12 +327,24 @@ class SLuaMachineDebugger : public SCompoundWidget
 			SNew(SVerticalBox)
 				+ SVerticalBox::Slot().AutoHeight()
 				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
+					[
+						SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
+					]
+					+ SHorizontalBox::Slot().FillWidth(0.6)
+					[
 					SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
+					]
 				]
 
 			+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Refresh")).OnClicked(this, &SLuaMachineDebugger::RefreshDebugger)
+				]
+			+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton).Text(FText::FromString("Call GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
 				]
 			+ SVerticalBox::Slot().AutoHeight()
 				[
@@ -337,6 +359,11 @@ class SLuaMachineDebugger : public SCompoundWidget
 				]
 		];
 		FLuaMachineModule::Get().OnRegisteredLuaStatesChanged.AddSP(this, &SLuaMachineDebugger::OnRegisteredLuaStatesChanged);
+	}
+
+	void AddReferencedObjects(FReferenceCollector& Collector) override
+	{
+		Collector.AddReferencedObject(SelectedLuaState);
 	}
 
 protected:
