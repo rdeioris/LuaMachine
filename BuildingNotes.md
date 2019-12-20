@@ -40,3 +40,14 @@ clang -arch arm64 -mios-version-min=7.0 -isysroot /Applications/Xcode.app/Conten
 rm lua.o luac.o
  ar rcu lua53_ios.a *.o
 ```
+
+
+# Building Lua static library for Linux AArch64 (RaspberryPi)
+
+```sh
+# assume cross compiler for aarch64 is available
+aarch64-linux-gnu-gcc -O2 -Wall -Werror -Wextra -DLUA_USE_POSIX -DLUA_USEDLOPEN -DLUA_COMPAT_5_2 -std=gnu99 -c *.c
+rm lua.o
+rm luac.o
+aarch64-linux-gnu-ar rcD lua53_linux_aarch64.a *.o
+```
