@@ -42,7 +42,7 @@ rm lua.o luac.o
 ```
 
 
-# Building Lua static library for Linux AArch64 (RaspberryPi)
+# Building Lua static library for Linux AArch64
 
 ```sh
 # assume cross compiler for aarch64 is available
