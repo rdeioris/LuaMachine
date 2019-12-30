@@ -5,7 +5,7 @@
 make macosx
 ```
 
-# Building Lua static library for Linux 64bit
+# Building Lua static library for Linux x86_64
 
 ```sh
 make linux
