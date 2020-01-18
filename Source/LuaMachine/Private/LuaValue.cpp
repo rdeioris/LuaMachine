@@ -194,3 +194,8 @@ FLuaValue FLuaValue::SetFieldByIndex(int32 Index, FLuaValue Value)
 	LuaState->Pop();
 	return *this;
 }
+
+bool FLuaValue::IsReferencedInLuaRegistry() const
+{
+	return LuaRef != LUA_NOREF;
+}

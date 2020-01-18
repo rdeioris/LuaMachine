@@ -132,4 +132,6 @@ struct LUAMACHINE_API FLuaValue
 
 	FLuaValue GetFieldByIndex(int32 Index);
 	FLuaValue SetFieldByIndex(int32 Index, FLuaValue Value);
+
+	bool IsReferencedInLuaRegistry() const;
 };

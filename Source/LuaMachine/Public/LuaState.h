@@ -294,6 +294,8 @@ public:
 
 	FORCEINLINE lua_State* GetInternalLuaState() const { return L; }
 
+	void PushRegistryTable();
+
 protected:
 	lua_State* L;
 	bool bDisabled;

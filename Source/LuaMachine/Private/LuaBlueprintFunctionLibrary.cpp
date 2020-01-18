@@ -1048,3 +1048,69 @@ void ULuaBlueprintFunctionLibrary::LuaSetUserDataMetaTable(UObject* WorldContext
 		return;
 	L->SetUserDataMetaTable(MetaTable);
 }
+
+bool ULuaBlueprintFunctionLibrary::LuaValueIsReferencedInLuaRegistry(FLuaValue Value)
+{
+	return Value.IsReferencedInLuaRegistry();
+}
+
+UClass* ULuaBlueprintFunctionLibrary::LuaValueToBlueprintGeneratedClass(FLuaValue Value)
+{
+	UObject* LoadedObject = nullptr;
+	if (Value.Type == ELuaValueType::String)
+	{
+		LoadedObject = StaticFindObject(UBlueprint::StaticClass(), nullptr, *Value.ToString());
+	}
+	else if (Value.Type == ELuaValueType::UObject)
+	{
+		LoadedObject = Value.Object;
+	}
+
+	if (!LoadedObject)
+		return nullptr;
+
+	UBlueprint* Blueprint = Cast<UBlueprint>(LoadedObject);
+	if (!Blueprint)
+		return nullptr;
+	return Cast<UClass>(Blueprint->GeneratedClass);
+}
+
+UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(FLuaValue Value, bool bDetectBlueprintGeneratedClass)
+{
+	UObject* LoadedObject = nullptr;
+	if (Value.Type == ELuaValueType::String)
+	{
+		LoadedObject = StaticFindObject(UObject::StaticClass(), nullptr, *Value.ToString());
+	}
+	else if (Value.Type == ELuaValueType::UObject)
+	{
+		LoadedObject = Value.Object;
+	}
+
+	if (!LoadedObject)
+		return nullptr;
+
+	if (bDetectBlueprintGeneratedClass)
+	{
+		UBlueprint* Blueprint = Cast<UBlueprint>(LoadedObject);
+		if (Blueprint)
+			return Cast<UClass>(Blueprint->GeneratedClass);
+	}
+
+	return Cast<UClass>(LoadedObject);
+}
+
+UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(FLuaValue Value)
+{
+	UObject* LoadedObject = nullptr;
+	if (Value.Type == ELuaValueType::String)
+	{
+		LoadedObject = StaticFindObject(UObject::StaticClass(), nullptr, *Value.ToString());
+	}
+	else if (Value.Type == ELuaValueType::UObject)
+	{
+		LoadedObject = Value.Object;
+	}
+
+	return LoadedObject;
+}

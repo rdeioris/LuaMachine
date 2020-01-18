@@ -11,7 +11,7 @@ ULuaCode::ULuaCode()
 
 void ULuaCode::Serialize(FArchive& Ar)
 {
-	if (Ar.IsCooking())
+	if (Ar.IsCooking() && !Ar.IsLoading())
 	{
 		if (bCookAsBytecode && !Code.IsEmpty())
 		{

@@ -1101,6 +1101,11 @@ void ULuaState::PushGlobalTable()
 	lua_pushglobaltable(L);
 }
 
+void ULuaState::PushRegistryTable()
+{
+	lua_pushvalue(L, LUA_REGISTRYINDEX);
+}
+
 int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 {
 	TArray<FString> Parts;

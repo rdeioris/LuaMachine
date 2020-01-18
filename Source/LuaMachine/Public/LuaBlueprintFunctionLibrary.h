@@ -143,6 +143,18 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static int32 LuaValueLength(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static bool LuaValueIsReferencedInLuaRegistry(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static UClass* LuaValueToBlueprintGeneratedClass(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static UObject* LuaValueLoadObject(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static UClass* LuaValueLoadClass(FLuaValue Value, bool bDetectBlueprintGeneratedClass);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
