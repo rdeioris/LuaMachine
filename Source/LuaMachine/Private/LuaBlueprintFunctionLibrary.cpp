@@ -1059,7 +1059,7 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueToBlueprintGeneratedClass(FLuaValu
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
 	{
-		LoadedObject = StaticFindObject(UBlueprint::StaticClass(), nullptr, *Value.ToString());
+		LoadedObject = StaticLoadObject(UBlueprint::StaticClass(), nullptr, *Value.ToString());
 	}
 	else if (Value.Type == ELuaValueType::UObject)
 	{
@@ -1080,7 +1080,7 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(FLuaValue Value, bool bD
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
 	{
-		LoadedObject = StaticFindObject(UObject::StaticClass(), nullptr, *Value.ToString());
+		LoadedObject = StaticLoadObject(UObject::StaticClass(), nullptr, *Value.ToString());
 	}
 	else if (Value.Type == ELuaValueType::UObject)
 	{
@@ -1105,7 +1105,7 @@ UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(FLuaValue Value)
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
 	{
-		LoadedObject = StaticFindObject(UObject::StaticClass(), nullptr, *Value.ToString());
+		LoadedObject = StaticLoadObject(UObject::StaticClass(), nullptr, *Value.ToString());
 	}
 	else if (Value.Type == ELuaValueType::UObject)
 	{

@@ -6,6 +6,29 @@
 #include "Engine/DataAsset.h"
 #include "LuaCode.generated.h"
 
+struct LUAMACHINE_API FLuaCodeObjectVersion
+{
+    enum Type
+    {
+        // Before any version changes were made
+        BeforeCustomVersionWasAdded = 0,
+
+        // Fixed duplication of properties
+        FixDuplicationOfProperties,
+
+		VersionPlusOne,
+		LatestVersion = VersionPlusOne - 1
+
+    };
+
+    // The GUID for this custom version number
+    const static FGuid GUID;
+
+private:
+	FLuaCodeObjectVersion() {}
+};
+
+
 /**
  * 
  */

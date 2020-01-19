@@ -2,6 +2,10 @@
 
 #include "LuaCode.h"
 #include "LuaMachine.h"
+#include "Serialization/CustomVersion.h"
+
+const FGuid FLuaCodeObjectVersion::GUID(0x01C2E96A1, 0xE24436EA, 0x6C69B025, 0x14E7FC3);
+FCustomVersionRegistration GRegisterLuaCodeCustomVersion(FLuaCodeObjectVersion::GUID, FLuaCodeObjectVersion::LatestVersion, TEXT("LuaCodeVer"));
 
 ULuaCode::ULuaCode()
 {
@@ -11,6 +15,7 @@ ULuaCode::ULuaCode()
 
 void ULuaCode::Serialize(FArchive& Ar)
 {
+	bool bSkipOriginalCode = false;
 	if (Ar.IsCooking() && !Ar.IsLoading())
 	{
 		if (bCookAsBytecode && !Code.IsEmpty())
@@ -22,7 +27,7 @@ void ULuaCode::Serialize(FArchive& Ar)
 			{
 				UE_LOG(LogLuaMachine, Error, TEXT("Unable to generate bytecode: %s"), *ErrorString);
 			}
-			Code = FText::GetEmpty();
+			bSkipOriginalCode = true;
 		}
 	}
 	else if (Ar.IsSaving())
@@ -32,12 +37,30 @@ void ULuaCode::Serialize(FArchive& Ar)
 		ByteCode = EmptyData;
 	}
 
-	UObject::Serialize(Ar);
+	FText OriginalCode;
 
-	Ar << bCooked;
-	Ar << Code;
-	Ar << bCookAsBytecode;
-	Ar << ByteCode;
+	if (bSkipOriginalCode)
+	{
+		OriginalCode = Code;
+		Code = FText::GetEmpty();
+	}
+
+
+	Super::Serialize(Ar);
+	Ar.UsingCustomVersion(FLuaCodeObjectVersion::GUID);
+
+	if (Ar.CustomVer(FLuaCodeObjectVersion::GUID) < FLuaCodeObjectVersion::FixDuplicationOfProperties)
+	{
+		Ar << bCooked;
+		Ar << Code;
+		Ar << bCookAsBytecode;
+		Ar << ByteCode;
+	}
+
+	if (bSkipOriginalCode)
+	{
+		Code = OriginalCode;
+	}
 }
 
 void ULuaCode::PreSave(const ITargetPlatform* TargetPlatform)
