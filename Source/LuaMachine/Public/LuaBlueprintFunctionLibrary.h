@@ -155,6 +155,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static UClass* LuaValueLoadClass(FLuaValue Value, bool bDetectBlueprintGeneratedClass);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
+	static bool LuaValueFromJson(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Json, FLuaValue& Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FString LuaValueToJson(FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static int32 LuaGetTop(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 

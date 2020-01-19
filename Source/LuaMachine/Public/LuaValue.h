@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "ThirdParty/lua/lua.hpp"
+#include "Serialization/JsonSerializer.h"
 #include "LuaValue.generated.h"
 
 // required for Mac
@@ -134,4 +135,7 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue SetFieldByIndex(int32 Index, FLuaValue Value);
 
 	bool IsReferencedInLuaRegistry() const;
+
+	static FLuaValue FromJsonValue(ULuaState* L, FJsonValue& JsonValue);
+	TSharedPtr<FJsonValue> ToJsonValue();
 };

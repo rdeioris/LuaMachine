@@ -7,6 +7,7 @@
 #include "Runtime/Core/Public/Math/BigInt.h"
 #include "Runtime/Core/Public/Misc/Base64.h"
 #include "Runtime/Core/Public/Misc/SecureHash.h"
+#include "Serialization/JsonSerializer.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -1113,4 +1114,32 @@ UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(FLuaValue Value)
 	}
 
 	return LoadedObject;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaValueFromJson(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Json, FLuaValue& LuaValue)
+{
+	// default to nil
+	LuaValue = FLuaValue();
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return false;
+
+	TSharedPtr<FJsonValue> JsonValue;
+	TSharedRef< TJsonReader<TCHAR> > JsonReader = TJsonReaderFactory<TCHAR>::Create(Json);
+	if (!FJsonSerializer::Deserialize(JsonReader, JsonValue))
+	{
+		return false;
+	}
+
+	LuaValue = FLuaValue::FromJsonValue(L, *JsonValue);
+	return true;
+}
+
+FString ULuaBlueprintFunctionLibrary::LuaValueToJson(FLuaValue Value)
+{
+	FString Json;
+	TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&Json);
+	FJsonSerializer::Serialize(Value.ToJsonValue(), "", JsonWriter);
+	return Json;
 }

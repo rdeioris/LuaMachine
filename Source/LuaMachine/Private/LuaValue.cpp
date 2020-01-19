@@ -113,7 +113,7 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 	}
 }
 
-FLuaValue& FLuaValue::operator = (const FLuaValue &SourceValue)
+FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 {
 	Type = SourceValue.Type;
 	Object = SourceValue.Object;
@@ -198,4 +198,122 @@ FLuaValue FLuaValue::SetFieldByIndex(int32 Index, FLuaValue Value)
 bool FLuaValue::IsReferencedInLuaRegistry() const
 {
 	return LuaRef != LUA_NOREF;
+}
+
+FLuaValue FLuaValue::FromJsonValue(ULuaState* L, FJsonValue& JsonValue)
+{
+	if (JsonValue.Type == EJson::String)
+	{
+		return FLuaValue(JsonValue.AsString());
+	}
+	else if (JsonValue.Type == EJson::Number)
+	{
+		return FLuaValue((float)JsonValue.AsNumber());
+	}
+	else if (JsonValue.Type == EJson::Boolean)
+	{
+		return FLuaValue(JsonValue.AsBool());
+	}
+	else if (JsonValue.Type == EJson::Array)
+	{
+		FLuaValue LuaArray = L->CreateLuaTable();
+		int32 Index = 0;
+		auto JsonValues = JsonValue.AsArray();
+		for (auto JsonItem : JsonValues)
+		{
+			FLuaValue LuaItem;
+			if (JsonItem.IsValid())
+			{
+				LuaItem = FromJsonValue(L, *JsonItem);
+			}
+			LuaArray.SetFieldByIndex(Index++, LuaItem);
+		}
+		return LuaArray;
+	}
+	else if (JsonValue.Type == EJson::Object)
+	{
+		FLuaValue LuaTable = L->CreateLuaTable();
+		auto JsonObject = JsonValue.AsObject();
+		for (TPair<FString, TSharedPtr<FJsonValue>> Pair : JsonObject->Values)
+		{
+			FLuaValue LuaItem;
+			if (Pair.Value.IsValid())
+			{
+				LuaItem = FromJsonValue(L, *Pair.Value);
+			}
+			LuaTable.SetField(Pair.Key, LuaItem);
+		}
+		return LuaTable;
+	}
+
+	// default to nil
+	return FLuaValue();
+}
+
+TSharedPtr<FJsonValue> FLuaValue::ToJsonValue()
+{
+	switch (Type)
+	{
+	case ELuaValueType::Integer:
+		return MakeShared<FJsonValueNumber>(Integer);
+	case ELuaValueType::Number:
+		return MakeShared<FJsonValueNumber>(Number);
+	case ELuaValueType::String:
+		return MakeShared<FJsonValueString>(String);
+	case ELuaValueType::UFunction:
+		return MakeShared<FJsonValueString>(FunctionName.ToString());
+	case ELuaValueType::UObject:
+		return MakeShared<FJsonValueString>(Object ? Object->GetFullName() : "");
+	case ELuaValueType::Table:
+	{
+
+		ULuaState* L = LuaState;
+		if (!L)
+			return MakeShared<FJsonValueNull>();
+
+		bool bIsArray = true;
+
+		TArray<TPair<FLuaValue, FLuaValue>> Items;
+		L->FromLuaValue(*this); // push the table
+		L->PushNil(); // first key
+		while (L->Next(-2))
+		{
+			auto Key = L->ToLuaValue(-2);
+			auto Value = L->ToLuaValue(-1);
+			Items.Add(TPair<FLuaValue, FLuaValue>(Key, Value));
+			if (Key.Type != ELuaValueType::Integer)
+			{
+				bIsArray = false;
+			}
+			L->Pop(); // pop the value
+		}
+		L->Pop(); // pop the table
+
+		// check if it is a valid lua "array"
+		if (bIsArray)
+		{
+			TArray<TSharedPtr<FJsonValue>> JsonValues;
+			int32 Index = 1;
+			for (;;)
+			{
+				FLuaValue Item = GetFieldByIndex(Index++);
+				if (Item.Type == ELuaValueType::Nil)
+					break;
+				JsonValues.Add(Item.ToJsonValue());
+			}
+			return MakeShared<FJsonValueArray>(JsonValues);
+		}
+
+		auto JsonObject = MakeShared<FJsonObject>();
+		for (auto Pair : Items)
+		{
+			JsonObject->SetField(Pair.Key.ToString(), Pair.Value.ToJsonValue());
+		}
+		auto JsonValueObject = MakeShared<FJsonValueObject>(JsonObject);
+		return JsonValueObject;
+	}
+	return MakeShared<FJsonValueNull>();
+	}
+
+	return MakeShared<FJsonValueNull>();
 }
