@@ -306,8 +306,12 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 	return Texture;
 }
 
-void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback)
+void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
 {
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return;
+
 	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
 	HttpRequest->SetVerb(Method);
 	HttpRequest->SetURL(URL);
@@ -316,24 +320,21 @@ void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, T
 		HttpRequest->AppendToHeader(Header.Key, Header.Value);
 	}
 	HttpRequest->SetContent(Body.ToBytes());
-	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpGenericRequestDone, State, TWeakObjectPtr<UWorld>(WorldContextObject->GetWorld()), ResponseReceived, Error, SuccessCallback, ErrorCallback);
+
+	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpGenericRequestDone, TWeakObjectPtr<ULuaState>(L), ResponseReceived, Error);
 	HttpRequest->ProcessRequest();
 }
 
-void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback)
+void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakObjectPtr<ULuaState> L, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error)
 {
-	// a response could arrive so late that the original world is no more valid (weak ptr) ...
-	if (!World.IsValid())
+	// a response could arrive so late that the original state is no more valid (weak ptr) ...
+	if (!L.IsValid())
 		return;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, World.Get());
-	if (!L)
-		return;
 
 	if (!bWasSuccessful)
 	{
 		Error.ExecuteIfBound();
-		LuaValueCallIfNotNil(ErrorCallback, TArray<FLuaValue>());
 		return;
 	}
 
@@ -358,8 +359,6 @@ void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Reques
 	LuaHttpResponse.SetFieldByIndex(2, Headers);
 	LuaHttpResponse.SetFieldByIndex(3, Content);
 	ResponseReceived.ExecuteIfBound(LuaHttpResponse);
-
-	LuaValueCallIfNotNil(SuccessCallback, TArray<FLuaValue>{ LuaHttpResponse });
 }
 
 void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)

@@ -189,7 +189,7 @@ public:
 
 	/* Make an HTTP GET request to the specified URL to download the Lua script to run */
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Headers,Error,ResponseReceived"), Category = "Lua")
-	static void LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback);
+	static void LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static UTexture2D* LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat = EPixelFormat::PF_B8G8R8A8, bool bDetectFormat = false);
@@ -298,6 +298,6 @@ public:
 
 private:
 	static void HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed);
-	static void HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback);
+	static void HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakObjectPtr<ULuaState> L, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error);
 	
 };
