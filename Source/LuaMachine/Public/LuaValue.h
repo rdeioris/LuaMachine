@@ -59,6 +59,25 @@ struct LUAMACHINE_API FLuaValue
 		String = InString;
 	}
 
+	FLuaValue(const char* InChars, size_t Length) : FLuaValue()
+	{
+		Type = ELuaValueType::String;
+		for (size_t i = 0; i < Length; i++)
+		{
+			uint16 TChar = (uint16)InChars[i];
+			// cleanup garbage
+			TChar &= 0xFF;
+			// hack for allowing binary data
+			if (TChar == 0)
+				TChar = 0xffff;
+			String += (TCHAR)TChar;
+		}
+	}
+
+	FLuaValue(TArray<uint8> InBytes) : FLuaValue((const char*)InBytes.GetData(), InBytes.Num())
+	{
+	}
+
 	FLuaValue(float Value) : FLuaValue()
 	{
 		Type = ELuaValueType::Number;
@@ -102,6 +121,8 @@ struct LUAMACHINE_API FLuaValue
 	float ToFloat();
 	bool ToBool();
 
+	TArray<uint8> ToBytes();
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Lua")
 	ELuaValueType Type;
 
@@ -138,4 +159,6 @@ struct LUAMACHINE_API FLuaValue
 
 	static FLuaValue FromJsonValue(ULuaState* L, FJsonValue& JsonValue);
 	TSharedPtr<FJsonValue> ToJsonValue();
+
+	void Unref();
 };

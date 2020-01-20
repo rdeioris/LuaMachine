@@ -8,6 +8,9 @@
 #include "Runtime/Core/Public/Misc/Base64.h"
 #include "Runtime/Core/Public/Misc/SecureHash.h"
 #include "Serialization/JsonSerializer.h"
+#include "Engine/Texture2D.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -248,6 +251,115 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	}
 	L->Pop();
 	return ReturnValue;
+}
+
+static IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
+
+UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat, bool bDetectFormat)
+{
+	if (Value.Type != ELuaValueType::String)
+		return nullptr;
+
+	TArray<uint8> Bytes = Value.ToBytes();
+
+	if (bDetectFormat)
+	{
+		EImageFormat ImageFormat = ImageWrapperModule.DetectImageFormat(Bytes.GetData(), Bytes.Num());
+		if (ImageFormat == EImageFormat::Invalid)
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("Unable to detect image format"));
+			return nullptr;
+		}
+		TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(ImageFormat);
+		if (!ImageWrapper.IsValid())
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("Unable to create ImageWrapper"));
+			return nullptr;
+		}
+		if (!ImageWrapper->SetCompressed(Bytes.GetData(), Bytes.Num()))
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("Unable to parse image data"));
+			return nullptr;
+		}
+		const TArray<uint8>* UncompressedBytes = nullptr;
+		if (!ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedBytes))
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("Unable to get raw image data"));
+			return nullptr;
+		}
+		PixelFormat = EPixelFormat::PF_B8G8R8A8;
+		Width = ImageWrapper->GetWidth();
+		Height = ImageWrapper->GetHeight();
+		Bytes = *UncompressedBytes;
+	}
+
+	UTexture2D* Texture = UTexture2D::CreateTransient(Width, Height, PixelFormat);
+	if (!Texture)
+		return nullptr;
+
+	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(Data, Bytes.GetData(), Bytes.Num());
+	Mip.BulkData.Unlock();
+	Texture->UpdateResource();
+
+	return Texture;
+}
+
+void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback)
+{
+	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
+	HttpRequest->SetVerb(Method);
+	HttpRequest->SetURL(URL);
+	for (TPair<FString, FString> Header : Headers)
+	{
+		HttpRequest->AppendToHeader(Header.Key, Header.Value);
+	}
+	HttpRequest->SetContent(Body.ToBytes());
+	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpGenericRequestDone, State, TWeakObjectPtr<UWorld>(WorldContextObject->GetWorld()), ResponseReceived, Error, SuccessCallback, ErrorCallback);
+	HttpRequest->ProcessRequest();
+}
+
+void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error, FLuaValue SuccessCallback, FLuaValue ErrorCallback)
+{
+	// a response could arrive so late that the original world is no more valid (weak ptr) ...
+	if (!World.IsValid())
+		return;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, World.Get());
+	if (!L)
+		return;
+
+	if (!bWasSuccessful)
+	{
+		Error.ExecuteIfBound();
+		LuaValueCallIfNotNil(ErrorCallback, TArray<FLuaValue>());
+		return;
+	}
+
+
+	FLuaValue StatusCode = FLuaValue(Response->GetResponseCode());
+	FLuaValue Headers = L->CreateLuaTable();
+	for (auto HeaderLine : Response->GetAllHeaders())
+	{
+		int32 Index;
+		if (HeaderLine.Len() > 2 && HeaderLine.FindChar(':', Index))
+		{
+			FString Key;
+			if (Index > 0)
+				Key = HeaderLine.Left(Index);
+			FString Value = HeaderLine.Right(HeaderLine.Len() - (Index + 2));
+			Headers.SetField(Key, FLuaValue(Value));
+		}
+	}
+	FLuaValue Content = FLuaValue(Response->GetContent());
+	FLuaValue LuaHttpResponse = L->CreateLuaTable();
+	LuaHttpResponse.SetFieldByIndex(1, StatusCode);
+	LuaHttpResponse.SetFieldByIndex(2, Headers);
+	LuaHttpResponse.SetFieldByIndex(3, Content);
+	ResponseReceived.ExecuteIfBound(LuaHttpResponse);
+
+	LuaValueCallIfNotNil(SuccessCallback, TArray<FLuaValue>{ LuaHttpResponse });
 }
 
 void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
@@ -807,6 +919,24 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableIndexCall(FLuaValue InTable, int
 		return ReturnValue;
 
 	return LuaValueCall(Value, Args);
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableUnpack(FLuaValue InTable)
+{
+	TArray<FLuaValue> ReturnValue;
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	int32 Index = 1;
+	for (;;)
+	{
+		FLuaValue Item = InTable.GetFieldByIndex(Index++);
+		if (Item.Type == ELuaValueType::Nil)
+			break;
+		ReturnValue.Add(Item);
+	}
+
+	return ReturnValue;
 }
 
 TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args)

@@ -78,7 +78,7 @@ void ULuaComponent::SetupMetatable(lua_State* State)
 		else {
 			L->FromLuaValue(Pair.Value);
 		}
-		lua_setfield(State, -2, TCHAR_TO_UTF8(*Pair.Key));
+		lua_setfield(State, -2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
 	lua_setmetatable(State, -2);

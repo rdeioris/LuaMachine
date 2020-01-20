@@ -113,7 +113,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	GetField(-1, "package");
 	if (!OverridePackagePath.IsEmpty())
 	{
-		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackagePath));
+		lua_pushstring(L, TCHAR_TO_ANSI(*OverridePackagePath));
 		SetField(-2, "path");
 	}
 
@@ -123,7 +123,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		const char* CurrentLuaPath = lua_tostring(L, -1);
 		FString NewPackagePath = FString(CurrentLuaPath) + ";" + FPaths::ProjectContentDir() + "/?.lua";
 		Pop();
-		lua_pushstring(L, TCHAR_TO_UTF8(*NewPackagePath));
+		lua_pushstring(L, TCHAR_TO_ANSI(*NewPackagePath));
 		SetField(-2, "path");
 	}
 
@@ -133,13 +133,13 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		const char* CurrentLuaPath = lua_tostring(L, -1);
 		FString NewPackagePath = FString(CurrentLuaPath) + ";" + FPaths::ProjectContentDir() / SubDir + "/?.lua";
 		Pop();
-		lua_pushstring(L, TCHAR_TO_UTF8(*NewPackagePath));
+		lua_pushstring(L, TCHAR_TO_ANSI(*NewPackagePath));
 		SetField(-2, "path");
 	}
 
 	if (!OverridePackageCPath.IsEmpty())
 	{
-		lua_pushstring(L, TCHAR_TO_UTF8(*OverridePackageCPath));
+		lua_pushstring(L, TCHAR_TO_ANSI(*OverridePackageCPath));
 		SetField(-2, "cpath");
 	}
 	// manage RequireTable
@@ -147,12 +147,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	for (TPair<FString, ULuaCode*>& Pair : RequireTable)
 	{
 		PushCFunction(ULuaState::TableFunction_package_preload);
-		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
-	}
-	for (TPair<FString, TSubclassOf<UBlueprintFunctionLibrary>>& Pair : RequireBlueprintFunctionLibraryTable)
-	{
-		PushCFunction(ULuaState::TableFunction_package_preload);
-		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
+		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
 	// pop package.preload
@@ -162,7 +157,31 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	for (TPair<FString, FLuaValue>& Pair : Table)
 	{
 		PushNil();
-		SetField(-2, TCHAR_TO_UTF8(*Pair.Key));
+		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
+	}
+
+	for (TPair<FString, TSubclassOf<ULuaBlueprintPackage>>& Pair : LuaBlueprintPackagesTable)
+	{
+		if (Pair.Value)
+		{
+			NewTable();
+			ULuaBlueprintPackage* LuaBlueprintPackage = NewObject<ULuaBlueprintPackage>(this, Pair.Value);
+			if (LuaBlueprintPackage)
+			{
+				for (auto LuaPair : LuaBlueprintPackage->Table)
+				{
+					FromLuaValue(LuaPair.Value, LuaBlueprintPackage);
+					SetField(-2, TCHAR_TO_ANSI(*LuaPair.Key));
+				}
+			}
+			// this avoid the package to be GC'd
+			LuaBlueprintPackages.Add(LuaBlueprintPackage);
+		}
+		else
+		{
+			PushNil();
+		}
+		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
 
@@ -205,8 +224,6 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 				LogError(LastError);
 			ReceiveLuaError(LastError);
 			bDisabled = true;
-			lua_close(L);
-			L = nullptr;
 			return nullptr;
 		}
 	}
@@ -219,8 +236,6 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 				LogError(LastError);
 			ReceiveLuaError(LastError);
 			bDisabled = true;
-			lua_close(L);
-			L = nullptr;
 			return nullptr;
 		}
 	}
@@ -233,8 +248,6 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 				LogError(LastError);
 			ReceiveLuaError(LastError);
 			bDisabled = true;
-			lua_close(L);
-			L = nullptr;
 			return nullptr;
 		}
 		UserDataMetaTable = ToLuaValue(-1);
@@ -255,7 +268,7 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 			CodeAsset->ByteCode[13] = sizeof(size_t);
 #endif
 		return RunCode(CodeAsset->ByteCode, CodeAsset->GetPathName(), NRet);
-	}
+}
 
 	return RunCode(CodeAsset->Code.ToString(), CodeAsset->GetPathName(), NRet);
 
@@ -294,7 +307,7 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet)
 bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
 	TArray<uint8> Bytes;
-	Bytes.Append((uint8*)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
+	Bytes.Append((uint8*)TCHAR_TO_ANSI(*Code), FCStringAnsi::Strlen(TCHAR_TO_ANSI(*Code)));
 	return RunCode(Bytes, CodePath, NRet);
 }
 
@@ -302,9 +315,9 @@ bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
 {
 	FString FullCodePath = FString("@") + CodePath;
 
-	if (luaL_loadbuffer(L, (const char*)Code.GetData(), Code.Num(), TCHAR_TO_UTF8(*FullCodePath)))
+	if (luaL_loadbuffer(L, (const char*)Code.GetData(), Code.Num(), TCHAR_TO_ANSI(*FullCodePath)))
 	{
-		LastError = FString::Printf(TEXT("Lua loading error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		LastError = FString::Printf(TEXT("Lua loading error: %s"), ANSI_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
 	else
@@ -312,7 +325,7 @@ bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
 
 		if (lua_pcall(L, 0, NRet, 0))
 		{
-			LastError = FString::Printf(TEXT("Lua execution error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+			LastError = FString::Printf(TEXT("Lua execution error: %s"), ANSI_TO_TCHAR(lua_tostring(L, -1)));
 			return false;
 		}
 	}
@@ -334,9 +347,9 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 	TArray<uint8> Output;
 
 	lua_State* L = luaL_newstate();
-	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_UTF8(*FullCodePath)))
+	if (luaL_loadbuffer(L, TCHAR_TO_ANSI(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_ANSI(CodeRaw)), TCHAR_TO_ANSI(*FullCodePath)))
 	{
-		ErrorString = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		ErrorString = ANSI_TO_TCHAR(lua_tostring(L, -1));
 		Output.Empty();
 		lua_close(L);
 		return Output;
@@ -344,7 +357,7 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 
 	if (lua_dump(L, ULuaState::ToByteCode_Writer, &Output, 1))
 	{
-		ErrorString = UTF8_TO_TCHAR(lua_tostring(L, -1));
+		ErrorString = ANSI_TO_TCHAR(lua_tostring(L, -1));
 		Output.Empty();
 		lua_close(L);
 		return Output;
@@ -371,8 +384,11 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		lua_pushnumber(State, LuaValue.Number);
 		break;
 	case ELuaValueType::String:
-		lua_pushstring(State, TCHAR_TO_UTF8(*LuaValue.String));
-		break;
+	{
+		TArray<uint8> Bytes = LuaValue.ToBytes();
+		lua_pushlstring(State, (const char*)Bytes.GetData(), Bytes.Num());
+	}
+	break;
 	case ELuaValueType::Table:
 		if (LuaValue.LuaRef == LUA_NOREF)
 		{
@@ -509,23 +525,21 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 
 	if (lua_isboolean(State, Index))
 	{
-		LuaValue.Type = ELuaValueType::Bool;
-		LuaValue.Bool = lua_toboolean(State, Index) != 0;
+		LuaValue = FLuaValue(lua_toboolean(State, Index) != 0);
 	}
 	else if (lua_type(State, Index) == LUA_TSTRING)
 	{
-		LuaValue.Type = ELuaValueType::String;
-		LuaValue.String = FString(UTF8_TO_TCHAR(lua_tostring(State, Index)));
+		size_t StringLength = 0;
+		const char* String = lua_tolstring(State, Index, &StringLength);
+		LuaValue = FLuaValue(String, StringLength);
 	}
 	else if (lua_isinteger(State, Index))
 	{
-		LuaValue.Type = ELuaValueType::Integer;
-		LuaValue.Integer = lua_tointeger(State, Index);
+		LuaValue = FLuaValue((int32)lua_tointeger(State, Index));
 	}
 	else if (lua_type(State, Index) == LUA_TNUMBER)
 	{
-		LuaValue.Type = ELuaValueType::Number;
-		LuaValue.Number = lua_tonumber(State, Index);
+		LuaValue = FLuaValue((float)lua_tonumber(State, Index));
 	}
 	else if (lua_istable(State, Index))
 	{
@@ -594,7 +608,7 @@ int ULuaState::MetaTableFunctionState__index(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
@@ -611,7 +625,7 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
 	FLuaValue* LuaValue = LuaState->Table.Find(Key);
 	if (LuaValue)
@@ -624,45 +638,6 @@ int ULuaState::MetaTableFunctionState__newindex(lua_State* L)
 	}
 
 	return 0;
-}
-
-int ULuaState::MetaTableBlueprintFunctionLibraryState__index(lua_State* L)
-{
-	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
-	}
-	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
-
-	if (!UserData->Context.IsValid())
-	{
-		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
-	}
-
-	UBlueprintFunctionLibrary* FunctionLibrary = Cast<UBlueprintFunctionLibrary>(UserData->Context);
-	if (!FunctionLibrary)
-		return luaL_error(L, "invalid state for BlueprintFunctionLibrary");
-
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
-
-	UFunction* Function = FunctionLibrary->FindFunction(FName(*Key));
-	if (Function)
-	{
-		FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
-		LuaCallContext->Type = ELuaValueType::UFunction;
-		LuaCallContext->Context = FunctionLibrary;
-		LuaCallContext->Function = Function;
-		lua_newtable(L);
-		lua_pushcfunction(L, ULuaState::MetaTableFunction__call);
-		lua_setfield(L, -2, "__call");
-		lua_setmetatable(L, -2);
-		return 1;
-	}
-
-	lua_pushnil(L);
-	return 1;
 }
 
 int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
@@ -684,7 +659,7 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
 	if (!LuaComponent)
 		return luaL_error(L, "invalid state for ULuaComponent");
 
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
@@ -716,7 +691,7 @@ int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State* L)
 	if (!LuaComponent)
 		return luaL_error(L, "invalid state for ULuaComponent");
 
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 2));
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
 	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
 	if (LuaValue)
@@ -737,10 +712,10 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 	FLuaDebug LuaDebug;
 	lua_getinfo(L, "lSn", ar);
 	LuaDebug.CurrentLine = ar->currentline;
-	LuaDebug.Source = UTF8_TO_TCHAR(ar->source);
-	LuaDebug.Name = UTF8_TO_TCHAR(ar->name);
-	LuaDebug.NameWhat = UTF8_TO_TCHAR(ar->namewhat);
-	LuaDebug.What = UTF8_TO_TCHAR(ar->what);
+	LuaDebug.Source = ANSI_TO_TCHAR(ar->source);
+	LuaDebug.Name = ANSI_TO_TCHAR(ar->name);
+	LuaDebug.NameWhat = ANSI_TO_TCHAR(ar->namewhat);
+	LuaDebug.What = ANSI_TO_TCHAR(ar->what);
 
 	switch (ar->event)
 	{
@@ -975,7 +950,7 @@ int ULuaState::TableFunction_print(lua_State* L)
 		const char* s = lua_tostring(L, -1);
 		if (!s)
 			return luaL_error(L, "'tostring must return a string to 'print'");
-		FString Value = FString(UTF8_TO_TCHAR(s));
+		FString Value = ANSI_TO_TCHAR(s);
 		lua_pop(L, 1);
 		Messages.Add(Value);
 	}
@@ -987,24 +962,12 @@ int ULuaState::TableFunction_package_preload(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	FString Key = UTF8_TO_TCHAR(lua_tostring(L, 1));
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
 
 	if (LuaState->L != L)
-		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", TCHAR_TO_UTF8(*Key));
+		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", TCHAR_TO_ANSI(*Key));
 
-	// first check for BlueprintFunctionLibrary
-	TSubclassOf<UBlueprintFunctionLibrary>* FunctionLibrary = LuaState->RequireBlueprintFunctionLibraryTable.Find(Key);
-	if (FunctionLibrary)
-	{
-		LuaState->NewUObject(FunctionLibrary->GetDefaultObject());
-		// metatable
-		LuaState->NewTable();
-		LuaState->PushCFunction(MetaTableBlueprintFunctionLibraryState__index);
-		LuaState->SetField(-2, "__index");
-		LuaState->SetMetaTable(-2);
-		return 1;
-	}
-	// then check for code assets
+	// check for code assets
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
@@ -1024,13 +987,13 @@ int ULuaState::TableFunction_package_preload(lua_State* L)
 			return luaL_error(L, "%s", lua_tostring(L, -1));
 
 		}
-		return luaL_error(L, "unable to find package %s", TCHAR_TO_UTF8(*Key));
+		return luaL_error(L, "unable to find package %s", TCHAR_TO_ANSI(*Key));
 	}
 
 	ULuaCode* LuaCode = *LuaCodePtr;
 	if (!LuaCode)
 	{
-		return luaL_error(L, "LuaCodeAsset not set for package %s", TCHAR_TO_UTF8(*Key));
+		return luaL_error(L, "LuaCodeAsset not set for package %s", TCHAR_TO_ANSI(*Key));
 	}
 
 	if (!LuaState->RunCodeAsset(LuaCode, 1))
@@ -1130,7 +1093,7 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 
 	for (i = 0; i < Parts.Num(); i++)
 	{
-		GetField(-1, TCHAR_TO_UTF8(*Parts[i]));
+		GetField(-1, TCHAR_TO_ANSI(*Parts[i]));
 
 		if (lua_isnil(L, -1))
 		{
@@ -1163,7 +1126,7 @@ void ULuaState::SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal)
 
 	Pop();
 	FromLuaValue(Value);
-	SetField(-2, TCHAR_TO_UTF8(*Parts.Last()));
+	SetField(-2, TCHAR_TO_ANSI(*Parts.Last()));
 	Pop(ItemsToPop - 1);
 }
 
@@ -1215,7 +1178,7 @@ bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
 	if (lua_pcall(L, NArgs, NRet, 0))
 	{
 
-		LastError = FString::Printf(TEXT("Lua error: %s"), UTF8_TO_TCHAR(lua_tostring(L, -1)));
+		LastError = FString::Printf(TEXT("Lua error: %s"), ANSI_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
 
@@ -1320,6 +1283,13 @@ FLuaValue ULuaState::CreateLuaTable()
 ULuaState::~ULuaState()
 {
 	FLuaMachineModule::Get().UnregisterLuaState(this);
+
+	// there could be a race condition with references managed by the Table map
+	// better to manually Unref them
+	for (auto Pair : Table)
+	{
+		Pair.Value.Unref();
+	}
 
 	if (L)
 		lua_close(L);

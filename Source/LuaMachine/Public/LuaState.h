@@ -7,6 +7,7 @@
 #include "ThirdParty/lua/lua.hpp"
 #include "LuaValue.h"
 #include "LuaCode.h"
+#include "LuaBlueprintPackage.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "Runtime/Engine/Classes/Kismet/BlueprintFunctionLibrary.h"
 #include "LuaState.generated.h"
@@ -118,8 +119,8 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	TMap<FString, ULuaCode*> RequireTable;
 
-	UPROPERTY(EditAnywhere, Category = "Lua")
-	TMap<FString, TSubclassOf<UBlueprintFunctionLibrary>> RequireBlueprintFunctionLibraryTable;
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Lua Blueprint Packages Table"))
+	TMap<FString, TSubclassOf<ULuaBlueprintPackage>> LuaBlueprintPackagesTable;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLuaOpenLibs;
@@ -175,6 +176,9 @@ public:
 	/* Enable debug of each Lua return. The LuaReturnHook event will be triggered */
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bEnableReturnHook;
+
+	UPROPERTY()
+	TArray<ULuaBlueprintPackage*> LuaBlueprintPackages;
 
 	int32 GetTop();
 
@@ -250,8 +254,6 @@ public:
 
 	static int MetaTableFunctionState__index(lua_State *L);
 	static int MetaTableFunctionState__newindex(lua_State *L);
-
-	static int MetaTableBlueprintFunctionLibraryState__index(lua_State *L);
 	
 	static int TableFunction_print(lua_State *L);
 	static int TableFunction_package_preload(lua_State *L);

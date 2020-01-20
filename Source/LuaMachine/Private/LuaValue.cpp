@@ -82,7 +82,7 @@ bool FLuaValue::ToBool()
 	return true;
 }
 
-FLuaValue::~FLuaValue()
+void FLuaValue::Unref()
 {
 	if (Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread)
 	{
@@ -90,7 +90,13 @@ FLuaValue::~FLuaValue()
 		{
 			LuaState->Unref(LuaRef);
 		}
+		LuaRef = LUA_NOREF;
 	}
+}
+
+FLuaValue::~FLuaValue()
+{
+	Unref();
 }
 
 FLuaValue::FLuaValue(const FLuaValue& SourceValue)
@@ -145,7 +151,7 @@ FLuaValue FLuaValue::SetField(FString Key, FLuaValue Value)
 
 	LuaState->FromLuaValue(*this);
 	LuaState->FromLuaValue(Value);
-	LuaState->SetField(-2, TCHAR_TO_UTF8(*Key));
+	LuaState->SetField(-2, TCHAR_TO_ANSI(*Key));
 	LuaState->Pop();
 	return *this;
 }
@@ -159,7 +165,7 @@ FLuaValue FLuaValue::GetField(FString Key)
 		return FLuaValue();
 
 	LuaState->FromLuaValue(*this);
-	LuaState->GetField(-1, TCHAR_TO_UTF8(*Key));
+	LuaState->GetField(-1, TCHAR_TO_ANSI(*Key));
 	FLuaValue ReturnValue = LuaState->ToLuaValue(-1);
 	LuaState->Pop(2);
 	return ReturnValue;
@@ -316,4 +322,28 @@ TSharedPtr<FJsonValue> FLuaValue::ToJsonValue()
 	}
 
 	return MakeShared<FJsonValueNull>();
+}
+
+TArray<uint8> FLuaValue::ToBytes()
+{
+	TArray<uint8> Bytes;
+	if (Type != ELuaValueType::String)
+		return Bytes;
+
+	int32 StringLength = String.Len();
+	Bytes.AddUninitialized(StringLength);
+	for (int32 i = 0; i < StringLength; i++)
+	{
+		uint16 CharValue = (uint16)String[i];
+		if (CharValue == 0xffff)
+		{
+			Bytes[i] = 0;
+		}
+		else
+		{
+			Bytes[i] = (uint8)String[i];
+		}
+	}
+
+	return Bytes;
 }
