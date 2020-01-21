@@ -160,5 +160,8 @@ struct LUAMACHINE_API FLuaValue
 	static FLuaValue FromJsonValue(ULuaState* L, FJsonValue& JsonValue);
 	TSharedPtr<FJsonValue> ToJsonValue();
 
+	static FLuaValue FromBase64(FString Base64);
+	FString ToBase64();
+
 	void Unref();
 };

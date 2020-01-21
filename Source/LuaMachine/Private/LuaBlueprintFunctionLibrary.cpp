@@ -184,6 +184,16 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject
 	return ReturnValue;
 }
 
+FString ULuaBlueprintFunctionLibrary::LuaValueToBase64(FLuaValue Value)
+{
+	return Value.ToBase64();
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromBase64(FString Base64)
+{
+	return FLuaValue::FromBase64(Base64);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
 {
 	FLuaValue ReturnValue;

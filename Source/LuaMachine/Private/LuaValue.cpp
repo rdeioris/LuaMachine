@@ -2,6 +2,7 @@
 
 #include "LuaValue.h"
 #include "LuaState.h"
+#include "Misc/Base64.h"
 
 FString FLuaValue::ToString()
 {
@@ -346,4 +347,16 @@ TArray<uint8> FLuaValue::ToBytes()
 	}
 
 	return Bytes;
+}
+
+FLuaValue FLuaValue::FromBase64(FString Base64)
+{
+	TArray<uint8> Bytes;
+	FBase64::Decode(Base64, Bytes);
+	return FLuaValue(Bytes);
+}
+
+FString FLuaValue::ToBase64()
+{
+	return FBase64::Encode(ToBytes());
 }
