@@ -15,6 +15,7 @@
 #include "Runtime/Slate/Public/Widgets/Input/STextComboBox.h"
 #include "LuaMachine/Public/LuaMachine.h"
 #include "LuaMachine/Public/LuaBlueprintFunctionLibrary.h"
+#include "Widgets/Layout/SScrollBox.h"
 
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
@@ -175,11 +176,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 				if (LuaState->GetInternalLuaState())
 				{
-					DebugTextContext += FString::Printf(TEXT("%s at %p (used memory: %dk) (top of the stack: %d) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num());
 				}
 				else
 				{
-					DebugTextContext += FString::Printf(TEXT("%s at %p (inactive) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, Referencers.Num());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (inactive) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, Referencers.Num());
 				}
 			}
 		}
@@ -203,8 +204,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		case ELuaValueType::Bool:
 			return FSlateColor(FColor::Purple);
 		case ELuaValueType::UFunction:
+			return FSlateColor(FColor::Magenta);
 		case ELuaValueType::UObject:
 			return FSlateColor(FColor::Cyan);
+		case ELuaValueType::Thread:
+			return FSlateColor(FColor::Yellow);
 		default:
 			return FSlateColor(FLinearColor::White);
 		}
@@ -262,6 +266,12 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		case ELuaValueType::UObject:
 			Value = Item->LuaTableValue.ToString();
 			break;
+		case ELuaValueType::Thread:
+			if (SelectedLuaState == Item->LuaTableValue.LuaState)
+			{
+				Value = "status: " + FindObject<UEnum>(ANY_PACKAGE, TEXT("ELuaThreadStatus"), true)->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
+			}
+			break;
 		default:
 			break;
 		}
@@ -307,7 +317,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 			[
 				SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
 			]
-		+ SHorizontalBox::Slot()
+		+ SHorizontalBox::Slot().FillWidth(0.2)
 			[
 				SNew(STextBlock).Text(GetLuaTypeText(Item))
 			]
@@ -329,13 +339,13 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 				[
 					SNew(SHorizontalBox)
 					+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
-					[
-						SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
-					]
-					+ SHorizontalBox::Slot().FillWidth(0.6)
-					[
+				[
+					SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
+				]
+			+ SHorizontalBox::Slot().FillWidth(0.6)
+				[
 					SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
-					]
+				]
 				]
 
 			+ SVerticalBox::Slot().AutoHeight()
@@ -346,11 +356,15 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 				[
 					SNew(SButton).Text(FText::FromString("Call GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
 				]
-			+ SVerticalBox::Slot().AutoHeight()
+			+ SVerticalBox::Slot().FillHeight(1)
+				[
+					SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+					+ SScrollBox::Slot()
 				[
 					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
 				]
-			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom)
+				]
+			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
 					[

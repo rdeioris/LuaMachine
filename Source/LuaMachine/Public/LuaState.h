@@ -40,6 +40,15 @@ struct FLuaUserData
 	}
 };
 
+UENUM(BlueprintType)
+enum ELuaThreadStatus
+{
+	Invalid,
+	Ok,
+	Suspended,
+	Error,
+};
+
 USTRUCT()
 struct FLuaLibsLoader
 {
@@ -158,6 +167,9 @@ public:
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
+	ELuaThreadStatus GetLuaThreadStatus(FLuaValue Value);
+	int32 GetLuaThreadStackTop(FLuaValue Value);
+
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLogError;
 
@@ -246,15 +258,13 @@ public:
 	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
 
 	FLuaValue CreateLuaTable();
+	FLuaValue CreateLuaThread(FLuaValue Value);
 
 	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0);
 
 	static int MetaTableFunctionLuaComponent__index(lua_State *L);
 	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
 
-	static int MetaTableFunctionState__index(lua_State *L);
-	static int MetaTableFunctionState__newindex(lua_State *L);
-	
 	static int TableFunction_print(lua_State *L);
 	static int TableFunction_package_preload(lua_State *L);
 

@@ -23,7 +23,7 @@ FString FLuaValue::ToString()
 	case ELuaValueType::UObject:
 		return Object->GetFullName();
 	case ELuaValueType::UFunction:
-		return FunctionName.ToString();
+		return Object ? (FunctionName.ToString() + " @ " + Object->GetClass()->GetPathName()) : FunctionName.ToString();
 	case ELuaValueType::Thread:
 		return FString::Printf(TEXT("thread: %d"), LuaRef);
 	}

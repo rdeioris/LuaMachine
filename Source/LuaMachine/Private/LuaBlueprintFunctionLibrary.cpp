@@ -52,6 +52,16 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 	return L->CreateLuaTable();
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateThread(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value)
+{
+	FLuaValue LuaValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return LuaValue;
+
+	return L->CreateLuaThread(Value);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObjectInState(UObject* WorldContextObject, TSubclassOf<ULuaState> State, UObject* InObject)
 {
 	FLuaValue LuaValue;
@@ -237,6 +247,22 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 	}
 	L->Pop();
 	return ReturnValue;
+}
+
+ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
+		return ELuaThreadStatus::Invalid;
+
+	return Value.LuaState->GetLuaThreadStatus(Value);
+}
+
+int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
+		return ELuaThreadStatus::Invalid;
+
+	return Value.LuaState->GetLuaThreadStackTop(Value);
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset)

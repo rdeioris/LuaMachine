@@ -153,10 +153,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// pop package.preload
 	Pop(2);
 
-	// assign global symbols to nil, this will allow to override global functions/symbols
+
 	for (TPair<FString, FLuaValue>& Pair : Table)
 	{
-		PushNil();
+		FromLuaValue(Pair.Value, this, L);
 		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
@@ -183,15 +183,6 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		}
 		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
-
-
-	// metatable
-	NewTable();
-	PushCFunction(MetaTableFunctionState__index);
-	SetField(-2, "__index");
-	PushCFunction(MetaTableFunctionState__newindex);
-	SetField(-2, "__newindex");
-	SetMetaTable(-2);
 
 	// pop global table
 	Pop();
@@ -268,7 +259,7 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 			CodeAsset->ByteCode[13] = sizeof(size_t);
 #endif
 		return RunCode(CodeAsset->ByteCode, CodeAsset->GetPathName(), NRet);
-}
+	}
 
 	return RunCode(CodeAsset->Code.ToString(), CodeAsset->GetPathName(), NRet);
 
@@ -602,42 +593,6 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 int32 ULuaState::GetTop()
 {
 	return lua_gettop(L);
-}
-
-int ULuaState::MetaTableFunctionState__index(lua_State* L)
-{
-	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-
-	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
-
-	FLuaValue* LuaValue = LuaState->Table.Find(Key);
-	if (LuaValue)
-	{
-		LuaState->FromLuaValue(*LuaValue, LuaState, L);
-		return 1;
-	}
-
-	lua_pushnil(L);
-	return 1;
-}
-
-int ULuaState::MetaTableFunctionState__newindex(lua_State* L)
-{
-	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-
-	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
-
-	FLuaValue* LuaValue = LuaState->Table.Find(Key);
-	if (LuaValue)
-	{
-		*LuaValue = LuaState->ToLuaValue(3, L);
-	}
-	else
-	{
-		lua_rawset(L, 1);
-	}
-
-	return 0;
 }
 
 int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
@@ -1280,16 +1235,53 @@ FLuaValue ULuaState::CreateLuaTable()
 	return NewTable;
 }
 
+FLuaValue ULuaState::CreateLuaThread(FLuaValue Value)
+{
+	FLuaValue NewThread;
+	NewThread.Type = ELuaValueType::Thread;
+	NewThread.LuaState = this;
+	FromLuaValue(NewThread);
+	lua_State* NewLuaThread = lua_tothread(L, -1);
+	FromLuaValue(Value, nullptr, NewLuaThread);
+	Pop();
+	return NewThread;
+}
+
+ELuaThreadStatus ULuaState::GetLuaThreadStatus(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Thread || Value.LuaState != this)
+		return ELuaThreadStatus::Invalid;
+
+	FromLuaValue(Value);
+	lua_State* LuaThread = lua_tothread(L, -1);
+	int ReturnValue = lua_status(LuaThread);
+	Pop();
+
+	if (ReturnValue == 0)
+		return ELuaThreadStatus::Ok;
+
+	if (ReturnValue == LUA_YIELD)
+		return ELuaThreadStatus::Suspended;
+
+	return ELuaThreadStatus::Error;
+}
+
+int32 ULuaState::GetLuaThreadStackTop(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Thread || Value.LuaState != this)
+		return ELuaThreadStatus::Invalid;
+
+	FromLuaValue(Value);
+	lua_State* LuaThread = lua_tothread(L, -1);
+	int ReturnValue = lua_gettop(LuaThread);
+	Pop();
+
+	return ReturnValue;
+}
+
 ULuaState::~ULuaState()
 {
 	FLuaMachineModule::Get().UnregisterLuaState(this);
-
-	// there could be a race condition with references managed by the Table map
-	// better to manually Unref them
-	for (auto Pair : Table)
-	{
-		Pair.Value.Unref();
-	}
 
 	if (L)
 		lua_close(L);

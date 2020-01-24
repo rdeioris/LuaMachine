@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static FLuaValue LuaCreateTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
+	static FLuaValue LuaCreateThread(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value /* Function */);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static FLuaValue LuaCreateObject(UObject* InObject);
 
@@ -143,6 +146,12 @@ public:
 	/* Resume a lua coroutine/thread with multiple return values (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
 	static TArray<FLuaValue> LuaValueResumeMulti(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static ELuaThreadStatus LuaThreadGetStatus(FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static int32 LuaThreadGetStackTop(FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static int32 LuaValueLength(FLuaValue Value);
