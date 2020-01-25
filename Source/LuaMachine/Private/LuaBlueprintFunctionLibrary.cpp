@@ -342,7 +342,7 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 	return Texture;
 }
 
-void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
+void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, FLuaValue Context, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
@@ -357,26 +357,30 @@ void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, T
 	}
 	HttpRequest->SetContent(Body.ToBytes());
 
-	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpGenericRequestDone, TWeakObjectPtr<ULuaState>(L), ResponseReceived, Error);
+	TSharedRef<FLuaSmartReference> ContextSmartRef = L->AddLuaSmartReference(Context);
+
+	HttpRequest->OnProcessRequestComplete().BindStatic(&ULuaBlueprintFunctionLibrary::HttpGenericRequestDone, TWeakPtr<FLuaSmartReference>(ContextSmartRef), ResponseReceived, Error);
 	HttpRequest->ProcessRequest();
 }
 
-void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakObjectPtr<ULuaState> L, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error)
+void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakPtr<FLuaSmartReference> Context, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error)
 {
-	// a response could arrive so late that the original state is no more valid (weak ptr) ...
-	if (!L.IsValid())
+	// if the context is invalid, the LuaState is already dead
+	if (!Context.IsValid())
 		return;
 
+	TSharedRef<FLuaSmartReference> SmartContext = Context.Pin().ToSharedRef();
+
+	SmartContext->LuaState->RemoveLuaSmartReference(SmartContext);
 
 	if (!bWasSuccessful)
 	{
-		Error.ExecuteIfBound();
+		Error.ExecuteIfBound(SmartContext->Value);
 		return;
 	}
 
-
 	FLuaValue StatusCode = FLuaValue(Response->GetResponseCode());
-	FLuaValue Headers = L->CreateLuaTable();
+	FLuaValue Headers = SmartContext->LuaState->CreateLuaTable();
 	for (auto HeaderLine : Response->GetAllHeaders())
 	{
 		int32 Index;
@@ -390,11 +394,11 @@ void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Reques
 		}
 	}
 	FLuaValue Content = FLuaValue(Response->GetContent());
-	FLuaValue LuaHttpResponse = L->CreateLuaTable();
+	FLuaValue LuaHttpResponse = SmartContext->LuaState->CreateLuaTable();
 	LuaHttpResponse.SetFieldByIndex(1, StatusCode);
 	LuaHttpResponse.SetFieldByIndex(2, Headers);
 	LuaHttpResponse.SetFieldByIndex(3, Content);
-	ResponseReceived.ExecuteIfBound(LuaHttpResponse);
+	ResponseReceived.ExecuteIfBound(SmartContext->Value, LuaHttpResponse);
 }
 
 void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
@@ -969,6 +973,49 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableUnpack(FLuaValue InTable
 		if (Item.Type == ELuaValueType::Nil)
 			break;
 		ReturnValue.Add(Item);
+	}
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTablePack(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TArray<FLuaValue> Values)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	ReturnValue = L->CreateLuaTable();
+
+	int32 Index = 1;
+
+	for (FLuaValue& Value : Values)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
+	}
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableMergePack(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TArray<FLuaValue> Values1, TArray<FLuaValue> Values2)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	ReturnValue = L->CreateLuaTable();
+
+	int32 Index = 1;
+
+	for (FLuaValue& Value : Values1)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
+	}
+
+	for (FLuaValue& Value : Values2)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
 	}
 
 	return ReturnValue;

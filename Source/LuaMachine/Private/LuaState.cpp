@@ -1279,6 +1279,22 @@ int32 ULuaState::GetLuaThreadStackTop(FLuaValue Value)
 	return ReturnValue;
 }
 
+TSharedRef<FLuaSmartReference> ULuaState::AddLuaSmartReference(FLuaValue Value)
+{
+	TSharedRef<FLuaSmartReference> Ref = MakeShared<FLuaSmartReference>();
+	Ref->LuaState = this;
+	Ref->Value = Value;
+
+	LuaSmartReferences.Add(Ref);
+
+	return Ref;
+}
+
+void ULuaState::RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref)
+{
+	LuaSmartReferences.Remove(Ref);
+}
+
 ULuaState::~ULuaState()
 {
 	FLuaMachineModule::Get().UnregisterLuaState(this);

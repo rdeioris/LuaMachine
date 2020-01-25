@@ -9,7 +9,6 @@
 #include "LuaCode.h"
 #include "LuaBlueprintPackage.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
-#include "Runtime/Engine/Classes/Kismet/BlueprintFunctionLibrary.h"
 #include "LuaState.generated.h"
 
 LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
@@ -17,6 +16,7 @@ LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
 /**
  *
  */
+
 
 struct FLuaUserData
 {
@@ -105,6 +105,13 @@ struct FLuaDebug
 };
 
 
+struct FLuaSmartReference : public TSharedFromThis<FLuaSmartReference>
+{
+	ULuaState* LuaState;
+	FLuaValue Value;
+};
+
+
 UCLASS(Abstract, Blueprintable, HideDropdown)
 class LUAMACHINE_API ULuaState : public UObject
 {
@@ -125,11 +132,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	TMap<FString, FLuaValue> Table;
 
-	UPROPERTY(EditAnywhere, Category = "Lua")
-	TMap<FString, ULuaCode*> RequireTable;
-
 	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Lua Blueprint Packages Table"))
 	TMap<FString, TSubclassOf<ULuaBlueprintPackage>> LuaBlueprintPackagesTable;
+
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLuaOpenLibs;
@@ -191,6 +198,8 @@ public:
 
 	UPROPERTY()
 	TArray<ULuaBlueprintPackage*> LuaBlueprintPackages;
+
+	TArray<TSharedRef<FLuaSmartReference>> LuaSmartReferences;
 
 	int32 GetTop();
 
@@ -307,6 +316,9 @@ public:
 	FORCEINLINE lua_State* GetInternalLuaState() const { return L; }
 
 	void PushRegistryTable();
+
+	TSharedRef<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
+	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
 
 protected:
 	lua_State* L;
