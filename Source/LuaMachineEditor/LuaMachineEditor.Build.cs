@@ -7,7 +7,6 @@ public class LuaMachineEditor : ModuleRules
     public LuaMachineEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        bFasterWithoutUnity = true;
 
         PublicIncludePaths.AddRange(
             new string[] {

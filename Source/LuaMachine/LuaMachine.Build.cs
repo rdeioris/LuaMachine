@@ -7,7 +7,6 @@ public class LuaMachine : ModuleRules
     public LuaMachine(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        bFasterWithoutUnity = true;
 
         PublicIncludePaths.AddRange(
             new string[] {
@@ -87,7 +86,7 @@ public class LuaMachine : ModuleRules
 
         if (Target.Platform == UnrealTargetPlatform.Android)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "lua53_android.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "liblua53_android.a"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.IOS)
