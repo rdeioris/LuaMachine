@@ -66,22 +66,22 @@ public class LuaMachine : ModuleRules
 
         if (Target.Platform == UnrealTargetPlatform.Win64)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "liblua53_win64.lib"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_win64.lib"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "liblua53_mac.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_mac.a"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.Linux)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "liblua53_linux64.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_linux64.a"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.LinuxAArch64)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "liblua53_linux_aarch64.a"));
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_linux_aarch64.a"));
         }
 
         if (Target.Platform == UnrealTargetPlatform.Android)
