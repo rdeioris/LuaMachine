@@ -510,6 +510,39 @@ void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHtt
 	Completed.ExecuteIfBound(ReturnValue, bWasSuccessful, StatusCode);
 }
 
+void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject* InObject)
+{
+	if (InTable.Type != ELuaValueType::Table || !InObject)
+		return;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return;
+
+	UStruct* Class = Cast<UStruct>(InObject);
+	if (!Class)
+		Class = InObject->GetClass();
+
+	L->FromLuaValue(InTable);
+	L->PushNil(); // first key
+	while (L->Next(-2))
+	{
+		FLuaValue Key = L->ToLuaValue(-2);
+		FLuaValue Value = L->ToLuaValue(-1);
+
+		UProperty* Property = Class->FindPropertyByName(*Key.ToString());
+		if (Property)
+		{
+			bool bSuccess = false;
+			L->ToUProperty(InObject, Property, Value, bSuccess);
+		}
+
+		L->Pop(); // pop the value
+	}
+
+	L->Pop(); // pop the table
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
 {
 	FLuaValue ReturnValue;
@@ -675,10 +708,10 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 				return FLuaValue(LuaComponent);
 			}
 		}
-	}
+			}
 
 	return FLuaValue();
-}
+		}
 
 FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* Actor, FString Name)
 {
@@ -701,10 +734,10 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 				return FLuaValue(LuaComponent);
 			}
 		}
-	}
+			}
 
 	return FLuaValue();
-}
+		}
 
 FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, FString Name)
 {
@@ -970,6 +1003,35 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableUnpack(FLuaValue InTable
 	for (;;)
 	{
 		FLuaValue Item = InTable.GetFieldByIndex(Index++);
+		if (Item.Type == ELuaValueType::Nil)
+			break;
+		ReturnValue.Add(Item);
+	}
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableMergeUnpack(FLuaValue InTable1, FLuaValue InTable2)
+{
+	TArray<FLuaValue> ReturnValue;
+	if (InTable1.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	if (InTable2.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	int32 Index = 1;
+	for (;;)
+	{
+		FLuaValue Item = InTable1.GetFieldByIndex(Index++);
+		if (Item.Type == ELuaValueType::Nil)
+			break;
+		ReturnValue.Add(Item);
+	}
+
+	for (;;)
+	{
+		FLuaValue Item = InTable2.GetFieldByIndex(Index++);
 		if (Item.Type == ELuaValueType::Nil)
 			break;
 		ReturnValue.Add(Item);

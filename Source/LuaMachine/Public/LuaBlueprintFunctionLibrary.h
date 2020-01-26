@@ -145,6 +145,12 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
 	static FLuaValue LuaTableMergePack(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TArray<FLuaValue> Values1, TArray<FLuaValue> Values2);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static TArray<FLuaValue> LuaTableMergeUnpack(FLuaValue InTable1, FLuaValue InTable2);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static void LuaTableFillObject(FLuaValue InTable, UObject* InObject);
+
 	/* Calls a lua value with multiple return values (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category="Lua")
 	static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
