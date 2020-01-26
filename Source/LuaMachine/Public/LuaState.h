@@ -271,8 +271,8 @@ public:
 
 	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0);
 
-	static int MetaTableFunctionLuaComponent__index(lua_State *L);
-	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
+	static int MetaTableFunctionUserData__index(lua_State *L);
+	static int MetaTableFunctionUserData__newindex(lua_State *L);
 
 	static int TableFunction_print(lua_State *L);
 	static int TableFunction_package_preload(lua_State *L);
@@ -319,6 +319,8 @@ public:
 
 	TSharedRef<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
 	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
+
+	void SetupUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
 
 protected:
 	lua_State* L;

@@ -2,6 +2,7 @@
 
 #include "LuaState.h"
 #include "LuaComponent.h"
+#include "LuaUserDataObject.h"
 #include "LuaMachine.h"
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
@@ -430,13 +431,20 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 	case ELuaValueType::UObject:
 	{
 		NewUObject(LuaValue.Object);
-		ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object);
-		if (LuaComponent)
+		if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object))
 		{
 			// ensure we are in the same LuaState
 			if (LuaComponent->LuaState == GetClass())
 			{
-				LuaComponent->SetupMetatable(State);
+				SetupUserDataMetatable(LuaComponent->GetOwner(), LuaComponent->Metatable);
+			}
+		}
+		else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(LuaValue.Object))
+		{
+			// ensure we are in the same LuaState
+			if (LuaUserDataObject->LuaState == GetClass())
+			{
+				SetupUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable);
 			}
 		}
 		else {
@@ -595,31 +603,43 @@ int32 ULuaState::GetTop()
 	return lua_gettop(L);
 }
 
-int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
+int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
 	if (!lua_isuserdata(L, 1))
 	{
-		return luaL_error(L, "invalid state for ULuaComponent");
+		return luaL_error(L, "invalid state for UserData");
 	}
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid state for ULuaComponent");
+		return luaL_error(L, "invalid state for UserData");
 	}
 
-	ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData->Context.Get());
-	if (!LuaComponent)
-		return luaL_error(L, "invalid state for ULuaComponent");
+	TMap<FString, FLuaValue>* TablePtr = nullptr;
+	UObject* Context = UserData->Context.Get();
+
+	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
+	{
+		TablePtr = &LuaComponent->Table;
+		Context = LuaComponent->GetOwner();
+	}
+	else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(Context))
+	{
+		TablePtr = &LuaUserDataObject->Table;
+	}
+
+	if (!TablePtr)
+		return luaL_error(L, "invalid state for UserData");
 
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
-	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
+	FLuaValue* LuaValue = TablePtr->Find(Key);
 	if (LuaValue)
 	{
-		LuaState->FromLuaValue(*LuaValue, LuaComponent->GetOwner(), L);
+		LuaState->FromLuaValue(*LuaValue, Context, L);
 		return 1;
 
 	}
@@ -628,34 +648,47 @@ int ULuaState::MetaTableFunctionLuaComponent__index(lua_State* L)
 	return 1;
 }
 
-int ULuaState::MetaTableFunctionLuaComponent__newindex(lua_State* L)
+int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
 	if (!lua_isuserdata(L, 1))
 	{
-		return luaL_error(L, "invalid state for ULuaComponent");
+		return luaL_error(L, "invalid state for UserData");
 	}
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid state for ULuaComponent");
+		return luaL_error(L, "invalid state for UserData");
 	}
 
-	ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData->Context.Get());
-	if (!LuaComponent)
-		return luaL_error(L, "invalid state for ULuaComponent");
+	TMap<FString, FLuaValue>* TablePtr = nullptr;
+	UObject* Context = UserData->Context.Get();
+
+	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
+	{
+		TablePtr = &LuaComponent->Table;
+		Context = LuaComponent->GetOwner();
+	}
+	else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(Context))
+	{
+		TablePtr = &LuaUserDataObject->Table;
+	}
+
+	if (!TablePtr)
+		return luaL_error(L, "invalid state for UserData");
+
 
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
-	FLuaValue* LuaValue = LuaComponent->Table.Find(Key);
+	FLuaValue* LuaValue = TablePtr->Find(Key);
 	if (LuaValue)
 	{
 		*LuaValue = LuaState->ToLuaValue(3, L);
 	}
 	else
 	{
-		LuaComponent->Table.Add(Key, LuaState->ToLuaValue(3, L));
+		TablePtr->Add(Key, LuaState->ToLuaValue(3, L));
 	}
 
 	return 0;
@@ -768,6 +801,16 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
 	int StackPointer = 2;
+
+	if (LuaCallContext->Context.Get()->IsA<ULuaUserDataObject>())
+	{
+		if (Cast<ULuaUserDataObject>(LuaCallContext->Context.Get())->bImplicitSelf)
+		{
+			NArgs--;
+			StackPointer++;
+		}
+	}
+
 	// arguments
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
@@ -1402,4 +1445,47 @@ void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
 {
 	UserDataMetaTable = MetaTable;
 }
+
+void ULuaState::SetupUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable)
+{
+	lua_newtable(L);
+	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__index);
+	lua_setfield(L, -2, "__index");
+	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__newindex);
+	lua_setfield(L, -2, "__newindex");
+	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__eq);
+	lua_setfield(L, -2, "__eq");
+
+	for (TPair<FString, FLuaValue>& Pair : Metatable)
+	{
+		// first check for UFunction
+		if (Pair.Value.Type == ELuaValueType::UFunction)
+		{
+			UFunction* Function = Context->FindFunction(Pair.Value.FunctionName);
+			if (Function)
+			{
+				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+				LuaCallContext->Type = ELuaValueType::UFunction;
+				LuaCallContext->Context = Context;
+				LuaCallContext->Function = Function;
+
+				lua_newtable(L);
+				lua_pushcfunction(L, ULuaState::MetaTableFunction__call);
+				lua_setfield(L, -2, "__call");
+				lua_setmetatable(L, -2);
+			}
+			else
+			{
+				lua_pushnil(L);
+			}
+		}
+		else {
+			FromLuaValue(Pair.Value);
+		}
+		lua_setfield(L, -2, TCHAR_TO_ANSI(*Pair.Key));
+	}
+
+	lua_setmetatable(L, -2);
+}
+
 

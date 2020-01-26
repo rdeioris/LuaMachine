@@ -80,8 +80,5 @@ public:
 	void LuaSetField(FString Name, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
-	FLuaComponentError OnLuaError;
-
-	void SetupMetatable(lua_State* State);
-	
+	FLuaComponentError OnLuaError;	
 };
