@@ -151,6 +151,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static void LuaTableFillObject(FLuaValue InTable, UObject* InObject);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static TArray<FLuaValue> LuaTableRange(FLuaValue InTable, int32 First, int32 Last);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static TArray<FLuaValue> LuaValueArrayMerge(TArray<FLuaValue> Array1, TArray<FLuaValue> Array2);
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static TArray<FLuaValue> LuaValueArrayAppend(TArray<FLuaValue> Array, FLuaValue Value);
+
 	/* Calls a lua value with multiple return values (must be callable) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category="Lua")
 	static TArray<FLuaValue> LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args);
