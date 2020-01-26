@@ -1083,6 +1083,34 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableMergePack(UObject* WorldContextO
 	return ReturnValue;
 }
 
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableRange(FLuaValue InTable, int32 First, int32 Last)
+{
+	TArray<FLuaValue> ReturnValue;
+	if (InTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	for (int32 i = First; i <= Last; i++)
+	{
+		ReturnValue.Add(InTable.GetFieldByIndex(i));
+	}
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueArrayMerge(TArray<FLuaValue> Array1, TArray<FLuaValue> Array2)
+{
+	TArray<FLuaValue> NewArray = Array1;
+	NewArray.Append(Array2);
+	return NewArray;
+}
+
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueArrayAppend(TArray<FLuaValue> Array, FLuaValue Value)
+{
+	TArray<FLuaValue> NewArray = Array;
+	NewArray.Add(Value);
+	return NewArray;
+}
+
 TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	TArray<FLuaValue> ReturnValue;
