@@ -89,7 +89,8 @@ void FLuaValue::Unref()
 	{
 		if (LuaRef != LUA_NOREF)
 		{
-			LuaState->Unref(LuaRef);
+			// use UnrefCheck here to support moving of LuaState
+			LuaState->UnrefChecked(LuaRef);
 		}
 		LuaRef = LUA_NOREF;
 	}

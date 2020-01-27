@@ -164,6 +164,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 	void RefreshDebugText()
 	{
 		DebugTextContext.Empty();
+		ReferencersTextContext.Empty();
 
 		for (TObjectIterator<ULuaState> StatesIterator; StatesIterator; ++StatesIterator)
 		{
@@ -185,9 +186,26 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 			}
 		}
 
+		if (SelectedLuaState)
+		{
+			TArray<UObject*> Referencers;
+			FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
+			Collector.FindReferences(SelectedLuaState);
+
+			for (UObject* Referencer : Referencers)
+			{
+				ReferencersTextContext += FString::Printf(TEXT("%s\n"), *Referencer->GetFullName());
+			}
+		}
+
 		if (DebugText.IsValid())
 		{
 			DebugText->SetText(FText::FromString(DebugTextContext));
+		}
+
+		if (ReferencersText.IsValid())
+		{
+			ReferencersText->SetText(FText::FromString(ReferencersTextContext));
 		}
 	}
 
@@ -364,6 +382,17 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
 				]
 				]
+			+ SVerticalBox::Slot().FillHeight(0.1)
+				[
+					SNew(SBorder).BorderBackgroundColor(FColor::White).Padding(4)
+					[
+						SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+						+ SScrollBox::Slot()
+				[
+					SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+				]
+					]
+				]
 			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
@@ -388,6 +417,8 @@ protected:
 	TSharedPtr<STextComboBox> LuaStatesComboBox;
 	TSharedPtr<STextBlock> DebugText;
 	FString DebugTextContext;
+	TSharedPtr<STextBlock> ReferencersText;
+	FString ReferencersTextContext;
 };
 
 TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSpawnTabArgs& Args)

@@ -1212,6 +1212,15 @@ void ULuaState::Unref(int Ref)
 	luaL_unref(L, LUA_REGISTRYINDEX, Ref);
 }
 
+void ULuaState::UnrefChecked(int Ref)
+{
+	// in case of moved value (like when compiling a blueprint), L should be nullptr
+	if (!L)
+		return;
+
+	Unref(Ref);
+}
+
 int ULuaState::NewRef()
 {
 	return luaL_ref(L, LUA_REGISTRYINDEX);

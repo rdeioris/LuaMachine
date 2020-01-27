@@ -242,6 +242,7 @@ public:
 	void PushNil();
 
 	void Unref(int Ref);
+	void UnrefChecked(int Ref);
 	int NewRef();
 	void GetRef(int Ref);
 	int Next(int Index);
