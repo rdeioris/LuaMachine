@@ -16,8 +16,11 @@ class LUAMACHINE_API ULuaUserDataObject : public UObject
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
-	TSubclassOf<ULuaState> LuaState;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	TSubclassOf<ULuaState> GetLuaState() const;
+
+	virtual UWorld* GetWorld() const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
 	TMap<FString, FLuaValue> Table;
