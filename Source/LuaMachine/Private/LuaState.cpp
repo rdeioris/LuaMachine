@@ -442,7 +442,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(LuaValue.Object))
 		{
 			// ensure we are in the same LuaState
-			if (LuaUserDataObject->LuaState == GetClass())
+			if (LuaUserDataObject->GetLuaState() == GetClass())
 			{
 				SetupUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable);
 			}
