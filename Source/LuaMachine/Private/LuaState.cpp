@@ -430,6 +430,12 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		break;
 	case ELuaValueType::UObject:
 	{
+		if (!LuaValue.Object)
+		{
+			lua_pushnil(State);
+			break;
+		}
+
 		NewUObject(LuaValue.Object);
 		if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object))
 		{
