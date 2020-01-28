@@ -708,10 +708,10 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 				return FLuaValue(LuaComponent);
 			}
 		}
-			}
+	}
 
 	return FLuaValue();
-		}
+}
 
 FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* Actor, FString Name)
 {
@@ -734,10 +734,10 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 				return FLuaValue(LuaComponent);
 			}
 		}
-			}
+	}
 
 	return FLuaValue();
-		}
+}
 
 FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, FString Name)
 {

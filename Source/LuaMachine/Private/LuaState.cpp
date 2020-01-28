@@ -611,17 +611,13 @@ int32 ULuaState::GetTop()
 
 int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 {
-	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for UserData");
-	}
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid state for UserData");
+		return luaL_error(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
@@ -636,18 +632,19 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 	{
 		TablePtr = &LuaUserDataObject->Table;
 	}
-
-	if (!TablePtr)
-		return luaL_error(L, "invalid state for UserData");
-
-	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
-
-	FLuaValue* LuaValue = TablePtr->Find(Key);
-	if (LuaValue)
+	
+	if (TablePtr)
 	{
-		LuaState->FromLuaValue(*LuaValue, Context, L);
-		return 1;
 
+		FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
+
+		FLuaValue* LuaValue = TablePtr->Find(Key);
+		if (LuaValue)
+		{
+			LuaState->FromLuaValue(*LuaValue, Context, L);
+			return 1;
+
+		}
 	}
 
 	lua_pushnil(L);
@@ -657,15 +654,10 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for UserData");
-	}
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid state for UserData");
+		return luaL_error(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
@@ -681,20 +673,19 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 		TablePtr = &LuaUserDataObject->Table;
 	}
 
-	if (!TablePtr)
-		return luaL_error(L, "invalid state for UserData");
-
-
-	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
-
-	FLuaValue* LuaValue = TablePtr->Find(Key);
-	if (LuaValue)
+	if (TablePtr)
 	{
-		*LuaValue = LuaState->ToLuaValue(3, L);
-	}
-	else
-	{
-		TablePtr->Add(Key, LuaState->ToLuaValue(3, L));
+		FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
+
+		FLuaValue* LuaValue = TablePtr->Find(Key);
+		if (LuaValue)
+		{
+			*LuaValue = LuaState->ToLuaValue(3, L);
+		}
+		else
+		{
+			TablePtr->Add(Key, LuaState->ToLuaValue(3, L));
+		}
 	}
 
 	return 0;
@@ -731,27 +722,16 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for usedata");
-	}
-
-	if (!lua_isuserdata(L, 2))
-	{
-		lua_pushboolean(L, 0);
-		return 1;
-	}
-
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for first userdata");
+		return luaL_error(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	FLuaUserData* UserData2 = (FLuaUserData*)lua_touserdata(L, 2);
 	if (!UserData2->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for second userdata");
+		return luaL_error(L, "invalid UObject for UserData %p", UserData2);
 	}
 
 	if (UserData->Type == UserData2->Type && UserData->Context.Get() == UserData2->Context.Get())
@@ -760,11 +740,11 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 		{
 			if (!UserData->Function.IsValid())
 			{
-				return luaL_error(L, "invalid UFunction for first userdata");
+				return luaL_error(L, "invalid UFunction for UserData %p", UserData);
 			}
 			if (!UserData2->Function.IsValid())
 			{
-				return luaL_error(L, "invalid UFunction for second userdata");
+				return luaL_error(L, "invalid UFunction for UserData %p", UserData2);
 			}
 			if (UserData->Function.Get() == UserData2->Function.Get())
 			{
@@ -786,16 +766,11 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 int ULuaState::MetaTableFunction__call(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
-
-	if (!lua_isuserdata(L, 1))
-	{
-		return luaL_error(L, "invalid state for lua UFunction");
-	}
 	FLuaUserData* LuaCallContext = (FLuaUserData*)lua_touserdata(L, 1);
 
 	if (!LuaCallContext->Context.IsValid() || !LuaCallContext->Function.IsValid())
 	{
-		return luaL_error(L, "invalid state for lua UFunction");
+		return luaL_error(L, "invalid lua UFunction for UserData %p", LuaCallContext);
 	}
 
 	int NArgs = lua_gettop(L);
@@ -966,10 +941,10 @@ int ULuaState::TableFunction_package_preload(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
-	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
-
 	if (LuaState->L != L)
-		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", TCHAR_TO_ANSI(*Key));
+		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", lua_tostring(L, 1));
+
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
 
 	// check for code assets
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
@@ -1181,7 +1156,6 @@ bool ULuaState::Call(int NArgs, FLuaValue& Value, int NRet)
 {
 	if (lua_pcall(L, NArgs, NRet, 0))
 	{
-
 		LastError = FString::Printf(TEXT("Lua error: %s"), ANSI_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
 	}
