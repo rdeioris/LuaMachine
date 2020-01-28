@@ -28,7 +28,7 @@ public:
 
 ```
 
-```c+++
+```c++
 #include "JsonLuaBlueprintPackage.h"
 #include "LuaBlueprintFunctionLibrary.h"
 
