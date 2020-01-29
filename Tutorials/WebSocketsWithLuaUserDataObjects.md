@@ -108,7 +108,7 @@ The 4 UFUNCTIONs will be exposed as lua functions (see the constructor below) wh
 
 Delegates can be triggered at any moment, even after the related FLuaValues (callback/functions) are destroyed. The FLuaSmartReference object allows you to link a LuaValue to a LuaState, avoiding it to be garbaged (note: remember to unlink them !).
 
-The OnMessageDelegate and OnClosedDelegate do not require a FLuaSmartReference as they are based on attributes of the object it self (see the lua code below for better understanding).
+The OnMessageDelegate and OnClosedDelegate do not require a FLuaSmartReference as they are based on attributes of the object itself (see ws:on_message() and ws:on_closed() functions defined in the previous lua code).
 
 Time for functions definitions:
 
