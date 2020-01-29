@@ -223,7 +223,13 @@ void ULuaWebsocketConnection::OnConnectionErrorDelegate(const FString& Message, 
 }
 ```
 
+Note the checks for .IsValid() for the OnConnectedDelegate() and OnConnectionErrorDelegate() functions: they can be called at any moment, so we must be sure the native lua callbacks/functions are still valid. This is not required for OnMessageDelegate() and OnClosedDelegate() as they make use of the LuaGetField() function to retrieve the related lua callback.
+
+Here the destructor prints a log message to allow the user/developer to track unexpected deallocations (see below)
+
 ## The LuaState
+
+This is a simple LuaState showing how to exposed the previously create ULuaUserDataObject:
 
 ```c++
 #pragma once
@@ -254,6 +260,10 @@ protected:
 };
 
 ```
+
+The WebSocketConnectionSingleton member allows you to have a single instance of the websocket() object and, in addition to this, it will avoid the Unreal Garbage Collector to destroy it. If you want to allow the user/scripter to create more instances just use a TArray for tracking them (but implement a way to "untrack" them or to limit the amount of instances).
+
+Let's go to the implementation:
 
 ```c++
 #include "WebSocketsLuaStateBase.h"
