@@ -186,3 +186,31 @@ void ULuaWebsocketConnection::OnConnectionErrorDelegate(const FString& Message, 
 	ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(OnConnectionErrorCallbackRef.Pin()->Value, Args);
 }
 ```
+
+## The Lua Code
+
+```lua
+local ws = websocket()
+print(ws)
+
+function ws:on_message(message)
+  print(message)
+  --ws:close(17, 'End of the World')
+end
+
+function ws:on_closed(code, reason, user)
+  print('websocket connection closed: ' .. reason)
+end
+
+ws:connect('wss://echo.websocket.org', function(self)
+  print('connected')
+  print(self)
+end, function(self, reason)
+  print('unable to connect: ' .. reason)
+end)
+
+function send_event(message)
+  print('sending...')
+  ws:send(message)
+end
+```
