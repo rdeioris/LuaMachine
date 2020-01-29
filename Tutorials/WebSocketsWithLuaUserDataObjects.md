@@ -10,7 +10,43 @@ attached to them. Having a metatable allows them to expose parameters/methods li
 If you want to expose methods or attributes for LuaValues wrapping UObjects, you can create a new Unreal Engine UCLASS (Blueprint or C++) inheriting from ULuaUserDataObject and add items to its Table and Metatable properties
 (like with LuaStates, LuaBlueprintPackages and LuaComponents).
 
-Note that is not responsability of the Lua VM to manage the lifetime of the associated ULuaUserDataObject: if the Unreal Garbage Collector frees it, the FLuaValue will become nil.
+
+The following code shows what we are trying to accomplish:
+
+```lua
+local ws = websocket()
+
+-- internally print() will call the __tostring metamethod of the ws object
+print(ws)
+
+-- this will be called whenever a new message is received
+function ws:on_message(message)
+  print(message)
+  --ws:close(17, 'End of the World')
+end
+
+-- this is called on connesion close
+function ws:on_closed(code, reason, user)
+  print('websocket connection closed: ' .. reason)
+end
+
+-- the first function/callback is called on successfull connection
+-- the second one on failure
+ws:connect('wss://echo.websocket.org', function(self)
+  print('connected')
+  print(self)
+end, function(self, reason)
+  print('unable to connect: ' .. reason)
+end)
+
+-- this can be called from any part of your project to trigger sending of messages
+function send_event(message)
+  print('sending...')
+  ws:send(message)
+end
+```
+
+'Note' that is not responsability of the Lua VM to manage the lifetime of the associated ULuaUserDataObject: if the Unreal Garbage Collector frees it, the FLuaValue will become nil.
 
 ## The ULuaWebSocketConnection UCLASS
 
@@ -235,30 +271,3 @@ FLuaValue UWebSocketsLuaStateBase::GetWebSocketConnectionSingleton()
 }
 ```
 
-## The Lua Code
-
-```lua
-local ws = websocket()
-print(ws)
-
-function ws:on_message(message)
-  print(message)
-  --ws:close(17, 'End of the World')
-end
-
-function ws:on_closed(code, reason, user)
-  print('websocket connection closed: ' .. reason)
-end
-
-ws:connect('wss://echo.websocket.org', function(self)
-  print('connected')
-  print(self)
-end, function(self, reason)
-  print('unable to connect: ' .. reason)
-end)
-
-function send_event(message)
-  print('sending...')
-  ws:send(message)
-end
-```
