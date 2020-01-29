@@ -187,6 +187,54 @@ void ULuaWebsocketConnection::OnConnectionErrorDelegate(const FString& Message, 
 }
 ```
 
+## The LuaState
+
+```c++
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaState.h"
+#include "LuaWebsocketConnection.h"
+#include "WebSocketsLuaStateBase.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class RPGLUA_API UWebSocketsLuaStateBase : public ULuaState
+{
+	GENERATED_BODY()
+
+public:
+	UWebSocketsLuaStateBase();
+
+	UFUNCTION()
+	FLuaValue GetWebSocketConnectionSingleton();
+
+protected:
+	UPROPERTY()
+	ULuaWebsocketConnection* WebSocketConnectionSingleton;
+	
+};
+
+```
+
+```c++
+#include "WebSocketsLuaStateBase.h"
+
+UWebSocketsLuaStateBase::UWebSocketsLuaStateBase()
+{
+	Table.Add("websocket", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UWebSocketsLuaStateBase, GetWebSocketConnectionSingleton)));
+}
+
+FLuaValue UWebSocketsLuaStateBase::GetWebSocketConnectionSingleton()
+{
+	if (!WebSocketConnectionSingleton)
+		WebSocketConnectionSingleton = NewObject<ULuaWebsocketConnection>(this);
+	return FLuaValue(WebSocketConnectionSingleton);
+}
+```
+
 ## The Lua Code
 
 ```lua
