@@ -142,7 +142,7 @@ LuaState's can load and execute scripts automatically if you specify the fields 
   
 ### LuaState Events
 
-A single event is exposed by ULuaState: "LuaError"
+The "LuaError" event i exposed by ULuaState.
 
 If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
@@ -245,6 +245,18 @@ As an example the LuaGetGlobal node, can access the package.path item by simply 
 ULuaComponent allows to map a table to an ActorComponent
 
 Check its docs here: [LuaComponent](Docs/LuaComponent.md)
+
+## LuaBlueprintPackage
+
+If you have C++/Blueprint functions that you want to expose to multiple LuaStates, consider grouping them in a LuaBlueprintPackage.
+
+Check: https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/JsonLuaBlueprintPackage.md
+
+## LuaUserDataObject
+
+You can create new Lua object types by subclassing ULuaUserDataObject.
+
+check this funny tutorial about exposing the Unreal WebSockets api to Lua: https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/WebSocketsWithLuaUserDataObjects.md
 
 ## LuaCodeBox/ULuaMultiLineEditableTextBox
 
