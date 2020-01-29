@@ -59,6 +59,14 @@ struct LUAMACHINE_API FLuaValue
 		String = InString;
 	}
 
+	FLuaValue(const char* InChars) : FLuaValue(FString(InChars))
+	{
+	}
+
+	FLuaValue(const TCHAR* InChars) : FLuaValue(FString(InChars))
+	{
+	}
+
 	FLuaValue(const char* InChars, size_t Length) : FLuaValue()
 	{
 		Type = ELuaValueType::String;

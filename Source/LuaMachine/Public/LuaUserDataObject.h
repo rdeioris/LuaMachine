@@ -30,4 +30,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
 	bool bImplicitSelf;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaValue LuaGetField(FString Name);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaSetField(FString Name, FLuaValue Value);
+
+protected:
+	TSharedPtr<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
+	void RemoveLuaSmartReference(TSharedPtr<FLuaSmartReference> Ref);
 };
