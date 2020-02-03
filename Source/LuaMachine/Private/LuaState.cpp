@@ -439,16 +439,24 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		NewUObject(LuaValue.Object);
 		if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object))
 		{
+			if (!LuaComponent->LuaState)
+			{
+				UE_LOG(LogLuaMachine, Warning, TEXT("%s has no associated LuaState"), *LuaComponent->GetFullName());
+			}
 			// ensure we are in the same LuaState
-			if (LuaComponent->LuaState == GetClass())
+			else if (LuaComponent->LuaState == GetClass())
 			{
 				SetupAndAssignUserDataMetatable(LuaComponent, LuaComponent->Metatable);
 			}
 		}
 		else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(LuaValue.Object))
 		{
+			if (!LuaUserDataObject->GetLuaState())
+			{
+				UE_LOG(LogLuaMachine, Warning, TEXT("%s has no associated LuaState"), *LuaUserDataObject->GetFullName());
+			}
 			// ensure we are in the same LuaState
-			if (LuaUserDataObject->GetLuaState() == GetClass())
+			else if (LuaUserDataObject->GetLuaState() == GetClass())
 			{
 				SetupAndAssignUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable);
 			}
