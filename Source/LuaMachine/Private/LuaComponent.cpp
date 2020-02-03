@@ -16,6 +16,7 @@ ULuaComponent::ULuaComponent()
 
 	bLazy = false;
 	bLogError = false;
+	bImplicitSelf = false;
 }
 
 // Called when the game starts
@@ -47,7 +48,7 @@ FLuaValue ULuaComponent::LuaGetField(FString Name)
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, false);
 	ReturnValue = L->ToLuaValue(-1);
@@ -66,7 +67,7 @@ void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	L->SetFieldFromTree(Name, Value, false);
 
@@ -85,7 +86,7 @@ FLuaValue ULuaComponent::LuaCallFunction(FString Name, TArray<FLuaValue> Args, b
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
@@ -124,7 +125,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 	int32 StackTop = L->GetTop();
@@ -179,7 +180,7 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	L->FromLuaValue(Value);
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)
@@ -262,7 +263,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	L->SetupUserDataMetatable(GetOwner(), Metatable);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)

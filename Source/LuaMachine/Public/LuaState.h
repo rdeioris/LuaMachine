@@ -321,7 +321,7 @@ public:
 	TSharedRef<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
 	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
 
-	void SetupUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
+	void SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
 
 protected:
 	lua_State* L;

@@ -52,7 +52,7 @@ FLuaValue ULuaUserDataObject::LuaGetField(FString Name)
 
 	// push component pointer as userdata
 	LuaState->NewUObject(this);
-	LuaState->SetupUserDataMetatable(this, Metatable);
+	LuaState->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = LuaState->GetFieldFromTree(Name, false);
 	FLuaValue ReturnValue = LuaState->ToLuaValue(-1);
@@ -71,7 +71,7 @@ void ULuaUserDataObject::LuaSetField(FString Name, FLuaValue Value)
 
 	// push component pointer as userdata
 	LuaState->NewUObject(this);
-	LuaState->SetupUserDataMetatable(this, Metatable);
+	LuaState->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	LuaState->SetFieldFromTree(Name, Value, false);
 

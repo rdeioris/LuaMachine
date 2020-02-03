@@ -43,6 +43,9 @@ public:
 	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bLogError;
 
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bImplicitSelf;
+
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
 
