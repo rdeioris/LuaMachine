@@ -565,30 +565,27 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 	}
 	else if (lua_istable(State, Index))
 	{
+		lua_pushvalue(State, Index);
 		if (State != this->L)
 			lua_xmove(State, this->L, 1);
-		else
-			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Table;
 		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isthread(State, Index))
 	{
+		lua_pushvalue(State, Index);
 		if (State != this->L)
 			lua_xmove(State, this->L, 1);
-		else
-			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Thread;
 		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
 	}
 	else if (lua_isfunction(State, Index))
 	{
+		lua_pushvalue(State, Index);
 		if (State != this->L)
 			lua_xmove(State, this->L, 1);
-		else
-			lua_pushvalue(State, Index);
 		LuaValue.Type = ELuaValueType::Function;
 		LuaValue.LuaState = this;
 		LuaValue.LuaRef = luaL_ref(this->L, LUA_REGISTRYINDEX);
