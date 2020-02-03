@@ -98,6 +98,11 @@ FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 	return Value.ToString();
 }
 
+FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(FLuaValue Value)
+{
+	return LuaTableToVector(Value);
+}
+
 FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(FLuaValue Value)
 {
 	return FName(*Value.ToString());
@@ -1188,6 +1193,34 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueResumeMulti(FLuaValue Va
 	L->Pop();
 
 	return ReturnValue;
+}
+
+FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Table)
+		return FVector(NAN);
+
+	auto GetVectorField = [](FLuaValue Value, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
+	{
+		FLuaValue N = Value.GetField(Field_n);
+		if (N.IsNil())
+		{
+			N = Value.GetField(Field_N);
+			if (N.IsNil())
+			{
+				N = Value.GetFieldByIndex(Index);
+				if (N.IsNil())
+					N = FLuaValue(NAN);
+			}
+		}
+		return N;
+	};
+
+	FLuaValue X = GetVectorField(Value, "x", "X", 1);
+	FLuaValue Y = GetVectorField(Value, "y", "Y", 2);
+	FLuaValue Z = GetVectorField(Value, "z", "Z", 3);
+
+	return FVector(X.ToFloat(), Y.ToFloat(), Z.ToFloat());
 }
 
 int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)

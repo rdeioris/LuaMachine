@@ -287,6 +287,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static bool LuaValueIsThread(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FVector LuaTableToVector(FLuaValue Value);
+
 	UFUNCTION(BlueprintPure, meta=(DisplayName = "To String (LuaValue)", BlueprintAutocast), Category="Lua")
 	static FString Conv_LuaValueToString(FLuaValue Value);
 
@@ -313,6 +316,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Float (LuaValue)", BlueprintAutocast), Category="Lua")
 	static float Conv_LuaValueToFloat(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Vector (LuaValue)", BlueprintAutocast), Category = "Lua")
+	static FVector Conv_LuaValueToFVector(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Bool (LuaValue)", BlueprintAutocast), Category="Lua")
 	static bool Conv_LuaValueToBool(FLuaValue Value);

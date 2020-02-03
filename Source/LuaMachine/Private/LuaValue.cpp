@@ -208,6 +208,11 @@ bool FLuaValue::IsReferencedInLuaRegistry() const
 	return LuaRef != LUA_NOREF;
 }
 
+bool FLuaValue::IsNil() const
+{
+	return Type == ELuaValueType::Nil;
+}
+
 FLuaValue FLuaValue::FromJsonValue(ULuaState* L, FJsonValue& JsonValue)
 {
 	if (JsonValue.Type == EJson::String)

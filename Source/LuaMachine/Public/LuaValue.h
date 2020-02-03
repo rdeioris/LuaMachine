@@ -171,5 +171,7 @@ struct LUAMACHINE_API FLuaValue
 	static FLuaValue FromBase64(FString Base64);
 	FString ToBase64();
 
+	bool IsNil() const;
+
 	void Unref();
 };

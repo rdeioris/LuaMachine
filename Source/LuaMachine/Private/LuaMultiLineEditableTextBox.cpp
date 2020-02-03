@@ -51,6 +51,15 @@ FText ULuaMultiLineEditableTextBox::GetText() const
 	return FText::GetEmpty();
 }
 
+FText ULuaMultiLineEditableTextBox::GetSelectedText() const
+{
+	if (EditableTextBoxPtr.IsValid())
+	{
+		return EditableTextBoxPtr->GetSelectedText();
+	}
+	return FText::GetEmpty();
+}
+
 void  ULuaMultiLineEditableTextBox::SetText(FText InText)
 {
 	if (EditableTextBoxPtr.IsValid())
