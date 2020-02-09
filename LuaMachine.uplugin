@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "20200202",
+  "VersionName": "20200209",
   "FriendlyName": "LuaMachine",
   "Description": "Expose a Lua api for your project",
   "Category": "Scripting",
