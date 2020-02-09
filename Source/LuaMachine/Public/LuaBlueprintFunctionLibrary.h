@@ -234,6 +234,9 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
 	static void LuaValueYield(FLuaValue Value, TArray<FLuaValue> Args);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static bool LuaLoadPakFile(FString Filename, FString Mountpoint, TArray<FLuaValue>& Assets, FString ContentPath, FString AssetRegistryPath);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static int32 LuaGetUsedMemory(UObject* WorldContextObject, TSubclassOf<ULuaState> State);
 

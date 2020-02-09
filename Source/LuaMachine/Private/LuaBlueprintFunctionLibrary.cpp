@@ -11,6 +11,12 @@
 #include "Engine/Texture2D.h"
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
+#include "IPlatformFilePak.h"
+#include "HAL/PlatformFilemanager.h"
+#include "IAssetRegistry.h"
+#include "AssetRegistryModule.h"
+#include "Misc/FileHelper.h"
+#include "Serialization/ArrayReader.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -1502,4 +1508,123 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToJson(FLuaValue Value)
 	TSharedRef<TJsonWriter<>> JsonWriter = TJsonWriterFactory<>::Create(&Json);
 	FJsonSerializer::Serialize(Value.ToJsonValue(), "", JsonWriter);
 	return Json;
+}
+
+bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(FString Filename, FString Mountpoint, TArray<FLuaValue>& Assets, FString ContentPath, FString AssetRegistryPath)
+{
+	if (!Mountpoint.StartsWith("/") || !Mountpoint.EndsWith("/"))
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Invalid Mountpoint, must be in the format /Name/"));
+		return false;
+	}
+
+	IPlatformFile& TopPlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+	bool bCustomPakPlatformFile = false;
+
+	FPakPlatformFile* PakPlatformFile = (FPakPlatformFile*)FPlatformFileManager::Get().FindPlatformFile(TEXT("PakFile"));
+	if (!PakPlatformFile)
+	{
+		PakPlatformFile = new FPakPlatformFile();
+		if (!PakPlatformFile->Initialize(&TopPlatformFile, TEXT("")))
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("Unable to setup PakPlatformFile"));
+			delete(PakPlatformFile);
+			return false;
+		}
+		FPlatformFileManager::Get().SetPlatformFile(*PakPlatformFile);
+		bCustomPakPlatformFile = true;
+	}
+
+	FPakFile PakFile(PakPlatformFile, *Filename, false);
+	if (!PakFile.IsValid())
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Unable to open PakFile"));
+		if (bCustomPakPlatformFile)
+		{
+			FPlatformFileManager::Get().SetPlatformFile(TopPlatformFile);
+			delete(PakPlatformFile);
+		}
+		return false;
+	}
+
+	FPaths::MakeStandardFilename(Mountpoint);
+
+	FString PakFileMountPoint(PakFile.GetMountPoint());
+	FPaths::MakeStandardFilename(PakFileMountPoint);
+	PakFile.SetMountPoint(*PakFileMountPoint);
+
+	if (!PakPlatformFile->Mount(*Filename, 0, *PakFile.GetMountPoint()))
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Unable to mount PakFile"));
+		if (bCustomPakPlatformFile)
+		{
+			FPlatformFileManager::Get().SetPlatformFile(TopPlatformFile);
+			delete(PakPlatformFile);
+		}
+		return false;
+	}
+
+	if (ContentPath.IsEmpty())
+	{
+		ContentPath = "/Plugins" + Mountpoint + "Content/";
+	}
+
+	FString MountDestination = PakFile.GetMountPoint() + ContentPath;
+	FPaths::MakeStandardFilename(MountDestination);
+
+	FPackageName::RegisterMountPoint(Mountpoint, MountDestination);
+
+	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
+
+#if WITH_EDITOR
+	int32 bPreviousGAllowUnversionedContentInEditor = GAllowUnversionedContentInEditor;
+	GAllowUnversionedContentInEditor = true;
+#endif
+
+	if (AssetRegistryPath.IsEmpty())
+	{
+		AssetRegistryPath = "/Plugins" + Mountpoint + "AssetRegistry.bin";
+	}
+
+	FArrayReader SerializedAssetData;
+	if (!FFileHelper::LoadFileToArray(SerializedAssetData, *(PakFile.GetMountPoint() + AssetRegistryPath)))
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Unable to parse AssetRegistry file"));
+		if (bCustomPakPlatformFile)
+		{
+			FPlatformFileManager::Get().SetPlatformFile(TopPlatformFile);
+			delete(PakPlatformFile);
+		}
+#if WITH_EDITOR
+		GAllowUnversionedContentInEditor = bPreviousGAllowUnversionedContentInEditor;
+#endif
+		return false;
+	}
+
+	AssetRegistry.Serialize(SerializedAssetData);
+
+	AssetRegistry.ScanPathsSynchronous({ Mountpoint }, true);
+
+	TArray<FAssetData> AssetData;
+	AssetRegistry.GetAllAssets(AssetData, false);
+
+	for (auto Asset : AssetData)
+	{
+		if (Asset.ObjectPath.ToString().StartsWith(Mountpoint))
+		{
+			Assets.Add(FLuaValue(Asset.GetAsset()));
+		}
+	}
+
+	if (bCustomPakPlatformFile)
+	{
+		FPlatformFileManager::Get().SetPlatformFile(TopPlatformFile);
+		delete(PakPlatformFile);
+	}
+
+#if WITH_EDITOR
+	GAllowUnversionedContentInEditor = bPreviousGAllowUnversionedContentInEditor;
+#endif
+
+	return true;
 }
