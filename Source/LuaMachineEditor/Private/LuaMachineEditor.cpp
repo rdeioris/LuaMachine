@@ -177,7 +177,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 				if (LuaState->GetInternalLuaState())
 				{
-					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
 				}
 				else
 				{

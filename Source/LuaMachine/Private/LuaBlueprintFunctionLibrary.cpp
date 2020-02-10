@@ -1326,6 +1326,15 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableAssetToLuaTable(UObject* WorldCo
 	return TableAsset->ToLuaTable(L);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaNewLuaUserDataObject(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TSubclassOf<ULuaUserDataObject> UserDataObjectClass, bool bTrackObject)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return FLuaValue();
+
+	return L->NewLuaUserDataObject(UserDataObjectClass, bTrackObject);
+}
+
 ULuaState* ULuaBlueprintFunctionLibrary::LuaGetState(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
 {
 	return FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());

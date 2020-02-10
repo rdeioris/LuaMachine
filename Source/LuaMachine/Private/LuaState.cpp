@@ -788,6 +788,7 @@ int ULuaState::MetaTableFunctionUserData__gc(lua_State* L)
 	ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(UserData->Context.Get());
 	if (LuaUserDataObject)
 	{
+		LuaState->TrackedLuaUserDataObjects.Remove(LuaUserDataObject);
 		LuaUserDataObject->ReceiveLuaGC();
 	}
 
@@ -1563,4 +1564,18 @@ void ULuaState::SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, 
 	lua_setmetatable(L, -2);
 }
 
+FLuaValue ULuaState::NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject)
+{
+	ULuaUserDataObject* LuaUserDataObject = NewObject<ULuaUserDataObject>(this, LuaUserDataObjectClass);
+	if (LuaUserDataObject)
+	{
+		if (bTrackObject)
+		{
+			TrackedLuaUserDataObjects.Add(LuaUserDataObject);
+		}
+		return FLuaValue(LuaUserDataObject);
+	}
+
+	return FLuaValue();
+}
 

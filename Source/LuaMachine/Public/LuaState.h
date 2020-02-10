@@ -112,6 +112,8 @@ struct FLuaSmartReference : public TSharedFromThis<FLuaSmartReference>
 };
 
 
+class ULuaUserDataObject;
+
 UCLASS(Abstract, Blueprintable, HideDropdown)
 class LUAMACHINE_API ULuaState : public UObject
 {
@@ -171,6 +173,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Return Hook"))
 	void ReceiveLuaReturnHook(const FLuaDebug& LuaDebug);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
@@ -200,6 +205,9 @@ public:
 	TArray<ULuaBlueprintPackage*> LuaBlueprintPackages;
 
 	TArray<TSharedRef<FLuaSmartReference>> LuaSmartReferences;
+
+	UPROPERTY()
+	TArray<ULuaUserDataObject*> TrackedLuaUserDataObjects;
 
 	int32 GetTop();
 
