@@ -20,6 +20,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	TSubclassOf<ULuaState> GetLuaState() const;
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	ULuaState* GetLuaStateInstance() const;
+
 	virtual UWorld* GetWorld() const override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
@@ -36,6 +39,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	void LuaSetField(FString Name, FLuaValue Value);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua GC"))
+	void ReceiveLuaGC();
 
 protected:
 	TSharedPtr<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);

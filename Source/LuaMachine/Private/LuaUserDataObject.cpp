@@ -12,6 +12,11 @@ TSubclassOf<ULuaState> ULuaUserDataObject::GetLuaState() const
 	return nullptr;
 }
 
+ULuaState* ULuaUserDataObject::GetLuaStateInstance() const
+{
+	return Cast<ULuaState>(GetOuter());
+}
+
 UWorld* ULuaUserDataObject::GetWorld() const
 {
 	ULuaState* LuaState = Cast<ULuaState>(GetOuter());
@@ -77,4 +82,9 @@ void ULuaUserDataObject::LuaSetField(FString Name, FLuaValue Value)
 
 	// remove UObject
 	LuaState->Pop();
+}
+
+void ULuaUserDataObject::ReceiveLuaGC_Implementation()
+{
+
 }

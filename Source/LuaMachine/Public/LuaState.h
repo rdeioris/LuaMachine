@@ -282,6 +282,7 @@ public:
 	static int MetaTableFunction__call(lua_State *L);
 
 	static int MetaTableFunctionUserData__eq(lua_State *L);
+	static int MetaTableFunctionUserData__gc(lua_State* L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
 

@@ -775,6 +775,26 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 	return 1;
 }
 
+int ULuaState::MetaTableFunctionUserData__gc(lua_State* L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+	if (!UserData->Context.IsValid())
+	{
+		return luaL_error(L, "invalid UObject for UserData %p", UserData);
+	}
+
+	ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(UserData->Context.Get());
+	if (LuaUserDataObject)
+	{
+		LuaUserDataObject->ReceiveLuaGC();
+	}
+
+	lua_pushnil(L);
+	return 1;
+}
+
 int ULuaState::MetaTableFunction__call(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
@@ -1496,6 +1516,11 @@ void ULuaState::SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, 
 	lua_setfield(L, -2, "__newindex");
 	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__eq);
 	lua_setfield(L, -2, "__eq");
+	if (Context->IsA<ULuaUserDataObject>())
+	{
+		lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__gc);
+		lua_setfield(L, -2, "__gc");
+	}
 
 	for (TPair<FString, FLuaValue>& Pair : Metatable)
 	{
