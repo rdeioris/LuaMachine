@@ -146,6 +146,14 @@ The "LuaError" event i exposed by ULuaState.
 
 If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
+### LuaMachine Debugger
+
+A Simple Lua Debugger is included in the plugin (you can find it under the Window/Developer Tools menu)
+
+![Debugger](Docs/Screenshots/Debugger.PNG?raw=true "Quickstart8")
+
+You can control/monitor active LuaStates as well as triggering both Unreal and Lua GC's
+
 ### LuaState in C++
 
 You can define your LuaState's as C++ classes, this is handy for exposing functions that would be hard to define with blueprints:
