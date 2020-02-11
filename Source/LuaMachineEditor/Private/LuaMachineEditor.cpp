@@ -158,7 +158,16 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 	FReply CallGC()
 	{
 		GEngine->ForceGarbageCollection(true);
-		return FReply::Handled();
+		return RefreshDebugger();
+	}
+
+	FReply CallLuaGC()
+	{
+		if (SelectedLuaState)
+		{
+			SelectedLuaState->GC(LUA_GCCOLLECT);
+		}
+		return RefreshDebugger();
 	}
 
 	void RefreshDebugText()
@@ -372,7 +381,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 				]
 			+ SVerticalBox::Slot().AutoHeight()
 				[
-					SNew(SButton).Text(FText::FromString("Call GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
+					SNew(SButton).Text(FText::FromString("Call Unreal GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
+				]
+			+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton).Text(FText::FromString("Call Lua GC")).OnClicked(this, &SLuaMachineDebugger::CallLuaGC)
 				]
 			+ SVerticalBox::Slot().FillHeight(1)
 				[
