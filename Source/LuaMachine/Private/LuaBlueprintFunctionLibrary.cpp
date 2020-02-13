@@ -260,6 +260,18 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaReadFile(UObject* WorldContextObject, FString Filename)
+{
+	TArray<uint8> Code;
+	FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), Filename);
+
+	if (FPaths::FileExists(AbsoluteFilename) && FFileHelper::LoadFileToArray(Code, *AbsoluteFilename))
+		return FLuaValue(Code);
+
+	// return nil
+	return FLuaValue();
+}
+
 ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
