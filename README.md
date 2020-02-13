@@ -325,6 +325,10 @@ Just enable the plugin content visualization from the content browser and from t
 
 https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/SimpleDialogueSystem.md
 
+## C++ Tips & Tricks
+
+https://github.com/rdeioris/LuaMachine/blob/master/Docs/TipsAndTricks.md
+
 ## Commercial Support
 
 Commercial support is offered by Unbit (based in Rome, Italy), just contact info at unbit dot it or follow/direct message @unbit on twitter
