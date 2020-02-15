@@ -16,6 +16,7 @@
 #include "LuaMachine/Public/LuaMachine.h"
 #include "LuaMachine/Public/LuaBlueprintFunctionLibrary.h"
 #include "Widgets/Layout/SScrollBox.h"
+#include "LuaUserDataObject.h"
 
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
@@ -135,7 +136,30 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 			}
 			OutChildren.Append(Item->Children);
 		}
-
+		else if (Item->LuaTableValue.Type == ELuaValueType::UObject && Item->LuaTableValue.Object)
+		{
+			if (Item->LuaTableValue.Object->IsA<ULuaUserDataObject>())
+			{
+				if (!Item->bExpanded)
+				{
+					ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(Item->LuaTableValue.Object);
+					if (LuaUserDataObject)
+					{
+						for (TPair<FString, FLuaValue> Pair : LuaUserDataObject->Table)
+						{
+							TSharedRef<FTableViewLuaValue> LuaItem = MakeShared<FTableViewLuaValue>();
+							LuaItem->LuaTableKey = Pair.Key;
+							LuaItem->LuaTableValue = Pair.Value;
+							LuaItem->bExpanded = false;
+							Item->Children.Add(LuaItem);
+						}
+					}
+					Item->bExpanded = true;
+					Item->Children.Sort([](const TSharedRef<FTableViewLuaValue>& LHS, const TSharedRef<FTableViewLuaValue>& RHS) { return LHS->LuaTableKey < RHS->LuaTableKey; });
+				}
+				OutChildren.Append(Item->Children);
+			}
+		}
 	}
 
 	void OnRegisteredLuaStatesChanged()
