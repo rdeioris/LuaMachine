@@ -353,6 +353,37 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 	return Texture;
 }
 
+USoundWave* ULuaBlueprintFunctionLibrary::LuaValueToTransientSoundWave(FLuaValue Value, bool bLoop)
+{
+	TArray<uint8> RawData = Value.ToBytes();
+
+	FWaveModInfo WaveModInfo;
+	if (!WaveModInfo.ReadWaveInfo(RawData.GetData(), RawData.Num()))
+		return nullptr;
+
+	USoundWave* SoundWave = NewObject<USoundWave>(GetTransientPackage());
+	if (!SoundWave)
+		return nullptr;
+
+	SoundWave->RawData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(SoundWave->RawData.Realloc(RawData.Num()), RawData.GetData(), RawData.Num());
+	SoundWave->RawData.Unlock();
+
+	SoundWave->NumChannels = (int32)(*WaveModInfo.pChannels);
+
+	int32 SizeOfSample = (*WaveModInfo.pBitsPerSample) / 8;
+	int32 NumSamples = WaveModInfo.SampleDataSize / SizeOfSample;
+	int32 NumFrames = NumSamples / SoundWave->NumChannels;
+
+	SoundWave->Duration = (float)NumFrames / *WaveModInfo.pSamplesPerSec;
+	SoundWave->SetSampleRate(*WaveModInfo.pSamplesPerSec);
+	SoundWave->TotalSamples = *WaveModInfo.pSamplesPerSec * SoundWave->Duration;
+
+	SoundWave->bLooping = bLoop;
+
+	return SoundWave;
+}
+
 void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, FLuaValue Context, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());

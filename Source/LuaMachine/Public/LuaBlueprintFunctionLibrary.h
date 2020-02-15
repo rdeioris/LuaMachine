@@ -10,6 +10,7 @@
 #include "UObject/TextProperty.h"
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "Runtime/Online/HTTP/Public/HttpModule.h"
+#include "Sound/SoundWave.h"
 #include "LuaBlueprintFunctionLibrary.generated.h"
 
 /**
@@ -230,6 +231,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static UTexture2D* LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat = EPixelFormat::PF_B8G8R8A8, bool bDetectFormat = false);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static USoundWave* LuaValueToTransientSoundWave(FLuaValue Value, bool bLoop=false);
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
 	static void LuaValueYield(FLuaValue Value, TArray<FLuaValue> Args);
