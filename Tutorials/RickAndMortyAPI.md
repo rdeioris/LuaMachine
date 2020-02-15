@@ -15,6 +15,19 @@ We want to expose two functions: one for making http requests (we will call it h
 
 Let's add a new LuaState called RickAndMortyLuaState:
 
+
+```lua
+http_get('https://rickandmortyapi.com/api/character',
+  function(status, header, content, data)
+    print(status)
+    foo = content
+  end,
+  function(data)
+    error('unable to connect to http service')
+  end
+)
+```
+
 ## Step 2: adding a LuaUserDataObject representing a RickAndMorty character
 
 ## Step 3: creating the widgets
