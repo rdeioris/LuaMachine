@@ -21,6 +21,7 @@ Let's add a new LuaState called RickAndMortyLuaState:
 
 And add a new Custom Event (note: not a plain function!) named HttpGet:
 
+![RickAndMortyHttpGet](RickAndMortyAPI_Data/RickAndMorty003.PNG?raw=true "RickAndMortyHttpGet")
 
 As you can see the event will trigger the HTTP request, and two additional events are generated (one for successfull connection, the other for failures) mapped to lua callbacks.
 
