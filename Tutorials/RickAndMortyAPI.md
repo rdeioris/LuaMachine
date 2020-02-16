@@ -15,10 +15,16 @@ We want to expose two functions: one for making http requests (we will call it h
 
 Let's add a new LuaState called RickAndMortyLuaState:
 
+And add a new Custom Event (note: not a plain function!) named HttpGet:
+
+
+As you can see the event will trigger the HTTP request, and two additional events are generated (one for successfull connection, the other for failures) mapped to lua callbacks.
+
+The successfull callback will get status, headers, content and a context object (nil for now), while the error one will only get the context:
 
 ```lua
 http_get('https://rickandmortyapi.com/api/character',
-  function(status, header, content, data)
+  function(status, headers, content, data)
     print(status)
     foo = content
   end,
