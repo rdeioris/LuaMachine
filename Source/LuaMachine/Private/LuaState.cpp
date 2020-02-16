@@ -810,15 +810,30 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	UObject* CallScope = LuaCallContext->Context.Get();
 	bool bImplicitSelf = false;
+	int StackPointer = 2;
 
 	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(CallScope))
 	{
 		CallScope = LuaComponent->GetOwner();
-		bImplicitSelf = LuaComponent->bImplicitSelf;
+		if (NArgs > 0)
+		{
+			FLuaValue LuaFirstArgument = LuaState->ToLuaValue(StackPointer, L);
+			if (LuaFirstArgument.Type == ELuaValueType::UObject && LuaFirstArgument.Object == LuaComponent)
+			{
+				bImplicitSelf = LuaComponent->bImplicitSelf;
+			}
+		}
 	}
 	else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(CallScope))
 	{
-		bImplicitSelf = LuaUserDataObject->bImplicitSelf;
+		if (NArgs > 0)
+		{
+			FLuaValue LuaFirstArgument = LuaState->ToLuaValue(StackPointer, L);
+			if (LuaFirstArgument.Type == ELuaValueType::UObject && LuaFirstArgument.Object == LuaUserDataObject)
+			{
+				bImplicitSelf = LuaUserDataObject->bImplicitSelf;
+			}
+		}
 	}
 
 	FScopeCycleCounterUObject ObjectScope(CallScope);
@@ -826,8 +841,6 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
-
-	int StackPointer = 2;
 
 	if (bImplicitSelf)
 	{
