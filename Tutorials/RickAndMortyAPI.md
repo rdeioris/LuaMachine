@@ -15,6 +15,10 @@ We want to expose two functions: one for making http requests (we will call it h
 
 Let's add a new LuaState called RickAndMortyLuaState:
 
+![RickAndMortyNewLuaState](RickAndMortyAPI_Data/RickAndMorty001.PNG?raw=true "RickAndMortyNewLuaState")
+
+![RickAndMortyNewLuaStateContentBrowser](RickAndMortyAPI_Data/RickAndMorty002.PNG?raw=true "RickAndMortyNewLuaStateContentBrowser")
+
 And add a new Custom Event (note: not a plain function!) named HttpGet:
 
 
