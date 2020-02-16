@@ -266,10 +266,15 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 
 }
 
-bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet)
+bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet, bool bNonContentDirectory)
 {
 	TArray<uint8> Code;
 	FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), Filename);
+
+	if (bNonContentDirectory)
+	{
+		AbsoluteFilename = Filename;
+	}
 
 	if (!FPaths::FileExists(AbsoluteFilename))
 	{

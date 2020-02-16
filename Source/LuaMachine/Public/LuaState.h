@@ -279,7 +279,7 @@ public:
 	FLuaValue CreateLuaTable();
 	FLuaValue CreateLuaThread(FLuaValue Value);
 
-	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0);
+	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
 
 	static int MetaTableFunctionUserData__index(lua_State *L);
 	static int MetaTableFunctionUserData__newindex(lua_State *L);

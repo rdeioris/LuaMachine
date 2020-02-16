@@ -238,6 +238,29 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, 
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
+{
+	FLuaValue ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	if (!L->RunFile(Filename, bIgnoreNonExistent, 1, true))
+	{
+		if (L->bLogError)
+			L->LogError(L->LastError);
+		L->ReceiveLuaError(L->LastError);
+	}
+	else
+	{
+		ReturnValue = L->ToLuaValue(-1);
+	}
+
+	L->Pop();
+	return ReturnValue;
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString)
 {
 	FLuaValue ReturnValue;
