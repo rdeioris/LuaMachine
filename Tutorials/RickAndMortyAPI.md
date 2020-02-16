@@ -133,10 +133,29 @@ http_get('https://rickandmortyapi.com/api/character',
 
 ## Step 3: creating the widgets
 
-## Step 4: retrieving a characters page from the api
+The Lua Virtual Machine has now a bunch of 'lua character' objects hanging around just waiting to be visualized.
 
-## Step 5: adding character's image
+Create a new User Widget containing a "List View" (the 'CharactersList' in the screenshot):
 
-## Step 6: pagination
+![RickAndMortyListView](RickAndMortyAPI_Data/RickAndMorty013.PNG?raw=true "RickAndMortyListView")
 
-## Step 7: using C++
+List Widget requires "Entry Widgets"; they are UserWidget implementing the "User List Entry" interface. You can create
+the Entry Widget for the list View by clicking on the "+" button of the "Entry Widget Class" property:
+
+![RickAndMortyEntryWidget](RickAndMortyAPI_Data/RickAndMorty015.PNG?raw=true "RickAndMortyEntryWidget")
+
+We now need to add an "Add Character" function to the main widget (not the entry widget!):
+
+![RickAndMortyAddCharacter](RickAndMortyAPI_Data/RickAndMorty016.PNG?raw=true "RickAndMortyAddCharacter")
+
+This function will populate the internal list of the "List View" widget, and will generate "Entry Widgets" on-demand.
+
+We are adding the Lua UserData Objects we created before as the list item. Our next task is to view them in the "Entry Widget".
+
+The "Entry Widget" (the one implementing the "User List Entry" interface) has one image widget and 4 text widgets, each of them exposing one of the Lua UserData Object fields:
+
+![RickAndMortyEntryWidgetDesign](RickAndMortyAPI_Data/RickAndMorty018.PNG?raw=true "RickAndMortyEntryWidgetDesign")
+
+## Step 4: pagination
+
+## Step 5: using C++
