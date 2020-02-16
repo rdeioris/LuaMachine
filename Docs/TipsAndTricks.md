@@ -4,6 +4,10 @@ In this page users can publish their c++ snippets (please make pull requests wit
 
 ## Running lua files recursively from a directory and get their return value
 
+Author: Roberto De Ioris
+
+C++/UFUNCTION code:
+
 ```cpp
 #include "HAL/FileManager.h"
 
@@ -26,6 +30,8 @@ TArray<FLuaValue> ULuaStateOrLuaPackage::ScanAndRunLuaScripts(FLuaValue Director
 	return Results;
 }
 ```
+
+Lua script:
 
 ```lua
 items = {foobar.scan_and_run('D:/luascripts')}
