@@ -6,6 +6,8 @@ In this tututorial we will see how to retrieve JSON data as well as raw images/t
 
 The objective is to build a User Widget listing all of the Rick And Morty characters available at https://rickandmortyapi.com/
 
+![RickAndMortyAPI](RickAndMortyAPI_Data/RickAndMorty.PNG?raw=true "RickAndMortyAPI")
+
 ## Step 1: adding http_get() and from_json() lua functions
 
 By default a LuaMachine state has no function exposed to the user/scripter. You generally want to carefully choose what to expose to the final scripter/modder, so the default behaviour
@@ -45,7 +47,31 @@ http_get('https://rickandmortyapi.com/api/character',
 
 The successfull callback will get status, headers, content and a context object (nil for now), while the error one will only get the context.
 
+Now in your level blueprint add a node for calling the Lua Code Asset, play the level and check Unreal logs (they should show both http status and http response):
 
+![RickAndMortyLevelBlueprint](RickAndMortyAPI_Data/RickAndMorty010.PNG?raw=true "RickAndMortyLevelBlueprint")
+
+Time to add the from_json() function. This time is a standard UFUNCTION (not a custom event like http_get()):
+
+![RickAndMortyFromJSON](RickAndMortyAPI_Data/RickAndMorty009.PNG?raw=true "RickAndMortyFromJSON")
+
+Add from_json() to the Lua State Table and update the Lua Code Asset for parsing the json response:
+
+```lua
+http_get('https://rickandmortyapi.com/api/character',
+  function(status, headers, content, data)
+    print(status)
+    foo = from_json(content)
+  end,
+  function(data)
+    error('unable to connect to http service')
+  end
+)
+```
+
+Before hitting play again, open the Lua Machine Debugger (it is under the Window/Developer Tools menu). When the level runs hit "refresh" in the debugger and you should see the 'foo' object tree:
+
+![RickAndMortyLuaDebugger](RickAndMortyAPI_Data/RickAndMorty005.PNG?raw=true "RickAndMortyLuaDebugger")
 
 ## Step 2: adding a LuaUserDataObject representing a RickAndMorty character
 
