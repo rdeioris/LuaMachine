@@ -15,24 +15,37 @@ We want to expose two functions: one for making http requests (we will call it h
 
 Let's add a new LuaState called RickAndMortyLuaState:
 
+![RickAndMortyNewLuaState](RickAndMortyAPI_Data/RickAndMorty001.PNG?raw=true "RickAndMortyNewLuaState")
+
+![RickAndMortyNewLuaStateContentBrowser](RickAndMortyAPI_Data/RickAndMorty002.PNG?raw=true "RickAndMortyNewLuaStateContentBrowser")
+
 And add a new Custom Event (note: not a plain function!) named HttpGet:
 
+![RickAndMortyHttpGet](RickAndMortyAPI_Data/RickAndMorty003.PNG?raw=true "RickAndMortyHttpGet")
 
 As you can see the event will trigger the HTTP request, and two additional events are generated (one for successfull connection, the other for failures) mapped to lua callbacks.
 
-The successfull callback will get status, headers, content and a context object (nil for now), while the error one will only get the context:
+Now expose the event as a lua function:
+
+![RickAndMortyHttpGetTable](RickAndMortyAPI_Data/RickAndMorty004.PNG?raw=true "RickAndMortyHttpGetTable")
+
+And create a Lua Code Asset for working with http_get():
 
 ```lua
 http_get('https://rickandmortyapi.com/api/character',
   function(status, headers, content, data)
     print(status)
-    foo = content
+    print(content)
   end,
   function(data)
     error('unable to connect to http service')
   end
 )
 ```
+
+The successfull callback will get status, headers, content and a context object (nil for now), while the error one will only get the context.
+
+
 
 ## Step 2: adding a LuaUserDataObject representing a RickAndMorty character
 
@@ -43,3 +56,5 @@ http_get('https://rickandmortyapi.com/api/character',
 ## Step 5: adding character's image
 
 ## Step 6: pagination
+
+## Step 7: using C++
