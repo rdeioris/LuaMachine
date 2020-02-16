@@ -189,5 +189,59 @@ Finally, the level blueprint will be modified for generating the widget and pass
 ![RickAndMortyLevelBlueprint2](RickAndMortyAPI_Data/RickAndMorty011.PNG?raw=true "RickAndMortyLevelBlueprint2")
 
 ## Step 5: pagination
+The RickAndMorty API is based on 'pages'. Currently we are only retrieving the page 1.
+
+For each page the api exposes an info.prev and info.next fields containing the urls of the previous page (if available) and the next page (if available).
+
+Let's refactor the code again:
+
+```lua
+
+function load_page_from_url(url)
+
+  http_get(url,
+    function(status, headers, content, data)
+      if status ~= 200 then
+        error('HTTP error code: ' .. status)
+      end
+      local response = from_json(content)
+      prev_page_url = response.info.prev
+      next_page_url = response.info.next
+      for _, result in ipairs(response.results) do
+        local new_character = character()
+        new_character.name = result.name
+        new_character.gender = result.gender
+        new_character.status = result.status
+        new_character.species = result.species
+        http_get(result.image,
+          function(status, headers, content, data)
+            if status ~= 200 then
+              error('HTTP error code for image: ' .. status)
+            end
+            local current_character = data
+            current_character.set_image(content)
+          end,
+          function(data)
+            error('unable to connect to http image service')
+          end,
+          new_character
+        )
+      end
+    end,
+    function(data)
+      error('unable to connect to http service')
+    end
+  )
+
+end
+
+load_page_from_url('https://rickandmortyapi.com/api/character')
+```
+
+The 'load_page_from_url()' function, now takes an arbitrary url.
+
+Let's add two buttons to the main widget and set their 'click event':
+
+
 
 ## Step 6: using C++
