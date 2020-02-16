@@ -75,6 +75,62 @@ Before hitting play again, open the Lua Machine Debugger (it is under the Window
 
 ## Step 2: adding a LuaUserDataObject representing a RickAndMorty character
 
+In addition to Lua native types (strings, integers, booleans, tables...), LuaMachine allows you to define new types based on UObjects.
+
+We will now create a new Lua UserData type for representing a RickAndMorty Character:
+
+![RickAndMortyUserData](RickAndMortyAPI_Data/RickAndMorty006.PNG?raw=true "RickAndMortyUserData")
+
+This new UObject includes a variable named "Image" of type SlateBrush (will show the character image/texture retrieved via HTTP), a UFUNCTION SetImage (exposed as a lua method named set_image()) and 4 pure UFUNCTIONS for retrieving specifing fields:
+
+
+![RickAndMortyLuaUserDataObject](RickAndMortyAPI_Data/RickAndMorty012.PNG?raw=true "RickAndMortyLuaUserDataObject")
+
+Note that you have dozens of different ways to expose the UObject fields to the other systems, adding pure functions is only one of them.
+As this object needs to be accessed by the widget subsystem, this approach reduce the amount of nodes in the widget itself.
+
+Time to add a new 'character()" function to the LuaState to create new lua userdata characters:
+
+![RickAndMortyNewCharacter](RickAndMortyAPI_Data/RickAndMorty007.PNG?raw=true "RickAndMortyNewCharacter")
+
+![RickAndMortyNewCharacterTable](RickAndMortyAPI_Data/RickAndMorty008.PNG?raw=true "RickAndMortyNewCharacterTable")
+
+Time to refactor the code to create a character() for each result returned by the HTTP api and to download the images/textures by issuing another http_get() call:
+
+```lua
+http_get('https://rickandmortyapi.com/api/character',
+  function(status, headers, content, data)
+    if status ~= 200 then
+      error('HTTP error code: ' .. status)
+    end
+    local response = from_json(content)
+    for _, result in ipairs(response.results) do
+      local new_character = character()
+      new_character.name = result.name
+      new_character.gender = result.gender
+      new_character.status = result.status
+      new_character.species = result.species
+      http_get(result.image,
+        function(status, headers, content, data)
+          if status ~= 200 then
+            error('HTTP error code for image: ' .. status)
+          end
+          local current_character = data
+          current_character.set_image(content)
+        end,
+        function(data)
+          error('unable to connect to http image service')
+        end,
+        new_character
+      )
+    end
+  end,
+  function(data)
+    error('unable to connect to http service')
+  end
+)
+```
+
 ## Step 3: creating the widgets
 
 ## Step 4: retrieving a characters page from the api
