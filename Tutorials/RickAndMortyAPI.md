@@ -191,7 +191,7 @@ Finally, the level blueprint will be modified for generating the widget and pass
 ## Step 5: pagination
 The RickAndMorty API is based on 'pages'. Currently we are only retrieving the page 1.
 
-For each page the api exposes an info.prev and info.next fields containing the urls of the previous page (if available) and the next page (if available).
+For each page the api exposes the info.prev and info.next fields containing the urls of the previous page (if available) and the next page (if available).
 
 Let's refactor the code again:
 
