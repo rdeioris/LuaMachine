@@ -156,7 +156,7 @@ The "Entry Widget" (the one implementing the "User List Entry" interface) has on
 
 ![RickAndMortyEntryWidgetDesign](RickAndMortyAPI_Data/RickAndMorty018.PNG?raw=true "RickAndMortyEntryWidgetDesign")
 
-In the Widget Editor Graph section add a variable of the Lua UserData Character:
+In the Widget Editor Graph section add a variable of the Lua UserData Character type:
 
 ![RickAndMortyEntryWidgetLua](RickAndMortyAPI_Data/RickAndMorty021.PNG?raw=true "RickAndMortyEntryWidgetLua")
 
