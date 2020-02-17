@@ -81,7 +81,7 @@ We will now create a new Lua UserData type for representing a RickAndMorty Chara
 
 ![RickAndMortyUserData](RickAndMortyAPI_Data/RickAndMorty006.PNG?raw=true "RickAndMortyUserData")
 
-This new UObject includes a variable named "Image" of type SlateBrush (will show the character image/texture retrieved via HTTP), a UFUNCTION SetImage (exposed as a lua method named set_image()) and 4 pure UFUNCTIONS for retrieving specifing fields:
+This new UObject includes a variable named "Image" of type SlateBrush (will show the character image/texture retrieved via HTTP), a UFUNCTION SetImage (exposed as a lua method named set_image()) and 4 pure UFUNCTIONS for retrieving specific fields:
 
 
 ![RickAndMortyLuaUserDataObject](RickAndMortyAPI_Data/RickAndMorty012.PNG?raw=true "RickAndMortyLuaUserDataObject")
