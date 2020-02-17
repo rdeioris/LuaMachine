@@ -87,7 +87,7 @@ This new UObject includes a variable named "Image" of type SlateBrush (will show
 ![RickAndMortyLuaUserDataObject](RickAndMortyAPI_Data/RickAndMorty012.PNG?raw=true "RickAndMortyLuaUserDataObject")
 
 Note that you have dozens of different ways to expose the UObject fields to the other systems, adding pure functions is only one of them.
-As this object needs to be accessed by the widget subsystem, this approach reduce the amount of nodes in the widget itself.
+As this object needs to be accessed by the widget subsystem, this approach reduces the amount of nodes in the widget itself.
 
 Time to add a new 'character()" function to the LuaState to create new lua userdata characters:
 
