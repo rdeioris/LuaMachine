@@ -242,6 +242,6 @@ The 'load_page_from_url()' function, now takes an arbitrary url.
 
 Let's add two buttons to the main widget and set their 'click event':
 
-
+![RickAndMortyPrevNext](RickAndMortyAPI_Data/RickAndMorty023.PNG?raw=true "RickAndMortyPrevNext")
 
 ## Step 6: using C++
