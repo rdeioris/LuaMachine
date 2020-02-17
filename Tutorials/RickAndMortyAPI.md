@@ -139,8 +139,8 @@ Create a new User Widget containing a "List View" (the 'CharactersList' in the s
 
 ![RickAndMortyListView](RickAndMortyAPI_Data/RickAndMorty013.PNG?raw=true "RickAndMortyListView")
 
-List Widget requires "Entry Widgets"; they are UserWidget implementing the "User List Entry" interface. You can create
-the Entry Widget for the list View by clicking on the "+" button of the "Entry Widget Class" property:
+List Widgets require "Entry Widgets". They are UserWidget implementing the "User List Entry" interface. You can create
+the Entry Widget for the List View by clicking on the "+" button of the "Entry Widget Class" property:
 
 ![RickAndMortyEntryWidget](RickAndMortyAPI_Data/RickAndMorty015.PNG?raw=true "RickAndMortyEntryWidget")
 
