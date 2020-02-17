@@ -253,3 +253,175 @@ Clicking on 'next' will show the next api page (after having cleared the list of
 ![RickAndMortyPage2](RickAndMortyAPI_Data/RickAndMorty025.PNG?raw=true "RickAndMortyPage2")
 
 ## Optional Step 6: using C++
+
+While it is pretty easy to define lua apis from blueprints, using C++ is way faster and less verbose. This is the equivalent C++ code for the previously defined LuaState as well as the Lua UserData Object:
+
+```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaState.h"
+#include "RickAndMortyLuaStateBase.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class LUARICKANDMORTY_API URickAndMortyLuaStateBase : public ULuaState
+{
+	GENERATED_BODY()
+
+public:
+	URickAndMortyLuaStateBase();
+
+	UFUNCTION()
+	void HttpGet(FLuaValue Url, FLuaValue SuccessCallback, FLuaValue ErrorCallback, FLuaValue Data);
+	
+	UFUNCTION()
+	void HttpSuccessCallback(FLuaValue StatusCode, FLuaValue Headers, FLuaValue Content, FLuaValue Data);
+
+	UFUNCTION()
+	void HttpErrorCallback(FLuaValue Data);
+
+	UFUNCTION()
+	bool FromJSON(FLuaValue Data, FLuaValue& Value);
+
+	UFUNCTION()
+	FLuaValue NewCharacter();
+};
+```
+
+```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaUserDataObject.h"
+#include "Styling/SlateBrush.h"
+#include "RickAndMortyCharacterBase.generated.h"
+
+/**
+ * 
+ */
+UCLASS()
+class LUARICKANDMORTY_API URickAndMortyCharacterBase : public ULuaUserDataObject
+{
+	GENERATED_BODY()
+
+public:
+	URickAndMortyCharacterBase();
+
+	UPROPERTY(EditAnywhere)
+	FSlateBrush Image;
+
+	UFUNCTION()
+	void SetImage(FLuaValue Data);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FText GetName();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FText GetStatus();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FText GetGender();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FText GetSpecies();
+
+};
+```
+
+```cpp
+#include "RickAndMortyLuaStateBase.h"
+#include "LuaBlueprintFunctionLibrary.h"
+#include "RickAndMortyCharacterBase.h"
+
+URickAndMortyLuaStateBase::URickAndMortyLuaStateBase()
+{
+	Table.Add("http_get", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, HttpGet)));
+	Table.Add("from_json", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, FromJSON)));
+}
+
+void URickAndMortyLuaStateBase::HttpGet(FLuaValue Url, FLuaValue SuccessCallback, FLuaValue ErrorCallback, FLuaValue Data)
+{
+	FLuaValue Context = CreateLuaTable();
+	Context.SetFieldByIndex(1, SuccessCallback);
+	Context.SetFieldByIndex(2, ErrorCallback);
+	Context.SetFieldByIndex(3, Data);
+
+	FLuaHttpResponseReceived ResponseReceived;
+	ResponseReceived.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, HttpSuccessCallback));
+
+	FLuaHttpError ErrorReceived;
+	ErrorReceived.BindUFunction(this, GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, HttpErrorCallback));
+
+	ULuaBlueprintFunctionLibrary::LuaHttpRequest(GetWorld(), GetClass(), "GET", Url.ToString(), TMap<FString, FString>(), FLuaValue(), Context, ResponseReceived, ErrorReceived);
+}
+
+void URickAndMortyLuaStateBase::HttpSuccessCallback(FLuaValue StatusCode, FLuaValue Headers, FLuaValue Content, FLuaValue Data)
+{
+	FLuaValue Callback = Data.GetFieldByIndex(1);
+	TArray<FLuaValue> Args = { StatusCode, Headers, Content, Data.GetFieldByIndex(3) };
+	ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(Callback, Args);
+}
+
+void URickAndMortyLuaStateBase::HttpErrorCallback(FLuaValue Data)
+{
+	FLuaValue Callback = Data.GetFieldByIndex(2);
+	TArray<FLuaValue> Args = { Data.GetFieldByIndex(3) };
+	ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(Callback, Args);
+}
+
+bool URickAndMortyLuaStateBase::FromJSON(FLuaValue Data, FLuaValue& Value)
+{
+	return ULuaBlueprintFunctionLibrary::LuaValueFromJson(GetWorld(), GetClass(), Data.ToString(), Value);
+}
+
+FLuaValue URickAndMortyLuaStateBase::NewCharacter()
+{
+	return NewLuaUserDataObject(URickAndMortyCharacterBase::StaticClass(), true);
+}
+```
+
+```cpp
+
+#include "RickAndMortyCharacterBase.h"
+#include "LuaBlueprintFunctionLibrary.h"
+#include "Engine/Texture2D.h"
+
+URickAndMortyCharacterBase::URickAndMortyCharacterBase()
+{
+
+}
+
+void URickAndMortyCharacterBase::SetImage(FLuaValue Data)
+{
+	UTexture2D* Texture = ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(0, 0, Data, PF_B8G8R8A8, true);
+	if (Texture)
+	{
+		Image.DrawAs = ESlateBrushDrawType::Image;
+		Image.ImageSize = FVector2D(200, 200);
+		Image.SetResourceObject(Texture);
+	}
+}
+
+FText URickAndMortyCharacterBase::GetName()
+{
+	return FText::FromString(LuaGetField("name").ToString());
+}
+
+FText URickAndMortyCharacterBase::GetGender()
+{
+	return FText::FromString(LuaGetField("gender").ToString());
+}
+
+FText URickAndMortyCharacterBase::GetSpecies()
+{
+	return FText::FromString(LuaGetField("species").ToString());
+}
+
+FText URickAndMortyCharacterBase::GetStatus()
+{
+	return FText::FromString(LuaGetField("status").ToString());
+}
+```
