@@ -244,4 +244,12 @@ Let's add two buttons to the main widget and set their 'click event':
 
 ![RickAndMortyPrevNext](RickAndMortyAPI_Data/RickAndMorty023.PNG?raw=true "RickAndMortyPrevNext")
 
-## Step 6: using C++
+![RickAndMortyPrevNextClick](RickAndMortyAPI_Data/RickAndMorty024.PNG?raw=true "RickAndMortyPrevNextClick")
+
+Note that we are using two different approaches: in the 'prev' case we retrieve each lua object (function and url) and then we call it. This approach is way more elegant than the 'next' one (where we simply invoke a lua string) but obviously requires more nodes.
+
+Clicking on 'next' will show the next api page (after having cleared the list of items):
+
+![RickAndMortyPage2](RickAndMortyAPI_Data/RickAndMorty025.PNG?raw=true "RickAndMortyPage2")
+
+## Optional Step 6: using C++
