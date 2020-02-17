@@ -325,6 +325,8 @@ Just enable the plugin content visualization from the content browser and from t
 
 https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/SimpleDialogueSystem.md
 
+https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/RickAndMortyAPI.md
+
 ## C++ Tips & Tricks
 
 https://github.com/rdeioris/LuaMachine/blob/master/Docs/TipsAndTricks.md
