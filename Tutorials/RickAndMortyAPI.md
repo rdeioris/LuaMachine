@@ -256,6 +256,7 @@ Clicking on 'next' will show the next api page (after having cleared the list of
 
 While it is pretty easy to define lua apis from blueprints, using C++ is way faster and less verbose. This is the equivalent C++ code for the previously defined LuaState as well as the Lua UserData Object:
 
+### RickAndMortyLuaStateBase.h
 ```cpp
 #pragma once
 
@@ -292,6 +293,7 @@ public:
 
 ```
 
+### RickAndMortyCharacterBase.h
 ```cpp
 
 #pragma once
@@ -334,6 +336,7 @@ public:
 
 ```
 
+### RickAndMortyLuaStateBase.cpp
 ```cpp
 
 #include "RickAndMortyLuaStateBase.h"
@@ -391,6 +394,7 @@ FLuaValue URickAndMortyLuaStateBase::NewCharacter()
 }
 ```
 
+### RickAndMortyCharacterBase.cpp
 ```cpp
 
 #include "RickAndMortyCharacterBase.h"
