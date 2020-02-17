@@ -278,7 +278,7 @@ public:
 	void HttpGet(FLuaValue Url, FLuaValue SuccessCallback, FLuaValue ErrorCallback, FLuaValue Data);
 	
 	UFUNCTION()
-	void HttpSuccessCallback(FLuaValue StatusCode, FLuaValue Headers, FLuaValue Content, FLuaValue Data);
+	void HttpSuccessCallback(FLuaValue Context, FLuaValue Response);
 
 	UFUNCTION()
 	void HttpErrorCallback(FLuaValue Data);
@@ -289,9 +289,11 @@ public:
 	UFUNCTION()
 	FLuaValue NewCharacter();
 };
+
 ```
 
 ```cpp
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -329,9 +331,11 @@ public:
 	FText GetSpecies();
 
 };
+
 ```
 
 ```cpp
+
 #include "RickAndMortyLuaStateBase.h"
 #include "LuaBlueprintFunctionLibrary.h"
 #include "RickAndMortyCharacterBase.h"
@@ -340,6 +344,7 @@ URickAndMortyLuaStateBase::URickAndMortyLuaStateBase()
 {
 	Table.Add("http_get", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, HttpGet)));
 	Table.Add("from_json", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, FromJSON)));
+	Table.Add("character", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyLuaStateBase, NewCharacter)));
 }
 
 void URickAndMortyLuaStateBase::HttpGet(FLuaValue Url, FLuaValue SuccessCallback, FLuaValue ErrorCallback, FLuaValue Data)
@@ -358,10 +363,13 @@ void URickAndMortyLuaStateBase::HttpGet(FLuaValue Url, FLuaValue SuccessCallback
 	ULuaBlueprintFunctionLibrary::LuaHttpRequest(GetWorld(), GetClass(), "GET", Url.ToString(), TMap<FString, FString>(), FLuaValue(), Context, ResponseReceived, ErrorReceived);
 }
 
-void URickAndMortyLuaStateBase::HttpSuccessCallback(FLuaValue StatusCode, FLuaValue Headers, FLuaValue Content, FLuaValue Data)
+void URickAndMortyLuaStateBase::HttpSuccessCallback(FLuaValue Context, FLuaValue Response)
 {
-	FLuaValue Callback = Data.GetFieldByIndex(1);
-	TArray<FLuaValue> Args = { StatusCode, Headers, Content, Data.GetFieldByIndex(3) };
+	FLuaValue Callback = Context.GetFieldByIndex(1);
+	FLuaValue StatusCode = Response.GetFieldByIndex(1);
+	FLuaValue Headers = Response.GetFieldByIndex(2);
+	FLuaValue Content = Response.GetFieldByIndex(3);
+	TArray<FLuaValue> Args = { StatusCode, Headers, Content, Context.GetFieldByIndex(3) };
 	ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(Callback, Args);
 }
 
@@ -379,7 +387,7 @@ bool URickAndMortyLuaStateBase::FromJSON(FLuaValue Data, FLuaValue& Value)
 
 FLuaValue URickAndMortyLuaStateBase::NewCharacter()
 {
-	return NewLuaUserDataObject(URickAndMortyCharacterBase::StaticClass(), true);
+	return NewLuaUserDataObject(URickAndMortyCharacterBase::StaticClass());
 }
 ```
 
@@ -391,7 +399,7 @@ FLuaValue URickAndMortyLuaStateBase::NewCharacter()
 
 URickAndMortyCharacterBase::URickAndMortyCharacterBase()
 {
-
+	Table.Add("set_image", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(URickAndMortyCharacterBase, SetImage)));
 }
 
 void URickAndMortyCharacterBase::SetImage(FLuaValue Data)
