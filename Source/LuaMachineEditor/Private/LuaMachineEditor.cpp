@@ -187,6 +187,8 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 	FReply CallLuaGC()
 	{
+		// avoid calling Lua GC on invalid lua state
+		RefreshDebugger();
 		if (SelectedLuaState)
 		{
 			SelectedLuaState->GC(LUA_GCCOLLECT);
