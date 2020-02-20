@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "LuaValue.h"
+#include "LuaState.h"
 #include "LuaBlueprintPackage.generated.h"
 
 /**

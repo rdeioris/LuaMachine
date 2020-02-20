@@ -7,7 +7,6 @@
 #include "ThirdParty/lua/lua.hpp"
 #include "LuaValue.h"
 #include "LuaCode.h"
-#include "LuaBlueprintPackage.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "LuaState.generated.h"
 
@@ -17,6 +16,7 @@ LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
  *
  */
 
+class ULuaBlueprintPackage;
 
 struct FLuaUserData
 {
