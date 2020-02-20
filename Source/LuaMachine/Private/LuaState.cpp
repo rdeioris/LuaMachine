@@ -1597,3 +1597,38 @@ FLuaValue ULuaState::NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUse
 	return FLuaValue();
 }
 
+void ULuaState::SetLuaUserDataField(FLuaValue UserData, FString Key, FLuaValue Value)
+{
+	if (UserData.Type != ELuaValueType::UObject || !UserData.Object)
+		return;
+
+	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData.Object))
+	{
+		LuaComponent->LuaSetField(Key, Value);
+		return;
+	}
+
+	if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(UserData.Object))
+	{
+		LuaUserDataObject->LuaSetField(Key, Value);
+		return;
+	}
+}
+
+FLuaValue ULuaState::GetLuaUserDataField(FLuaValue UserData, FString Key)
+{
+	if (UserData.Type != ELuaValueType::UObject || !UserData.Object)
+		return FLuaValue();
+
+	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(UserData.Object))
+	{
+		return LuaComponent->LuaGetField(Key);
+	}
+
+	if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(UserData.Object))
+	{
+		return LuaUserDataObject->LuaGetField(Key);
+	}
+
+	return FLuaValue();
+}

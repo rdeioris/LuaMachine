@@ -43,6 +43,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua GC"))
 	void ReceiveLuaGC();
 
+	UFUNCTION(BlueprintCallable, Category = "Lua", meta = (AutoCreateRefTerm = "Args"))
+	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
+
 protected:
 	TSharedPtr<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
 	void RemoveLuaSmartReference(TSharedPtr<FLuaSmartReference> Ref);

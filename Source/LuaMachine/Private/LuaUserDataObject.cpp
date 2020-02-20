@@ -88,3 +88,34 @@ void ULuaUserDataObject::ReceiveLuaGC_Implementation()
 {
 
 }
+
+FLuaValue ULuaUserDataObject::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
+{
+	FLuaValue ReturnValue;
+
+	ULuaState* L = GetLuaStateInstance();
+	if (!L)
+		return ReturnValue;
+
+	// push userdata pointer as userdata
+	L->NewUObject(this);
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
+
+	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
+
+	// first argument (self/actor)
+	L->PushValue(-(ItemsToPop + 1));
+	int NArgs = 1;
+	for (FLuaValue& Arg : Args)
+	{
+		L->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	L->PCall(NArgs, ReturnValue);
+
+	// the return value and the function has been removed, so we do not need to change ItemsToPop
+	L->Pop(ItemsToPop + 1);
+
+	return ReturnValue;
+}

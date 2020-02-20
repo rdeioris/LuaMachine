@@ -176,6 +176,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
 
+	template<class T>
+	FLuaValue NewLuaUserDataObject(bool bTrackObject = true)
+	{
+		return NewLuaUserDataObject(T::StaticClass(), bTrackObject);
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void SetLuaUserDataField(FLuaValue UserData, FString Key, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaValue GetLuaUserDataField(FLuaValue UserData, FString Key);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
