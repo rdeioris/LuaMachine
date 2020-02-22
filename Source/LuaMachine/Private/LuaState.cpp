@@ -708,6 +708,22 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 	return 0;
 }
 
+FLuaDebug ULuaState::LuaGetInfo(int32 Level)
+{
+	lua_Debug ar;
+	if (lua_getstack(L, Level, &ar) != 1)
+		return FLuaDebug();
+	lua_getinfo(L, "lSn", &ar);
+	FLuaDebug LuaDebug;
+	LuaDebug.CurrentLine = ar.currentline;
+	LuaDebug.Source = ANSI_TO_TCHAR(ar.source);
+	LuaDebug.Name = ANSI_TO_TCHAR(ar.name);
+	LuaDebug.NameWhat = ANSI_TO_TCHAR(ar.namewhat);
+	LuaDebug.What = ANSI_TO_TCHAR(ar.what);
+
+	return LuaDebug;
+}
+
 void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);

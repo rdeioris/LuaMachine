@@ -176,6 +176,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaDebug LuaGetInfo(int32 Level);
+
 	template<class T>
 	FLuaValue NewLuaUserDataObject(bool bTrackObject = true)
 	{
