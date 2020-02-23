@@ -261,13 +261,18 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldConte
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString, FString CodePath=FString(""))
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString, FString CodePath)
 {
 	FLuaValue ReturnValue;
 
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return ReturnValue;
+
+	if (CodePath.IsEmpty())
+	{
+		CodePath = CodeString;
+	}
 
 	if (!L->RunCode(CodeString, CodePath, 1))
 	{
