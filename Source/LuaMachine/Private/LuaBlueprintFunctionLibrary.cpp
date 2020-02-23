@@ -261,7 +261,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldConte
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString, FString CodePath=FString(""))
 {
 	FLuaValue ReturnValue;
 
@@ -269,7 +269,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 	if (!L)
 		return ReturnValue;
 
-	if (!L->RunCode(CodeString, CodeString, 1))
+	if (!L->RunCode(CodeString, CodePath, 1))
 	{
 		if (L->bLogError)
 			L->LogError(L->LastError);
