@@ -179,6 +179,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	FLuaDebug LuaGetInfo(int32 Level);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	TMap<FString, FLuaValue> LuaGetLocals(int32 Level);
+
 	template<class T>
 	FLuaValue NewLuaUserDataObject(bool bTrackObject = true)
 	{

@@ -153,6 +153,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static void LuaTableFillObject(FLuaValue InTable, UObject* InObject);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
+	static FLuaValue LuaTableFromMap(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TMap<FString, FLuaValue> Map);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static TArray<FLuaValue> LuaTableRange(FLuaValue InTable, int32 First, int32 Last);
 	

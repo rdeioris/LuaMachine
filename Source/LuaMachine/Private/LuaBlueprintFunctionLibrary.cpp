@@ -1153,6 +1153,23 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableMergePack(UObject* WorldContextO
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableFromMap(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TMap<FString, FLuaValue> Map)
+{
+	FLuaValue ReturnValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	ReturnValue = L->CreateLuaTable();
+
+	for (TPair<FString, FLuaValue>& Pair : Map)
+	{
+		ReturnValue.SetField(Pair.Key, Pair.Value);
+	}
+
+	return ReturnValue;
+}
+
 TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableRange(FLuaValue InTable, int32 First, int32 Last)
 {
 	TArray<FLuaValue> ReturnValue;

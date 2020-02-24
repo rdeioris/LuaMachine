@@ -724,6 +724,26 @@ FLuaDebug ULuaState::LuaGetInfo(int32 Level)
 	return LuaDebug;
 }
 
+TMap<FString, FLuaValue> ULuaState::LuaGetLocals(int32 Level)
+{
+	TMap<FString, FLuaValue> ReturnValue;
+
+	lua_Debug ar;
+	if (lua_getstack(L, Level, &ar) != 1)
+		return ReturnValue;
+
+	int Index = 1;
+	const char* name = lua_getlocal(L, &ar, Index);
+	while(name)
+	{
+		FLuaValue LuaValue = ToLuaValue(-1);
+		ReturnValue.Add(ANSI_TO_TCHAR(name), LuaValue);
+		Pop();
+		name = lua_getlocal(L, &ar, ++Index);
+	}
+	return ReturnValue;
+}
+
 void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
