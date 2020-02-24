@@ -279,6 +279,8 @@ public:
 
 	void Len(int Index);
 
+	int32 ILen(int Index);
+
 	void RawGetI(int Index, int N);
 	void RawSetI(int Index, int N);
 

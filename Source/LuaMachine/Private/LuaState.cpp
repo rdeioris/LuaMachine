@@ -863,6 +863,16 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
+	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	{
+		UProperty* Prop = *It;
+		if (!Prop->HasAnyPropertyFlags(CPF_ZeroConstructor))
+		{
+			Prop->InitializeValue_InContainer(Parameters);
+		}
+	}
+
+
 	if (bImplicitSelf)
 	{
 		NArgs--;
@@ -983,6 +993,12 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			LuaState->FromLuaValue(*LuaValue, nullptr, L);
 		}
 	}
+
+	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	{
+		It->DestroyValue_InContainer(Parameters);
+	}
+
 
 	if (ReturnedValues > 0)
 		return ReturnedValues;
@@ -1359,6 +1375,11 @@ int ULuaState::GC(int What, int Data)
 void ULuaState::Len(int Index)
 {
 	lua_len(L, Index);
+}
+
+int32 ULuaState::ILen(int Index)
+{
+	return luaL_len(L, Index);
 }
 
 int32 ULuaState::ToInteger(int Index)

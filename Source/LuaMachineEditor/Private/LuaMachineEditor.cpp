@@ -89,7 +89,6 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 			return;
 
 		SelectedLuaState->PushGlobalTable();
-		FLuaValue CurrentLuaTableOwner = SelectedLuaState->ToLuaValue(-1);
 		SelectedLuaState->PushNil(); // first key
 		while (SelectedLuaState->Next(-2))
 		{
@@ -212,7 +211,10 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 				if (LuaState->GetInternalLuaState())
 				{
-					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
+					LuaState->PushRegistryTable();
+					int32 RegistrySize = LuaState->ILen(-1);
+					LuaState->Pop();
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (registry size: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), RegistrySize, Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
 				}
 				else
 				{
