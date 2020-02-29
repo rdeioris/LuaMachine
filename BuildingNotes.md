@@ -8,6 +8,7 @@ make macosx
 # Building Lua static library for Linux x86_64
 
 ```sh
+# after having added -fPIC to MYCFLAGS in src/Makefile
 make linux
 ```
 
