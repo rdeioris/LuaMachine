@@ -4,6 +4,7 @@
 #include "LuaComponent.h"
 #include "LuaUserDataObject.h"
 #include "LuaMachine.h"
+#include "LuaBlueprintPackage.h"
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
 #include "Runtime/Core/Public/Misc/Paths.h"
