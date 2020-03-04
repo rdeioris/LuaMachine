@@ -318,8 +318,15 @@ public:
 
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 
+#if ENGINE_MINOR_VERSION >= 25
+	FLuaValue FromUProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToUProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromFProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToFProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+#else
 	FLuaValue FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+#endif
 
 	static ULuaState* GetFromExtraSpace(lua_State *L)
 	{

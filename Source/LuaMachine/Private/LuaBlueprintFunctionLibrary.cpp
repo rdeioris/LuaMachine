@@ -356,7 +356,11 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 			UE_LOG(LogLuaMachine, Error, TEXT("Unable to parse image data"));
 			return nullptr;
 		}
+#if ENGINE_MINOR_VERSION >= 25
+		TArray<uint8> UncompressedBytes;
+#else
 		const TArray<uint8>* UncompressedBytes = nullptr;
+#endif
 		if (!ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, UncompressedBytes))
 		{
 			UE_LOG(LogLuaMachine, Error, TEXT("Unable to get raw image data"));
@@ -365,7 +369,11 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 		PixelFormat = EPixelFormat::PF_B8G8R8A8;
 		Width = ImageWrapper->GetWidth();
 		Height = ImageWrapper->GetHeight();
+#if ENGINE_MINOR_VERSION >= 25
+		Bytes = UncompressedBytes;
+#else
 		Bytes = *UncompressedBytes;
+#endif
 	}
 
 	UTexture2D* Texture = UTexture2D::CreateTransient(Width, Height, PixelFormat);
@@ -599,8 +607,11 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 	{
 		FLuaValue Key = L->ToLuaValue(-2);
 		FLuaValue Value = L->ToLuaValue(-1);
-
+#if ENGINE_MINOR_VERSION >= 25
+		FProperty* Property = Class->FindPropertyByName(*Key.ToString());
+#else
 		UProperty* Property = Class->FindPropertyByName(*Key.ToString());
+#endif
 		if (Property)
 		{
 			bool bSuccess = false;

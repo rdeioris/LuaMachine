@@ -140,17 +140,34 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 			continue;*/
 
 		bool bIsValid = true;
+#if ENGINE_MINOR_VERSION >= 25
+		for (TFieldIterator<FProperty> FArgs(Function); FArgs&& FArgs->PropertyFlags& CPF_Parm; ++FArgs)
+#else
 		for (TFieldIterator<UProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
+#endif
 		{
-			UProperty *Prop = *FArgs;
+#if ENGINE_MINOR_VERSION >= 25
+			FProperty *Prop = *FArgs;
+			FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
+#else
+			UProperty* Prop = *FArgs;
 			UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
+#endif
 			if (!LuaProp)
 			{
 				// check for array ?
+#if ENGINE_MINOR_VERSION >= 25
+				FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
+#else
 				UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+#endif
 				if (ArrayProp)
 				{
+#if ENGINE_MINOR_VERSION >= 25
+					LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
+#else
 					LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+#endif
 					if (!LuaProp)
 					{
 						bIsValid = false;
