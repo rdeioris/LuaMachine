@@ -926,7 +926,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			{
 				LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
 #else
-			FArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+			UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
 			if (ArrayProp)
 			{
 				LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
@@ -994,7 +994,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	{
 		FProperty* Prop = *FArgs;
 #else
-	for (TFieldIterator<Property> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
+	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		UProperty* Prop = *FArgs;
 #endif
@@ -1543,19 +1543,19 @@ ULuaState::~ULuaState()
 		return;\
 	}
 #else
-#define LUAVALUE_PROP_CAST(Type, Type2) U##Type* __##Type##__ = Cast<Type>(Property);\
+#define LUAVALUE_PROP_CAST(Type, Type2) U##Type* __##Type##__ = Cast<U##Type>(Property);\
 	if (__##Type##__)\
 	{\
 		return FLuaValue((Type2)__##Type##__->GetPropertyValue_InContainer(Buffer, Index));\
 	}
 
-#define LUAVALUE_PROP_CAST_TOSTRING(Type) U##Type* __##Type##__ = Cast<Type>(Property);\
+#define LUAVALUE_PROP_CAST_TOSTRING(Type) U##Type* __##Type##__ = Cast<U##Type>(Property);\
 	if (__##Type##__)\
 	{\
 		return FLuaValue(__##Type##__->GetPropertyValue_InContainer(Buffer, Index).ToString());\
 	}
 
-#define LUAVALUE_PROP_SET(Type, Value) U##Type* __##Type##__ = Cast<Type>(Property);\
+#define LUAVALUE_PROP_SET(Type, Value) U##Type* __##Type##__ = Cast<U##Type>(Property);\
 	if (__##Type##__)\
 	{\
 		__##Type##__->SetPropertyValue_InContainer(Buffer, Value, Index);\
