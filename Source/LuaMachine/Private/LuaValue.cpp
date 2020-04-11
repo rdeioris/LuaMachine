@@ -230,7 +230,7 @@ FLuaValue FLuaValue::FromJsonValue(ULuaState* L, FJsonValue& JsonValue)
 	else if (JsonValue.Type == EJson::Array)
 	{
 		FLuaValue LuaArray = L->CreateLuaTable();
-		int32 Index = 0;
+		int32 Index = 1;
 		auto JsonValues = JsonValue.AsArray();
 		for (auto JsonItem : JsonValues)
 		{
