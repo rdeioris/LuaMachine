@@ -1351,12 +1351,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, 
 	if (!L)
 		return ReturnValue;
 
-	L->FromLuaValue(InTable);
-	L->FromLuaValue(InMetaTable);
-	L->SetMetaTable(-2);
-	L->Pop();
-
-	return InTable;
+	return InTable.SetMetaTable(InMetaTable);
 }
 
 int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)

@@ -163,6 +163,8 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue GetFieldByIndex(int32 Index);
 	FLuaValue SetFieldByIndex(int32 Index, FLuaValue Value);
 
+	FLuaValue SetMetaTable(FLuaValue MetaTable);
+
 	bool IsReferencedInLuaRegistry() const;
 
 	static FLuaValue FromJsonValue(ULuaState* L, FJsonValue& JsonValue);

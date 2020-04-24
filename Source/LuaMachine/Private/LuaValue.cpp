@@ -158,6 +158,23 @@ FLuaValue FLuaValue::SetField(FString Key, FLuaValue Value)
 	return *this;
 }
 
+FLuaValue FLuaValue::SetMetaTable(FLuaValue MetaTable)
+{
+	if (Type != ELuaValueType::Table || MetaTable.Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->FromLuaValue(MetaTable);
+	LuaState->SetMetaTable(-2);
+	LuaState->Pop();
+
+	return *this;
+}
+
+
 FLuaValue FLuaValue::GetField(FString Key)
 {
 	if (Type != ELuaValueType::Table)
