@@ -43,7 +43,7 @@ end
 
 ## Wrapping Vectors in Lua tables with math support via metatables
 
-The goal:
+The Goal:
 
 ```lua
 a = vector:new(1,2,3)
@@ -55,7 +55,9 @@ print(b)
 print(a + b)
 ```
 
-The implementation (ULuaVector is a subclass of ULuaBlueprintPackage and must be added to the LuaState Blueprint Package Table as 'vector')
+The Implementation:
+
+(ULuaVector is a subclass of ULuaBlueprintPackage and must be added to the LuaState Blueprint Package Table as 'vector')
 
 ```cpp
 #include "LuaVector.h"
