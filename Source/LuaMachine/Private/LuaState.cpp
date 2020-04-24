@@ -175,9 +175,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 					FromLuaValue(LuaPair.Value, LuaBlueprintPackage);
 					SetField(-2, TCHAR_TO_ANSI(*LuaPair.Key));
 				}
+				// this avoid the package to be GC'd
+				LuaBlueprintPackages.Add(LuaBlueprintPackage);
+				LuaBlueprintPackage->SelfTable = ToLuaValue(-1);
 			}
-			// this avoid the package to be GC'd
-			LuaBlueprintPackages.Add(LuaBlueprintPackage);
 		}
 		else
 		{

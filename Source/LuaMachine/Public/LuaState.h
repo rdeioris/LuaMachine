@@ -182,6 +182,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	TMap<FString, FLuaValue> LuaGetLocals(int32 Level);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	TSubclassOf<ULuaState> GetSelfLuaState() const { return GetClass(); }
+
 	template<class T>
 	FLuaValue NewLuaUserDataObject(bool bTrackObject = true)
 	{

@@ -1341,6 +1341,24 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 	return FVector(X.ToFloat(), Y.ToFloat(), Z.ToFloat());
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable)
+{
+	FLuaValue ReturnValue;
+	if (InTable.Type != ELuaValueType::Table || InMetaTable.Type != ELuaValueType::Table)
+		return ReturnValue;
+
+	ULuaState* L = InTable.LuaState;
+	if (!L)
+		return ReturnValue;
+
+	L->FromLuaValue(InTable);
+	L->FromLuaValue(InMetaTable);
+	L->SetMetaTable(-2);
+	L->Pop();
+
+	return InTable;
+}
+
 int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)
 {
 

@@ -310,6 +310,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static FVector LuaTableToVector(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static FLuaValue LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable);
+
 	UFUNCTION(BlueprintPure, meta=(DisplayName = "To String (LuaValue)", BlueprintAutocast), Category="Lua")
 	static FString Conv_LuaValueToString(FLuaValue Value);
 

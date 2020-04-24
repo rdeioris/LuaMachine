@@ -24,4 +24,10 @@ public:
 	TSubclassOf<ULuaState> GetLuaState() const;
 	
 	virtual UWorld* GetWorld() const override;
+
+	UPROPERTY()
+	FLuaValue SelfTable;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaValue GetSelfLuaTable() const { return SelfTable; }
 };
