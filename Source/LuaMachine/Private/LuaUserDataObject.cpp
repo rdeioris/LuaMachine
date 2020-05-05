@@ -89,6 +89,21 @@ void ULuaUserDataObject::ReceiveLuaGC_Implementation()
 
 }
 
+FLuaValue ULuaUserDataObject::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
+{
+	return FLuaValue();
+}
+
+FLuaValue ULuaUserDataObject::UFunctionToLuaValue(FString FunctionName)
+{
+	FName FunctionFName = FName(FunctionName);
+	UFunction* Function = FindFunction(FunctionFName);
+	if (!Function)
+		return FLuaValue();
+
+	return FLuaValue::Function(FunctionFName);
+}
+
 FLuaValue ULuaUserDataObject::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;

@@ -149,7 +149,7 @@ struct LUAMACHINE_API FLuaValue
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
 	UObject* Object;
 
-	UPROPERTY(EditAnywhere, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
 	FName FunctionName;
 
 	int LuaRef;

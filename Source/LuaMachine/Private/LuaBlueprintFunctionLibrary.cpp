@@ -626,13 +626,9 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
 {
-	FLuaValue ReturnValue;
-	if (Table.Type != ELuaValueType::Table)
-		return ReturnValue;
-
 	ULuaState* L = Table.LuaState;
 	if (!L)
-		return ReturnValue;
+		return FLuaValue();
 
 	return Table.GetField(Key);
 }

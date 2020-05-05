@@ -40,11 +40,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	void LuaSetField(FString Name, FLuaValue Value);
 
-	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua GC"))
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Metatable __gc"))
 	void ReceiveLuaGC();
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Metatable __index"))
+	FLuaValue ReceiveLuaMetaIndex(FLuaValue Key);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua", meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaValue UFunctionToLuaValue(FString FunctionName);
 
 protected:
 	TSharedPtr<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);

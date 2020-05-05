@@ -644,20 +644,24 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
 	UObject* Context = UserData->Context.Get();
 
+	ULuaUserDataObject* LuaUserDataObject = nullptr;
+	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
+
 	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
 	{
 		TablePtr = &LuaComponent->Table;
 	}
-	else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(Context))
+	else
 	{
-		TablePtr = &LuaUserDataObject->Table;
+		LuaUserDataObject = Cast<ULuaUserDataObject>(Context);
+		if (LuaUserDataObject)
+		{
+			TablePtr = &LuaUserDataObject->Table;
+		}
 	}
 
 	if (TablePtr)
 	{
-
-		FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
-
 		FLuaValue* LuaValue = TablePtr->Find(Key);
 		if (LuaValue)
 		{
@@ -665,6 +669,12 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 			return 1;
 
 		}
+	}
+	if (LuaUserDataObject)
+	{
+		FLuaValue MetaIndexReturnValue = LuaUserDataObject->ReceiveLuaMetaIndex(Key);
+		LuaState->FromLuaValue(MetaIndexReturnValue, Context, L);
+		return 1;
 	}
 
 	lua_pushnil(L);
@@ -1565,20 +1575,20 @@ ULuaState::~ULuaState()
 #endif
 
 #if ENGINE_MINOR_VERSION >= 25
-FLuaValue ULuaState::FromUProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromUProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 {
 	return FromFProperty(Buffer, Property, bSuccess, Index);
 }
-void ULuaState::ToUProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToUProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
 	ToFProperty(Buffer, Property, Value, bSuccess, Index);
 }
 #endif
 
 #if ENGINE_MINOR_VERSION >= 25
-FLuaValue ULuaState::FromFProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromFProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 #else
-FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
@@ -1626,9 +1636,9 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty* Property, bool& bSuc
 }
 
 #if ENGINE_MINOR_VERSION >= 25
-void ULuaState::ToFProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToFProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #else
-void ULuaState::ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
