@@ -84,6 +84,30 @@ void ULuaUserDataObject::LuaSetField(FString Name, FLuaValue Value)
 	LuaState->Pop();
 }
 
+TArray<FString> ULuaUserDataObject::GetObjectUFunctions(bool bOnlyPublic)
+{
+	TArray<FString> FunctionNames;
+
+	for (TFieldIterator<UFunction> It(GetClass()); It; ++It)
+	{
+		UFunction* Function = *It;
+		bool bSuccess = true;
+		if (bOnlyPublic && !Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
+		{
+			bSuccess = false;
+		}
+		if (bSuccess)
+			FunctionNames.Add(Function->GetName());
+	}
+
+	return FunctionNames;
+}
+
+void ULuaUserDataObject::ReceiveLuaUserDataTableInit_Implementation()
+{
+
+}
+
 void ULuaUserDataObject::ReceiveLuaGC_Implementation()
 {
 
@@ -96,7 +120,7 @@ FLuaValue ULuaUserDataObject::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
 
 FLuaValue ULuaUserDataObject::UFunctionToLuaValue(FString FunctionName)
 {
-	FName FunctionFName = FName(FunctionName);
+	FName FunctionFName = FName(*FunctionName);
 	UFunction* Function = FindFunction(FunctionFName);
 	if (!Function)
 		return FLuaValue();

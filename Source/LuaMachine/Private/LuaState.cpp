@@ -1754,6 +1754,7 @@ FLuaValue ULuaState::NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUse
 		{
 			TrackedLuaUserDataObjects.Add(LuaUserDataObject);
 		}
+		LuaUserDataObject->ReceiveLuaUserDataTableInit();
 		return FLuaValue(LuaUserDataObject);
 	}
 

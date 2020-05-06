@@ -26,6 +26,9 @@ public class LuaMachine : ModuleRules
             new string[]
             {
                 "Core",
+                "HTTP",
+                "Json",
+                "PakFile"
 				// ... add other public dependencies that you statically link with here ...
 			}
             );
@@ -40,9 +43,6 @@ public class LuaMachine : ModuleRules
                 "SlateCore",
                 "UMG",
                 "InputCore",
-                "HTTP",
-                "Json",
-                "PakFile"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );
