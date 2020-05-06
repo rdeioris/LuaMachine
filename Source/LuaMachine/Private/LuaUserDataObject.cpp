@@ -78,7 +78,7 @@ void ULuaUserDataObject::LuaSetField(FString Name, FLuaValue Value)
 	LuaState->NewUObject(this);
 	LuaState->SetupAndAssignUserDataMetatable(this, Metatable);
 
-	LuaState->SetFieldFromTree(Name, Value, false);
+	LuaState->SetFieldFromTree(Name, Value, false, this);
 
 	// remove UObject
 	LuaState->Pop();
@@ -88,6 +88,14 @@ TArray<FString> ULuaUserDataObject::GetObjectUFunctions(bool bOnlyPublic)
 {
 	TArray<FString> FunctionNames;
 
+	UClass* RelevantClass = GetClass();
+	UClass* ParentClass = RelevantClass->GetSuperClass();
+	while (ParentClass != ULuaUserDataObject::StaticClass())
+	{
+		RelevantClass = ParentClass;
+		ParentClass = ParentClass->GetSuperClass();
+	}
+
 	for (TFieldIterator<UFunction> It(GetClass()); It; ++It)
 	{
 		UFunction* Function = *It;
@@ -96,8 +104,19 @@ TArray<FString> ULuaUserDataObject::GetObjectUFunctions(bool bOnlyPublic)
 		{
 			bSuccess = false;
 		}
+		
 		if (bSuccess)
-			FunctionNames.Add(Function->GetName());
+		{
+			if (Function->GetOuterUClass()->IsChildOf(RelevantClass))
+			{
+				UFunction* SuperFunction = Function->GetSuperFunction();
+				if (SuperFunction && !SuperFunction->GetOuterUClass()->IsChildOf(RelevantClass))
+				{
+					continue;
+				}
+				FunctionNames.Add(Function->GetName());
+			}
+		}
 	}
 
 	return FunctionNames;

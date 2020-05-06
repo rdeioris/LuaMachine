@@ -255,7 +255,7 @@ public:
 
 	int32 GetFieldFromTree(FString Tree, bool bGlobal = true);
 
-	void SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal = true);
+	void SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal, UObject* CallContext = nullptr);
 
 	void SetGlobal(const char* Name);
 

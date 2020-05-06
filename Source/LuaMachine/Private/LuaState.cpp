@@ -670,6 +670,7 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 
 		}
 	}
+
 	if (LuaUserDataObject)
 	{
 		FLuaValue MetaIndexReturnValue = LuaUserDataObject->ReceiveLuaMetaIndex(Key);
@@ -1254,7 +1255,7 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 	return i + AdditionalPop;
 }
 
-void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal)
+void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal, UObject* CallContext)
 {
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
@@ -1268,7 +1269,7 @@ void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal)
 	}
 
 	Pop();
-	FromLuaValue(Value);
+	FromLuaValue(Value, CallContext);
 	SetField(-2, TCHAR_TO_ANSI(*Parts.Last()));
 	Pop(ItemsToPop - 1);
 }

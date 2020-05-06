@@ -855,7 +855,7 @@ void ULuaBlueprintFunctionLibrary::LuaSetGlobal(UObject* WorldContextObject, TSu
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
 		return;
-	L->SetFieldFromTree(Name, Value);
+	L->SetFieldFromTree(Name, Value, true);
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args)
