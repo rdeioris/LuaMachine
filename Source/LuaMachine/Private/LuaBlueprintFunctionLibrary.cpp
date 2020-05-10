@@ -1682,7 +1682,7 @@ bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(FString Filename, FString Moun
 	IAssetRegistry& AssetRegistry = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry")).Get();
 
 #if WITH_EDITOR
-	int32 bPreviousGAllowUnversionedContentInEditor = GAllowUnversionedContentInEditor;
+	bool bPreviousGAllowUnversionedContentInEditor = GAllowUnversionedContentInEditor;
 	GAllowUnversionedContentInEditor = true;
 #endif
 
