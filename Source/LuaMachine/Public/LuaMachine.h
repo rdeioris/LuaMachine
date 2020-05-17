@@ -10,7 +10,7 @@
 DECLARE_MULTICAST_DELEGATE(FOnRegisteredLuaStatesChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewLuaState, ULuaState*);
 
-class LUAMACHINE_API FLuaMachineModule : public IModuleInterface
+class LUAMACHINE_API FLuaMachineModule : public IModuleInterface, public FGCObject
 {
 public:
 
@@ -29,6 +29,11 @@ public:
 
 	FOnNewLuaState OnNewLuaState;
 	FOnRegisteredLuaStatesChanged OnRegisteredLuaStatesChanged;
+
+	void LuaLevelAddedToWorld(ULevel* Level, UWorld* World);
+	void LuaLevelRemovedFromWorld(ULevel* Level, UWorld* World);
+
+	void AddReferencedObjects(FReferenceCollector& Collector) override;
 
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;

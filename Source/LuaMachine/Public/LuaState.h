@@ -230,6 +230,12 @@ public:
 	UPROPERTY()
 	TArray<ULuaUserDataObject*> TrackedLuaUserDataObjects;
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Added To World"))
+	void ReceiveLuaLevelAddedToWorld(ULevel* Level, UWorld* World);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Removed From World"))
+	void ReceiveLuaLevelRemovedFromWorld(ULevel* Level, UWorld* World);
+
 	int32 GetTop();
 
 	FString LastError;

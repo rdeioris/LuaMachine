@@ -17,12 +17,40 @@ void FLuaMachineModule::StartupModule()
 	FEditorDelegates::BeginPIE.AddRaw(this, &FLuaMachineModule::CleanupLuaStates);
 	FEditorDelegates::EndPIE.AddRaw(this, &FLuaMachineModule::CleanupLuaStates);
 #endif
+
+	// streaming level hooks
+	FWorldDelegates::LevelAddedToWorld.AddRaw(this, &FLuaMachineModule::LuaLevelAddedToWorld);
+	FWorldDelegates::LevelRemovedFromWorld.AddRaw(this, &FLuaMachineModule::LuaLevelRemovedFromWorld);
+
+}
+
+void FLuaMachineModule::LuaLevelAddedToWorld(ULevel* Level, UWorld* World)
+{
+	for (ULuaState* LuaState : GetRegisteredLuaStates())
+	{
+		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+			LuaState->ReceiveLuaLevelAddedToWorld(Level, World);
+	}
+}
+
+void FLuaMachineModule::LuaLevelRemovedFromWorld(ULevel* Level, UWorld* World)
+{
+	for (ULuaState* LuaState : GetRegisteredLuaStates())
+	{
+		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+			LuaState->ReceiveLuaLevelRemovedFromWorld(Level, World);
+	}
 }
 
 void FLuaMachineModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
+}
+
+void FLuaMachineModule::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	Collector.AddReferencedObjects(LuaStates);
 }
 
 void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
@@ -34,13 +62,10 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
-		if (LuaStates[LuaStateClass]->bPersistent)
+		ULuaState* DefaultLuaState = Cast<ULuaState>(LuaStateClass->GetDefaultObject());
+		if (DefaultLuaState && DefaultLuaState->bPersistent && LuaStates[LuaStateClass]->bPersistent)
 		{
 			PersistentLuaStates.Add(LuaStateClass, LuaStates[LuaStateClass]);
-		}
-		else
-		{
-			LuaStates[LuaStateClass]->RemoveFromRoot();
 		}
 	}
 
@@ -63,9 +88,8 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 	{
 		if (bCheckOnly)
 			return nullptr;
-		ULuaState* NewLuaState = NewObject<ULuaState>((UObject *)GetTransientPackage(), LuaStateClass);
+		ULuaState* NewLuaState = NewObject<ULuaState>((UObject*)GetTransientPackage(), LuaStateClass);
 		LuaStates.Add(LuaStateClass, NewLuaState);
-		LuaStates[LuaStateClass]->AddToRoot();
 		OnNewLuaState.Broadcast(NewLuaState);
 		OnRegisteredLuaStatesChanged.Broadcast();
 	}
@@ -97,12 +121,10 @@ void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
 
 	if (FoundLuaStateClass)
 	{
-
-		LuaStates[FoundLuaStateClass]->RemoveFromRoot();
 		LuaStates.Remove(FoundLuaStateClass);
 	}
 
-	// trick for waking up on low-level destuctor
+	// trick for waking up on low-level destructor
 	OnRegisteredLuaStatesChanged.Broadcast();
 }
 

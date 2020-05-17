@@ -188,7 +188,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 	{
 		// avoid calling Lua GC on invalid lua state
 		RefreshDebugger();
-		if (SelectedLuaState)
+		if (SelectedLuaState && SelectedLuaState->GetInternalLuaState())
 		{
 			SelectedLuaState->GC(LUA_GCCOLLECT);
 		}
@@ -214,11 +214,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 					LuaState->PushRegistryTable();
 					int32 RegistrySize = LuaState->ILen(-1);
 					LuaState->Pop();
-					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (used memory: %dk) (top of the stack: %d) (registry size: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), RegistrySize, Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (%sused memory: %dk) (top of the stack: %d) (registry size: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->bPersistent ? TEXT("persistent, ") : TEXT(""), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), RegistrySize, Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
 				}
 				else
 				{
-					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (inactive) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, Referencers.Num());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (%sinactive) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, LuaState->bPersistent ? TEXT("persistent, ") : TEXT(""), Referencers.Num());
 				}
 			}
 		}
@@ -349,7 +349,8 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 					{
 						if (State->GetClass()->GetName() == *SelectedText.Get())
 						{
-							SelectedLuaState = State;
+							if (State->GetInternalLuaState())
+								SelectedLuaState = State;
 							break;
 						}
 					}

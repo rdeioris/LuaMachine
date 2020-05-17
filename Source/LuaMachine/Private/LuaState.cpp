@@ -24,6 +24,7 @@ ULuaState::ULuaState()
 	bEnableLineHook = false;
 	bEnableCallHook = false;
 	bEnableReturnHook = false;
+
 }
 
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
@@ -1168,6 +1169,16 @@ void ULuaState::ReceiveLuaLineHook_Implementation(const FLuaDebug & LuaDebug)
 
 }
 
+void ULuaState::ReceiveLuaLevelRemovedFromWorld_Implementation(ULevel * Level, UWorld * World)
+{
+
+}
+
+void ULuaState::ReceiveLuaLevelAddedToWorld_Implementation(ULevel * Level, UWorld * World)
+{
+
+}
+
 void ULuaState::NewTable()
 {
 	lua_newtable(L);
@@ -1255,7 +1266,7 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 	return i + AdditionalPop;
 }
 
-void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal, UObject* CallContext)
+void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal, UObject * CallContext)
 {
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
