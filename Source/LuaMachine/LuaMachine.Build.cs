@@ -80,10 +80,10 @@ public class LuaMachine : ModuleRules
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_linux64.a"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.LinuxAArch64)
+        /*if (Target.Platform == UnrealTargetPlatform.LinuxAArch64)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_linux_aarch64.a"));
-        }
+        }*/
 
         if (Target.Platform == UnrealTargetPlatform.Android)
         {
