@@ -90,7 +90,7 @@ void FLuaValue::Unref()
 		if (LuaRef != LUA_NOREF)
 		{
 			// special case for when the engine is shutting down
-			if (GIsRequestingExit)
+			if (IsEngineExitRequested())
 			{
 				if (!LuaState->IsValidLowLevel())
 				{
