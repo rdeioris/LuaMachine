@@ -89,6 +89,15 @@ void FLuaValue::Unref()
 	{
 		if (LuaRef != LUA_NOREF)
 		{
+			// special case for when the engine is shutting down
+			if (GIsRequestingExit)
+			{
+				if (!LuaState->IsValidLowLevel())
+				{
+					LuaRef = LUA_NOREF;
+					return;
+				}
+			}
 			// use UnrefCheck here to support moving of LuaState
 			LuaState->UnrefChecked(LuaRef);
 		}
