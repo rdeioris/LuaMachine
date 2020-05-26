@@ -1475,6 +1475,16 @@ FLuaValue ULuaState::CreateLuaTable()
 	FLuaValue NewTable;
 	NewTable.Type = ELuaValueType::Table;
 	NewTable.LuaState = this;
+	FromLuaValue(NewTable);
+	Pop();
+	return NewTable;
+}
+
+FLuaValue ULuaState::CreateLuaLazyTable()
+{
+	FLuaValue NewTable;
+	NewTable.Type = ELuaValueType::Table;
+	NewTable.LuaState = this;
 	return NewTable;
 }
 
@@ -1807,4 +1817,9 @@ FLuaValue ULuaState::GetLuaUserDataField(FLuaValue UserData, FString Key)
 	}
 
 	return FLuaValue();
+}
+
+const void* ULuaState::ToPointer(int Index)
+{
+	return lua_topointer(L, Index);
 }

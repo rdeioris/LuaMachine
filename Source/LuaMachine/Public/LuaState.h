@@ -309,6 +309,8 @@ public:
 	FLuaValue CreateLuaTable();
 	FLuaValue CreateLuaThread(FLuaValue Value);
 
+	FLuaValue CreateLuaLazyTable();
+
 	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
 
 	static int MetaTableFunctionUserData__index(lua_State *L);
@@ -369,6 +371,8 @@ public:
 	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
 
 	void SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
+
+	const void* ToPointer(int Index);
 
 protected:
 	lua_State* L;

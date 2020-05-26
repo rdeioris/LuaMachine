@@ -127,7 +127,7 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread) && LuaRef != LUA_NOREF)
+	if (LuaRef != LUA_NOREF)
 	{
 		LuaState->GetRef(LuaRef);
 		LuaRef = LuaState->NewRef();
@@ -147,7 +147,7 @@ FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 	FunctionName = SourceValue.FunctionName;
 
 	// make a new reference to the table, to avoid it being destroyed
-	if ((Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread) && LuaRef != LUA_NOREF)
+	if (LuaRef != LUA_NOREF)
 	{
 		LuaState->GetRef(LuaRef);
 		LuaRef = LuaState->NewRef();

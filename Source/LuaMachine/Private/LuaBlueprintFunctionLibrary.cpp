@@ -58,6 +58,16 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObje
 	return L->CreateLuaTable();
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateLazyTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
+{
+	FLuaValue LuaValue;
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return LuaValue;
+
+	return L->CreateLuaLazyTable();
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateThread(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value)
 {
 	FLuaValue LuaValue;
@@ -203,6 +213,40 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject
 	FLuaValue ReturnValue = L->ToLuaValue(-1);
 	L->Pop(ItemsToPop);
 	return ReturnValue;
+}
+
+int64 ULuaBlueprintFunctionLibrary::LuaValueToPointer(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value)
+{
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return 0;
+
+	L->FromLuaValue(Value);
+	const void* Ptr = L->ToPointer(-1);
+	L->Pop();
+
+	return (int64)Ptr;
+}
+
+FString ULuaBlueprintFunctionLibrary::LuaValueToHexPointer(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value)
+{
+	int64 Ptr = LuaValueToPointer(WorldContextObject, State, Value);
+	if (FGenericPlatformProperties::IsLittleEndian())
+	{
+		uint8 BEPtr[8] =
+		{
+			(Ptr >> 56) & 0xff,
+			(Ptr >> 48) & 0xff,
+			(Ptr >> 40) & 0xff,
+			(Ptr >> 32) & 0xff,
+			(Ptr >> 24) & 0xff,
+			(Ptr >> 16) & 0xff,
+			(Ptr >> 8) & 0xff,
+			(Ptr) & 0xff,
+		};
+		return BytesToHex((const uint8*)BEPtr, sizeof(int64));
+	}
+	return BytesToHex((const uint8*)&Ptr, sizeof(int64));
 }
 
 FString ULuaBlueprintFunctionLibrary::LuaValueToBase64(FLuaValue Value)
