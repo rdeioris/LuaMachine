@@ -343,7 +343,7 @@ ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Valu
 int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
-		return ELuaThreadStatus::Invalid;
+		return MIN_int32;
 
 	return Value.LuaState->GetLuaThreadStackTop(Value);
 }

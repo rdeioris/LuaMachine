@@ -249,6 +249,8 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		Pop();
 	}
 
+	ReceiveLuaStateInitialized();
+
 	return this;
 }
 
@@ -1179,6 +1181,11 @@ void ULuaState::ReceiveLuaLevelAddedToWorld_Implementation(ULevel * Level, UWorl
 
 }
 
+void ULuaState::ReceiveLuaStateInitialized_Implementation()
+{
+
+}
+
 void ULuaState::NewTable()
 {
 	lua_newtable(L);
@@ -1522,7 +1529,7 @@ ELuaThreadStatus ULuaState::GetLuaThreadStatus(FLuaValue Value)
 int32 ULuaState::GetLuaThreadStackTop(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Thread || Value.LuaState != this)
-		return ELuaThreadStatus::Invalid;
+		return MIN_int32;
 
 	FromLuaValue(Value);
 	lua_State* LuaThread = lua_tothread(L, -1);

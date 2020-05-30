@@ -42,7 +42,7 @@ struct FLuaUserData
 };
 
 UENUM(BlueprintType)
-enum ELuaThreadStatus
+enum class ELuaThreadStatus : uint8
 {
 	Invalid,
 	Ok,
@@ -236,6 +236,9 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Removed From World"))
 	void ReceiveLuaLevelRemovedFromWorld(ULevel* Level, UWorld* World);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua State Initialized"))
+	void ReceiveLuaStateInitialized();
 
 	int32 GetTop();
 

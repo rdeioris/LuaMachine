@@ -62,8 +62,7 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
-		ULuaState* DefaultLuaState = Cast<ULuaState>(LuaStateClass->GetDefaultObject());
-		if (DefaultLuaState && DefaultLuaState->bPersistent && LuaStates[LuaStateClass]->bPersistent)
+		if (LuaStates[LuaStateClass]->bPersistent)
 		{
 			PersistentLuaStates.Add(LuaStateClass, LuaStates[LuaStateClass]);
 		}
