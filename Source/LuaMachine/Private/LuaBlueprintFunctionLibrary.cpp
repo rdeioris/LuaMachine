@@ -235,14 +235,14 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToHexPointer(UObject* WorldContext
 	{
 		uint8 BEPtr[8] =
 		{
-			(Ptr >> 56) & 0xff,
-			(Ptr >> 48) & 0xff,
-			(Ptr >> 40) & 0xff,
-			(Ptr >> 32) & 0xff,
-			(Ptr >> 24) & 0xff,
-			(Ptr >> 16) & 0xff,
-			(Ptr >> 8) & 0xff,
-			(Ptr) & 0xff,
+			(uint8)((Ptr >> 56) & 0xff),
+			(uint8)((Ptr >> 48) & 0xff),
+			(uint8)((Ptr >> 40) & 0xff),
+			(uint8)((Ptr >> 32) & 0xff),
+			(uint8)((Ptr >> 24) & 0xff),
+			(uint8)((Ptr >> 16) & 0xff),
+			(uint8)((Ptr >> 8) & 0xff),
+			(uint8)((Ptr) & 0xff),
 		};
 		return BytesToHex((const uint8*)BEPtr, sizeof(int64));
 	}
