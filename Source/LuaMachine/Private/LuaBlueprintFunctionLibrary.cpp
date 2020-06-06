@@ -334,7 +334,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 
 ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Value)
 {
-	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
+	if (Value.Type != ELuaValueType::Thread || !Value.LuaState)
 		return ELuaThreadStatus::Invalid;
 
 	return Value.LuaState->GetLuaThreadStatus(Value);
@@ -342,7 +342,7 @@ ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Valu
 
 int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
 {
-	if (Value.Type != ELuaValueType::Thread || Value.LuaState)
+	if (Value.Type != ELuaValueType::Thread || !Value.LuaState)
 		return MIN_int32;
 
 	return Value.LuaState->GetLuaThreadStackTop(Value);
