@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
+#include "UObject/GCObject.h"
 #include "LuaState.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnRegisteredLuaStatesChanged);
