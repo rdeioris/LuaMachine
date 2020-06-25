@@ -372,6 +372,28 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObject, TSubclassOf<ULuaState> State, TArray<uint8> ByteCode, FString CodePath)
+{
+	FLuaValue ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	if (!L->RunCode(ByteCode, CodePath, 1))
+	{
+		if (L->bLogError)
+			L->LogError(L->LastError);
+		L->ReceiveLuaError(L->LastError);
+	}
+	else
+	{
+		ReturnValue = L->ToLuaValue(-1);
+	}
+	L->Pop();
+	return FLuaValue();
+}
+
 UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat, bool bDetectFormat)
 {
 	if (Value.Type != ELuaValueType::String)
