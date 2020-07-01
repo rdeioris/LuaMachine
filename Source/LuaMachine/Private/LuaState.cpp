@@ -648,9 +648,13 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 	UObject* Context = UserData->Context.Get();
 
 	ULuaUserDataObject* LuaUserDataObject = nullptr;
+	ULuaComponent* LuaComponent = nullptr;
+
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
-	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
+	LuaComponent = Cast<ULuaComponent>(Context);
+
+	if (LuaComponent)
 	{
 		TablePtr = &LuaComponent->Table;
 	}
@@ -672,6 +676,13 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 			return 1;
 
 		}
+	}
+
+	if (LuaComponent)
+	{
+		FLuaValue MetaIndexReturnValue = LuaComponent->ReceiveLuaMetaIndex(Key);
+		LuaState->FromLuaValue(MetaIndexReturnValue, Context, L);
+		return 1;
 	}
 
 	if (LuaUserDataObject)

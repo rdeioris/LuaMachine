@@ -344,3 +344,8 @@ TArray<FLuaValue> ULuaComponent::LuaCallTableIndexMulti(FLuaValue InTable, int32
 
 	return LuaCallValueMulti(Value, Args);
 }
+
+FLuaValue ULuaComponent::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
+{
+	return FLuaValue();
+}

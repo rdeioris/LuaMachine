@@ -11,7 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLuaComponentError, FString, Message);
 
 
-UCLASS( ClassGroup=(Scripting), meta=(BlueprintSpawnableComponent) )
+UCLASS(Blueprintable, ClassGroup=(Scripting), meta=(BlueprintSpawnableComponent) )
 class LUAMACHINE_API ULuaComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -83,5 +83,8 @@ public:
 	void LuaSetField(FString Name, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
-	FLuaComponentError OnLuaError;	
+	FLuaComponentError OnLuaError;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __index"))
+	FLuaValue ReceiveLuaMetaIndex(FLuaValue Key);
 };
