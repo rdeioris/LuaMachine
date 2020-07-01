@@ -19,7 +19,9 @@ Join the LuaMachine Discord channel: https://discord.gg/eTXDfEU
 
 ## Marketplace
 
-Albeit fully open source and free, you can find the plugin in the Unreal Engine Marketplace for about 30$. If you want to sponsor the project consider buying it.
+Albeit fully open source and free, you can find the plugin in the Unreal Engine Marketplace for about 30$. If you want to sponsor the project consider buying it:
+
+https://www.unrealengine.com/marketplace/en-US/product/luamachine
 
 ## Quickstart
 
