@@ -87,4 +87,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __index"))
 	FLuaValue ReceiveLuaMetaIndex(FLuaValue Key);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __newindex"))
+	void ReceiveLuaMetaNewIndex(FLuaValue Key, FLuaValue Value);
 };

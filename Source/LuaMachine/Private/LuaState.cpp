@@ -708,7 +708,9 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
 	UObject* Context = UserData->Context.Get();
 
-	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
+	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context);
+
+	if (LuaComponent)
 	{
 		TablePtr = &LuaComponent->Table;
 	}
@@ -730,6 +732,10 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 		{
 			TablePtr->Add(Key, LuaState->ToLuaValue(3, L));
 		}
+	}
+	else if (LuaComponent)
+	{
+		LuaComponent->ReceiveLuaMetaNewIndex(LuaState->ToLuaValue(2, L), LuaState->ToLuaValue(3, L));
 	}
 
 	return 0;
