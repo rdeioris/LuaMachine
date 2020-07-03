@@ -730,12 +730,15 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 		}
 		else
 		{
+			if (LuaComponent)
+			{
+				if (LuaComponent->ReceiveLuaMetaNewIndex(LuaState->ToLuaValue(2, L), LuaState->ToLuaValue(3, L)))
+				{
+					return 0;
+				}
+			}
 			TablePtr->Add(Key, LuaState->ToLuaValue(3, L));
 		}
-	}
-	else if (LuaComponent)
-	{
-		LuaComponent->ReceiveLuaMetaNewIndex(LuaState->ToLuaValue(2, L), LuaState->ToLuaValue(3, L));
 	}
 
 	return 0;
@@ -980,7 +983,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 				}
 			}
 			break;
-		}
+	}
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			break;
 
@@ -1080,7 +1083,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			ReturnedValues++;
 			LuaState->FromLuaValue(*LuaValue, nullptr, L);
 		}
-	}
+		}
 
 #if ENGINE_MINOR_VERSION >= 25
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1097,7 +1100,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	lua_pushnil(L);
 	return 1;
-}
+	}
 
 int ULuaState::TableFunction_print(lua_State * L)
 {
@@ -1664,7 +1667,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	if (ObjectPropertyBase)
 	{
 		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Buffer, Index));
-	}
+}
 
 #if ENGINE_MINOR_VERSION >= 25
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
@@ -1713,7 +1716,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (ObjectPropertyBase)
 	{
 		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Buffer, Value.Object, Index);
-	}
+}
 
 #if ENGINE_MINOR_VERSION >= 25
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
@@ -1728,7 +1731,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	}
 
 	bSuccess = false;
-}
+	}
 
 void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
 {

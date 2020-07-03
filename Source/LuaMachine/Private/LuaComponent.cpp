@@ -350,6 +350,7 @@ FLuaValue ULuaComponent::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
 	return FLuaValue();
 }
 
-void ULuaComponent::ReceiveLuaMetaNewIndex_Implementation(FLuaValue Key, FLuaValue Value)
+bool ULuaComponent::ReceiveLuaMetaNewIndex_Implementation(FLuaValue Key, FLuaValue Value)
 {
+	return false;
 }
