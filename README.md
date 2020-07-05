@@ -9,7 +9,8 @@ If you want modders to customize your game/project, or you need to allow game de
 
 ## How it works
 
-Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it exposing to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+In addition to this, a full featued C++ API for adding generic Lua scripting capabilities to your project is included.
 
 Currently Windows 64bit, Mac, Linux x86_64 (both Runtime and Editor), Linux AArch64, Android (32 and 64 bit) and iOS are supported. Minimal supported Engine version is 4.20.
 
