@@ -983,7 +983,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 				}
 			}
 			break;
-	}
+		}
 		if (LuaProp->Struct != FLuaValue::StaticStruct())
 			break;
 
@@ -1083,7 +1083,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			ReturnedValues++;
 			LuaState->FromLuaValue(*LuaValue, nullptr, L);
 		}
-		}
+	}
 
 #if ENGINE_MINOR_VERSION >= 25
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1100,7 +1100,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	lua_pushnil(L);
 	return 1;
-	}
+}
 
 int ULuaState::TableFunction_print(lua_State * L)
 {
@@ -1667,7 +1667,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	if (ObjectPropertyBase)
 	{
 		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Buffer, Index));
-}
+	}
 
 #if ENGINE_MINOR_VERSION >= 25
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
@@ -1716,7 +1716,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (ObjectPropertyBase)
 	{
 		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Buffer, Value.Object, Index);
-}
+	}
 
 #if ENGINE_MINOR_VERSION >= 25
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
@@ -1731,7 +1731,76 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	}
 
 	bSuccess = false;
+}
+
+#if ENGINE_MINOR_VERSION >= 25
+void ULuaState::ToProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+{
+	ToFProperty(Buffer, Property, Value, bSuccess, Index);
+}
+
+FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
+{
+	return FromFProperty(Buffer, Property, bSuccess, Index);
+}
+#else
+void ULuaState::ToProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+{
+	ToUProperty(Buffer, Property, Value, bSuccess, Index);
+}
+FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
+{
+	return FromUProperty(Buffer, Property, bSuccess, Index);
+}
+#endif
+
+
+FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, FString PropertyName)
+{
+	if (!InObject)
+	{
+		return FLuaValue();
 	}
+
+	UClass* Class = InObject->GetClass();
+#if ENGINE_MINOR_VERSION >= 25
+	FProperty* Property = nullptr;
+#else
+	UProperty* Property = nullptr;
+#endif
+	Property = Class->FindPropertyByName(*PropertyName);
+	if (Property)
+	{
+		bool bSuccess = false;
+		return FromProperty(InObject, Property, bSuccess);
+	}
+
+	return FLuaValue();
+}
+
+bool ULuaState::SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value)
+{
+	if (!InObject)
+	{
+		return false;
+	}
+
+	UClass* Class = InObject->GetClass();
+#if ENGINE_MINOR_VERSION >= 25
+	FProperty* Property = nullptr;
+#else
+	UProperty* Property = nullptr;
+#endif
+	Property = Class->FindPropertyByName(*PropertyName);
+	if (Property)
+	{
+		bool bSuccess = false;
+		ToProperty(InObject, Property, Value, bSuccess);
+		return bSuccess;
+	}
+
+	return false;
+}
 
 void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
 {

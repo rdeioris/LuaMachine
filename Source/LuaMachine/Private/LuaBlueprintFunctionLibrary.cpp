@@ -651,17 +651,7 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 	{
 		FLuaValue Key = L->ToLuaValue(-2);
 		FLuaValue Value = L->ToLuaValue(-1);
-#if ENGINE_MINOR_VERSION >= 25
-		FProperty* Property = Class->FindPropertyByName(*Key.ToString());
-#else
-		UProperty* Property = Class->FindPropertyByName(*Key.ToString());
-#endif
-		if (Property)
-		{
-			bool bSuccess = false;
-			L->ToUProperty(InObject, Property, Value, bSuccess);
-		}
-
+		L->SetPropertyFromLuaValue(InObject, Key.ToString(), Value);
 		L->Pop(); // pop the value
 	}
 

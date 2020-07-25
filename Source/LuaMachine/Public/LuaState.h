@@ -198,6 +198,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	FLuaValue GetLuaUserDataField(FLuaValue UserData, FString Key);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue GetLuaValueFromProperty(UObject* InObject, FString PropertyName);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	bool SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
@@ -316,15 +322,15 @@ public:
 
 	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
 
-	static int MetaTableFunctionUserData__index(lua_State *L);
-	static int MetaTableFunctionUserData__newindex(lua_State *L);
+	static int MetaTableFunctionUserData__index(lua_State* L);
+	static int MetaTableFunctionUserData__newindex(lua_State* L);
 
-	static int TableFunction_print(lua_State *L);
-	static int TableFunction_package_preload(lua_State *L);
+	static int TableFunction_print(lua_State* L);
+	static int TableFunction_package_preload(lua_State* L);
 
-	static int MetaTableFunction__call(lua_State *L);
+	static int MetaTableFunction__call(lua_State* L);
 
-	static int MetaTableFunctionUserData__eq(lua_State *L);
+	static int MetaTableFunctionUserData__eq(lua_State* L);
 	static int MetaTableFunctionUserData__gc(lua_State* L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
@@ -338,12 +344,16 @@ public:
 	void ToUProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
 	FLuaValue FromFProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToFProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
 #else
 	FLuaValue FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
 #endif
 
-	static ULuaState* GetFromExtraSpace(lua_State *L)
+	static ULuaState* GetFromExtraSpace(lua_State* L)
 	{
 		ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
 		return *LuaExtraSpacePtr;
