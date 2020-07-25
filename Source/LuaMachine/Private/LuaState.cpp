@@ -1637,7 +1637,7 @@ void ULuaState::ToUProperty(void* Buffer, FProperty * Property, FLuaValue Value,
 #if ENGINE_MINOR_VERSION >= 25
 FLuaValue ULuaState::FromFProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 #else
-FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
@@ -1685,9 +1685,9 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 }
 
 #if ENGINE_MINOR_VERSION >= 25
-void ULuaState::ToFProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToFProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #else
-void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
@@ -1744,18 +1744,18 @@ FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuc
 	return FromFProperty(Buffer, Property, bSuccess, Index);
 }
 #else
-void ULuaState::ToProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
 	ToUProperty(Buffer, Property, Value, bSuccess, Index);
 }
-FLuaValue ULuaState::FromProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index)
 {
 	return FromUProperty(Buffer, Property, bSuccess, Index);
 }
 #endif
 
 
-FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, FString PropertyName)
+FLuaValue ULuaState::GetLuaValueFromProperty(UObject* InObject, FString PropertyName)
 {
 	if (!InObject)
 	{
@@ -1778,7 +1778,7 @@ FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, FString Propert
 	return FLuaValue();
 }
 
-bool ULuaState::SetPropertyFromLuaValue(UObject * InObject, FString PropertyName, FLuaValue Value)
+bool ULuaState::SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value)
 {
 	if (!InObject)
 	{
@@ -1807,7 +1807,7 @@ void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
 	UserDataMetaTable = MetaTable;
 }
 
-void ULuaState::SetupAndAssignUserDataMetatable(UObject * Context, TMap<FString, FLuaValue> & Metatable)
+void ULuaState::SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable)
 {
 	lua_newtable(L);
 	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__index);
