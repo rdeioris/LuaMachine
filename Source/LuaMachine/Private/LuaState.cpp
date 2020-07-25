@@ -1748,7 +1748,7 @@ void ULuaState::ToProperty(void* Buffer, UProperty * Property, FLuaValue Value, 
 {
 	ToUProperty(Buffer, Property, Value, bSuccess, Index);
 }
-FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
 {
 	return FromUProperty(Buffer, Property, bSuccess, Index);
 }
@@ -1778,7 +1778,7 @@ FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, FString Propert
 	return FLuaValue();
 }
 
-bool ULuaState::SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value)
+bool ULuaState::SetPropertyFromLuaValue(UObject * InObject, FString PropertyName, FLuaValue Value)
 {
 	if (!InObject)
 	{
