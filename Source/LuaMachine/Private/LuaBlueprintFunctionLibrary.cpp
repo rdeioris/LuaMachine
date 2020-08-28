@@ -259,6 +259,74 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromBase64(FString Base64)
 	return FLuaValue::FromBase64(Base64);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF16(FString String)
+{
+	TArray<uint8> Bytes;
+	if (FGenericPlatformProperties::IsLittleEndian())
+	{
+		for (int32 Index = 0; Index < String.Len(); Index++)
+		{
+			uint16 UTF16Char = (uint16)String[Index];
+			Bytes.Add((uint8)(UTF16Char & 0xFF));
+			Bytes.Add((uint8)((UTF16Char >> 8) & 0xFF));
+		}
+	}
+	else
+	{
+		for (int32 Index = 0; Index < String.Len(); Index++)
+		{
+			uint16 UTF16Char = (uint16)String[Index];
+			Bytes.Add((uint8)((UTF16Char >> 8) & 0xFF));
+			Bytes.Add((uint8)(UTF16Char & 0xFF));
+		}
+	}
+	return FLuaValue(Bytes);
+}
+
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF16(FLuaValue Value)
+{
+	FString ReturnValue;
+	TArray<uint8> Bytes = Value.ToBytes();
+	if (Bytes.Num() % 2 != 0)
+	{
+		return ReturnValue;
+	}
+
+	if (FGenericPlatformProperties::IsLittleEndian())
+	{
+		for (int32 Index = 0; Index < Bytes.Num(); Index += 2)
+		{
+			uint16 UTF16Low = Bytes[Index];
+			uint16 UTF16High = Bytes[Index + 1];
+			ReturnValue.AppendChar((TCHAR)((UTF16High << 8) | UTF16Low));
+		}
+	}
+	else
+	{
+		for (int32 Index = 0; Index < Bytes.Num(); Index += 2)
+		{
+			uint16 UTF16High = Bytes[Index];
+			uint16 UTF16Low = Bytes[Index + 1];
+			ReturnValue.AppendChar((TCHAR)((UTF16High << 8) | UTF16Low));
+		}
+	}
+	return ReturnValue;
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF8(FString String)
+{
+	FTCHARToUTF8 UTF8String(*String);
+	return FLuaValue((const char*)UTF8String.Get(), UTF8String.Length());
+}
+
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(FLuaValue Value)
+{
+	FString ReturnValue;
+	TArray<uint8> Bytes = Value.ToBytes();
+	Bytes.Add(0);
+	return FString(UTF8_TO_TCHAR(Bytes.GetData()));
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
 {
 	FLuaValue ReturnValue;
