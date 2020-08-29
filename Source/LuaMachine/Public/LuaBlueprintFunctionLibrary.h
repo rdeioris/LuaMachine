@@ -218,6 +218,12 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static FString LuaValueToUTF8(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static FLuaValue LuaValueFromUTF32(FString String);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FString LuaValueToUTF32(FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
 	static int64 LuaValueToPointer(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value);
 

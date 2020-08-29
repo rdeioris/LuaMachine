@@ -327,6 +327,23 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(FLuaValue Value)
 	return FString(UTF8_TO_TCHAR(Bytes.GetData()));
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(FString String)
+{
+	FTCHARToUTF32 UTF32String(*String);
+	return FLuaValue((const char*)UTF32String.Get(), UTF32String.Length());
+}
+
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(FLuaValue Value)
+{
+	FString ReturnValue;
+	TArray<uint8> Bytes = Value.ToBytes();
+	Bytes.Add(0);
+	Bytes.Add(0);
+	Bytes.Add(0);
+	Bytes.Add(0);
+	return FString(FUTF32ToTCHAR((const UTF32CHAR*)Bytes.GetData(), Bytes.Num() / 4).Get());
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
 {
 	FLuaValue ReturnValue;
@@ -490,7 +507,9 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 
 	UTexture2D* Texture = UTexture2D::CreateTransient(Width, Height, PixelFormat);
 	if (!Texture)
+	{
 		return nullptr;
+	}
 
 	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];
 	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
