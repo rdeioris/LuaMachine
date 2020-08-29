@@ -309,7 +309,7 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet, boo
 bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
 {
 	TArray<uint8> Bytes;
-	Bytes.Append((uint8*)TCHAR_TO_ANSI(*Code), FCStringAnsi::Strlen(TCHAR_TO_ANSI(*Code)));
+	Bytes.Append((uint8*)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
 	return RunCode(Bytes, CodePath, NRet);
 }
 
@@ -349,7 +349,7 @@ TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& Err
 	TArray<uint8> Output;
 
 	lua_State* L = luaL_newstate();
-	if (luaL_loadbuffer(L, TCHAR_TO_ANSI(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_ANSI(CodeRaw)), TCHAR_TO_ANSI(*FullCodePath)))
+	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_ANSI(*FullCodePath)))
 	{
 		ErrorString = ANSI_TO_TCHAR(lua_tostring(L, -1));
 		Output.Empty();
