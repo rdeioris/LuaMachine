@@ -329,12 +329,18 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(FLuaValue Value)
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(FString String)
 {
+#if ENGINE_MINOR_VERSION >= 25
 	FTCHARToUTF32 UTF32String(*String);
 	return FLuaValue((const char*)UTF32String.Get(), UTF32String.Length());
+#else
+	UE_LOG(LogLuaMachine, Error, TEXT("UTF32 not supported in this engine version"));
+	return FLuaValue();
+#endif
 }
 
 FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(FLuaValue Value)
 {
+#if ENGINE_MINOR_VERSION >= 25
 	FString ReturnValue;
 	TArray<uint8> Bytes = Value.ToBytes();
 	Bytes.Add(0);
@@ -342,6 +348,10 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(FLuaValue Value)
 	Bytes.Add(0);
 	Bytes.Add(0);
 	return FString(FUTF32ToTCHAR((const UTF32CHAR*)Bytes.GetData(), Bytes.Num() / 4).Get());
+#else
+	UE_LOG(LogLuaMachine, Error, TEXT("UTF32 not supported in this engine version"));
+	return FString("");
+#endif
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
