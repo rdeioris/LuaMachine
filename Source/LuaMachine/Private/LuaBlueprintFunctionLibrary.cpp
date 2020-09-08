@@ -48,6 +48,18 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObject(UObject* InObject)
 	return FLuaValue(InObject);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateUFunction(UObject* InObject, FString FunctionName)
+{
+	if (InObject && InObject->FindFunction(FName(FunctionName)))
+	{
+		FLuaValue Value = FLuaValue::Function(FName(FunctionName));
+		Value.Object = InObject;
+		return Value;
+	}
+
+	return FLuaValue();
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateTable(UObject* WorldContextObject, TSubclassOf<ULuaState> State)
 {
 	FLuaValue LuaValue;
@@ -470,7 +482,9 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat, bool bDetectFormat)
 {
 	if (Value.Type != ELuaValueType::String)
+	{
 		return nullptr;
+	}
 
 	IImageWrapperModule& ImageWrapperModule = FModuleManager::LoadModuleChecked<IImageWrapperModule>(TEXT("ImageWrapper"));
 
@@ -484,17 +498,20 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 			UE_LOG(LogLuaMachine, Error, TEXT("Unable to detect image format"));
 			return nullptr;
 		}
+
 		TSharedPtr<IImageWrapper> ImageWrapper = ImageWrapperModule.CreateImageWrapper(ImageFormat);
 		if (!ImageWrapper.IsValid())
 		{
 			UE_LOG(LogLuaMachine, Error, TEXT("Unable to create ImageWrapper"));
 			return nullptr;
 		}
+
 		if (!ImageWrapper->SetCompressed(Bytes.GetData(), Bytes.Num()))
 		{
 			UE_LOG(LogLuaMachine, Error, TEXT("Unable to parse image data"));
 			return nullptr;
 		}
+
 #if ENGINE_MINOR_VERSION >= 25
 		TArray<uint8> UncompressedBytes;
 #else
