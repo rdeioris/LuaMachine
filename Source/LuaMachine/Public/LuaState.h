@@ -204,6 +204,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	bool SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "Lua")
+	FLuaValue GetLuaBlueprintPackageTable(FString PackageName);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
@@ -230,7 +233,7 @@ public:
 	bool bEnableReturnHook;
 
 	UPROPERTY()
-	TArray<ULuaBlueprintPackage*> LuaBlueprintPackages;
+	TMap<FString, ULuaBlueprintPackage*> LuaBlueprintPackages;
 
 	TArray<TSharedRef<FLuaSmartReference>> LuaSmartReferences;
 

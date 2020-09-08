@@ -177,7 +177,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 					SetField(-2, TCHAR_TO_ANSI(*LuaPair.Key));
 				}
 				// this avoid the package to be GC'd
-				LuaBlueprintPackages.Add(LuaBlueprintPackage);
+				LuaBlueprintPackages.Add(Pair.Key, LuaBlueprintPackage);
 				LuaBlueprintPackage->SelfTable = ToLuaValue(-1);
 			}
 		}
@@ -252,6 +252,16 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	ReceiveLuaStateInitialized();
 
 	return this;
+}
+
+FLuaValue ULuaState::GetLuaBlueprintPackageTable(FString PackageName)
+{
+	if (!LuaBlueprintPackages.Contains(PackageName))
+	{
+		return FLuaValue();
+	}
+
+	return LuaBlueprintPackages[PackageName]->SelfTable;
 }
 
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
