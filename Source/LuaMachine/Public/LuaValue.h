@@ -123,6 +123,15 @@ struct LUAMACHINE_API FLuaValue
 		return LuaValue;
 	}
 
+	static FLuaValue FunctionOfObject(UObject* InObject, FName FunctionName)
+	{
+		FLuaValue LuaValue;
+		LuaValue.Type = ELuaValueType::UFunction;
+		LuaValue.Object = InObject;
+		LuaValue.FunctionName = FunctionName;
+		return LuaValue;
+	}
+
 	FString ToString();
 	FName ToName();
 	int32 ToInteger();
