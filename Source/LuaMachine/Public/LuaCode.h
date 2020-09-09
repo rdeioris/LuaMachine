@@ -1,4 +1,5 @@
 // Copyright 2018-2020 - Roberto De Ioris
+// Reimport system by yama2akira (Akira Yamamoto)
 
 #pragma once
 
@@ -56,4 +57,12 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 
 	virtual void PreSave(const ITargetPlatform* TargetPlatform) override;
+
+#if WITH_EDITORONLY_DATA
+	virtual void PostInitProperties() override;
+	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+
+	UPROPERTY(VisibleAnywhere, Instanced, Category = Reimport)
+	class UAssetImportData* AssetImportData;
+#endif
 };

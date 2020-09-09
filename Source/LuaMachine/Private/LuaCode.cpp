@@ -1,8 +1,10 @@
 // Copyright 2018-2020 - Roberto De Ioris
+// Reimport system by yama2akira (Akira Yamamoto)
 
 #include "LuaCode.h"
 #include "LuaMachine.h"
 #include "Serialization/CustomVersion.h"
+#include "EditorFramework/AssetImportData.h"
 
 const FGuid FLuaCodeObjectVersion::GUID(0x01C2E96A1, 0xE24436EA, 0x6C69B025, 0x14E7FC3);
 FCustomVersionRegistration GRegisterLuaCodeCustomVersion(FLuaCodeObjectVersion::GUID, FLuaCodeObjectVersion::LatestVersion, TEXT("LuaCodeVer"));
@@ -75,3 +77,23 @@ void ULuaCode::PreSave(const ITargetPlatform* TargetPlatform)
 		}
 	}
 }
+
+#if WITH_EDITORONLY_DATA
+void ULuaCode::PostInitProperties()
+{
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		AssetImportData = NewObject<UAssetImportData>(this, TEXT("AssetImportData"));
+	}
+	Super::PostInitProperties();
+}
+
+void ULuaCode::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
+{
+	if (AssetImportData)
+	{
+		OutTags.Add(FAssetRegistryTag(SourceFileTagName(), AssetImportData->GetSourceData().ToJson(), FAssetRegistryTag::TT_Hidden));
+	}
+	Super::GetAssetRegistryTags(OutTags);
+}
+#endif
