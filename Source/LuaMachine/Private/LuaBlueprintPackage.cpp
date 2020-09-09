@@ -23,3 +23,8 @@ UWorld* ULuaBlueprintPackage::GetWorld() const
 	}
 	return nullptr;
 }
+
+void ULuaBlueprintPackage::Init()
+{
+
+}

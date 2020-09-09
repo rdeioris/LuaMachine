@@ -179,6 +179,8 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 				// this avoid the package to be GC'd
 				LuaBlueprintPackages.Add(Pair.Key, LuaBlueprintPackage);
 				LuaBlueprintPackage->SelfTable = ToLuaValue(-1);
+				LuaBlueprintPackage->Init();
+				LuaBlueprintPackage->ReceiveInit();
 			}
 		}
 		else

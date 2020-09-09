@@ -30,4 +30,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	FLuaValue GetSelfLuaTable() const { return SelfTable; }
+
+	virtual void Init();
+
+	UFUNCTION(BlueprintImplementableEvent, meta = (DisplayName = "Init"), Category = "Lua")
+	void ReceiveInit();
 };
