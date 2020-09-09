@@ -2,7 +2,8 @@
 
 #include "LuaCodeFactory.h"
 #include "LuaCode.h"
-
+#include "EditorFramework/AssetImportData.h"
+#include "Misc/FileHelper.h"
 
 ULuaCodeFactory::ULuaCodeFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
 
@@ -27,5 +28,75 @@ UObject* ULuaCodeFactory::FactoryCreateBinary(UClass* InClass, UObject* InParent
 	FString Code = ANSI_TO_TCHAR((const char*)Buffer);
 	ULuaCode *NewAsset = NewObject<ULuaCode>(InParent, InClass, InName, Flags);
 	NewAsset->Code = FText::FromString(Code);
+
+	if (NewAsset->AssetImportData != nullptr) {
+		NewAsset->AssetImportData->Update(GetCurrentFilename());
+		NewAsset->MarkPackageDirty();
+	}
 	return NewAsset;
+}
+
+bool ULuaCodeFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
+{
+	ULuaCode* Asset = Cast<ULuaCode>(Obj);
+	if (Asset && Asset->AssetImportData)
+	{
+		Asset->AssetImportData->ExtractFilenames(OutFilenames);
+
+		for (auto FileName : OutFilenames)
+		{
+			FString FileContent;
+			if (FFileHelper::LoadFileToString(/*out*/ FileContent, *FileName))
+			{
+				if (Asset->Code.ToString().Compare(FileContent) == 0)
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+void ULuaCodeFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
+{
+	ULuaCode* Asset = Cast<ULuaCode>(Obj);
+	if (Asset && ensure(NewReimportPaths.Num() == 1))
+	{
+		Asset->AssetImportData->UpdateFilenameOnly(NewReimportPaths[0]);
+	}
+}
+
+EReimportResult::Type ULuaCodeFactory::Reimport(UObject* Obj)
+{
+	ULuaCode* Asset = Cast<ULuaCode>(Obj);
+	if (!Asset)
+	{
+		return EReimportResult::Failed;
+	}
+
+	const FString Filename = Asset->AssetImportData->GetFirstFilename();
+	if (!Filename.Len() || IFileManager::Get().FileSize(*Filename) == INDEX_NONE)
+	{
+		return EReimportResult::Failed;
+	}
+
+	EReimportResult::Type Result = EReimportResult::Failed;
+	if (UFactory::StaticImportObject(
+		Asset->GetClass(), Asset->GetOuter(),
+		*Asset->GetName(), RF_Public | RF_Standalone, *Filename, NULL, this))
+	{
+		if (Asset->GetOuter())
+		{
+			Asset->GetOuter()->MarkPackageDirty();
+		}
+		else
+		{
+			Asset->MarkPackageDirty();
+		}
+		return EReimportResult::Succeeded;
+	}
+
+	return EReimportResult::Failed;
 }

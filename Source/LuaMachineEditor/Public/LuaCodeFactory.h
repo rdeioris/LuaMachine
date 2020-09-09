@@ -6,13 +6,14 @@
 #include "Factories/Factory.h"
 #include "Developer/AssetTools/Public/AssetTypeCategories.h"
 #include "Runtime/Engine/Classes/Engine/Level.h"
+#include "EditorReimportHandler.h"
 #include "LuaCodeFactory.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory
+class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory, public FReimportHandler
 {
 	GENERATED_UCLASS_BODY()
 
@@ -34,6 +35,7 @@ class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory
 		UObject* NewAsset = nullptr;
 		if (!Filename.IsEmpty())
 		{
+			CurrentFilename = Filename;
 			return FactoryCreateFile(InClass, InOuter, InName, Flags, Filename, Parms, nullptr, OutCanceled);
 		}
 		else
@@ -50,4 +52,9 @@ class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory
 
 		return NewAsset;
 	}
+
+public:
+	virtual bool CanReimport(UObject* Obj, TArray<FString>& OutFilenames) override;
+	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
+	virtual EReimportResult::Type Reimport(UObject* Obj) override;
 };
