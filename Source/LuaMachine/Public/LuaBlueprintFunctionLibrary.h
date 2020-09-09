@@ -247,6 +247,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset);
+	
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
+	static FLuaValue LuaRunByteCode(UObject* WorldContextObject, TSubclassOf<ULuaState> State, TArray<uint8> ByteCode, FString CodePath);
 
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category="Lua")
 	static FLuaValue LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString, FString CodePath="");

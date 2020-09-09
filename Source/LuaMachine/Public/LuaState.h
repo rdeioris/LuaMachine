@@ -340,6 +340,7 @@ public:
 
 	static void Debug_Hook(lua_State* L, lua_Debug* ar);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
 
 #if ENGINE_MINOR_VERSION >= 25
