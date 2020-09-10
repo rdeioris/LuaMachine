@@ -256,7 +256,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	return this;
 }
 
-FLuaValue ULuaState::GetLuaBlueprintPackageTable(FString PackageName)
+FLuaValue ULuaState::GetLuaBlueprintPackageTable(const FString& PackageName)
 {
 	if (!LuaBlueprintPackages.Contains(PackageName))
 	{
@@ -283,7 +283,7 @@ bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 
 }
 
-bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet, bool bNonContentDirectory)
+bool ULuaState::RunFile(const FString& Filename, bool bIgnoreNonExistent, int NRet, bool bNonContentDirectory)
 {
 	TArray<uint8> Code;
 	FString AbsoluteFilename = FPaths::Combine(FPaths::ProjectContentDir(), Filename);
@@ -318,14 +318,14 @@ bool ULuaState::RunFile(FString Filename, bool bIgnoreNonExistent, int NRet, boo
 	return false;
 }
 
-bool ULuaState::RunCode(FString Code, FString CodePath, int NRet)
+bool ULuaState::RunCode(const FString& Code, const FString& CodePath, int NRet)
 {
 	TArray<uint8> Bytes;
 	Bytes.Append((uint8*)TCHAR_TO_UTF8(*Code), FCStringAnsi::Strlen(TCHAR_TO_UTF8(*Code)));
 	return RunCode(Bytes, CodePath, NRet);
 }
 
-bool ULuaState::RunCode(TArray<uint8> Code, FString CodePath, int NRet)
+bool ULuaState::RunCode(const TArray<uint8>& Code, const FString& CodePath, int NRet)
 {
 	FString FullCodePath = FString("@") + CodePath;
 
@@ -354,7 +354,7 @@ int ULuaState::ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, voi
 	return 0;
 }
 
-TArray<uint8> ULuaState::ToByteCode(FString Code, FString CodePath, FString& ErrorString)
+TArray<uint8> ULuaState::ToByteCode(const FString& Code, const FString& CodePath, FString& ErrorString)
 {
 	const TCHAR* CodeRaw = *Code;
 	FString FullCodePath = FString("@") + CodePath;
@@ -1263,7 +1263,7 @@ void ULuaState::PushRegistryTable()
 	lua_pushvalue(L, LUA_REGISTRYINDEX);
 }
 
-int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
+int32 ULuaState::GetFieldFromTree(const FString& Tree, bool bGlobal)
 {
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
@@ -1305,7 +1305,7 @@ int32 ULuaState::GetFieldFromTree(FString Tree, bool bGlobal)
 	return i + AdditionalPop;
 }
 
-void ULuaState::SetFieldFromTree(FString Tree, FLuaValue & Value, bool bGlobal, UObject * CallContext)
+void ULuaState::SetFieldFromTree(const FString& Tree, FLuaValue& Value, bool bGlobal, UObject * CallContext)
 {
 	TArray<FString> Parts;
 	Tree.ParseIntoArray(Parts, TEXT("."));
@@ -1767,7 +1767,7 @@ FLuaValue ULuaState::FromProperty(void* Buffer, UProperty* Property, bool& bSucc
 #endif
 
 
-FLuaValue ULuaState::GetLuaValueFromProperty(UObject* InObject, FString PropertyName)
+FLuaValue ULuaState::GetLuaValueFromProperty(UObject* InObject, const FString& PropertyName)
 {
 	if (!InObject)
 	{
@@ -1790,7 +1790,7 @@ FLuaValue ULuaState::GetLuaValueFromProperty(UObject* InObject, FString Property
 	return FLuaValue();
 }
 
-bool ULuaState::SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value)
+bool ULuaState::SetPropertyFromLuaValue(UObject* InObject, const FString& PropertyName, FLuaValue Value)
 {
 	if (!InObject)
 	{
@@ -1891,7 +1891,7 @@ FLuaValue ULuaState::NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUse
 	return FLuaValue();
 }
 
-void ULuaState::SetLuaUserDataField(FLuaValue UserData, FString Key, FLuaValue Value)
+void ULuaState::SetLuaUserDataField(FLuaValue UserData, const FString& Key, FLuaValue Value)
 {
 	if (UserData.Type != ELuaValueType::UObject || !UserData.Object)
 		return;
@@ -1909,7 +1909,7 @@ void ULuaState::SetLuaUserDataField(FLuaValue UserData, FString Key, FLuaValue V
 	}
 }
 
-FLuaValue ULuaState::GetLuaUserDataField(FLuaValue UserData, FString Key)
+FLuaValue ULuaState::GetLuaUserDataField(FLuaValue UserData, const FString& Key)
 {
 	if (UserData.Type != ELuaValueType::UObject || !UserData.Object)
 		return FLuaValue();

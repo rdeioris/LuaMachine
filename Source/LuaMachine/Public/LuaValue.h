@@ -53,7 +53,7 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue(const FLuaValue& SourceValue);
 	FLuaValue& operator = (const FLuaValue &SourceValue);
 
-	FLuaValue(FString InString) : FLuaValue()
+	FLuaValue(const FString& InString) : FLuaValue()
 	{
 		Type = ELuaValueType::String;
 		String = InString;
@@ -132,13 +132,13 @@ struct LUAMACHINE_API FLuaValue
 		return LuaValue;
 	}
 
-	FString ToString();
-	FName ToName();
-	int32 ToInteger();
-	float ToFloat();
-	bool ToBool();
+	FString ToString() const;
+	FName ToName() const;
+	int32 ToInteger() const;
+	float ToFloat() const;
+	bool ToBool() const;
 
-	TArray<uint8> ToBytes();
+	TArray<uint8> ToBytes() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Lua")
 	ELuaValueType Type;
@@ -166,11 +166,11 @@ struct LUAMACHINE_API FLuaValue
 	UPROPERTY()
 	ULuaState* LuaState;
 
-	FLuaValue GetField(FString Key);
-	FLuaValue SetField(FString Key, FLuaValue Value);
+	FLuaValue GetField(const FString& Key);
+	FLuaValue SetField(const FString& Key, FLuaValue Value);
 
-	FLuaValue GetFieldByIndex(int32 Index);
-	FLuaValue SetFieldByIndex(int32 Index, FLuaValue Value);
+	FLuaValue GetFieldByIndex(const int32 Index);
+	FLuaValue SetFieldByIndex(const int32 Index, FLuaValue Value);
 
 	FLuaValue SetMetaTable(FLuaValue MetaTable);
 
@@ -179,8 +179,8 @@ struct LUAMACHINE_API FLuaValue
 	static FLuaValue FromJsonValue(ULuaState* L, FJsonValue& JsonValue);
 	TSharedPtr<FJsonValue> ToJsonValue();
 
-	static FLuaValue FromBase64(FString Base64);
-	FString ToBase64();
+	static FLuaValue FromBase64(const FString& Base64);
+	FString ToBase64() const;
 
 	bool IsNil() const;
 

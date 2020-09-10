@@ -35,10 +35,10 @@ public:
 	bool bImplicitSelf;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	FLuaValue LuaGetField(FString Name);
+	FLuaValue LuaGetField(const FString& Name);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
-	void LuaSetField(FString Name, FLuaValue Value);
+	void LuaSetField(const FString& Name, FLuaValue Value);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua UserData Metatable __gc"))
 	void ReceiveLuaGC();
@@ -50,10 +50,10 @@ public:
 	void ReceiveLuaUserDataTableInit();
 
 	UFUNCTION(BlueprintCallable, Category = "Lua", meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
+	FLuaValue LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	FLuaValue UFunctionToLuaValue(FString FunctionName);
+	FLuaValue UFunctionToLuaValue(const FString& FunctionName);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	TArray<FString> GetObjectUFunctions(bool bOnlyPublic=true);

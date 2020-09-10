@@ -23,22 +23,22 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 	return FLuaValue();
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateString(FString String)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateString(const FString& String)
 {
 	return FLuaValue(String);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNumber(float Value)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNumber(const float Value)
 {
 	return FLuaValue(Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger(int32 Value)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger(const int32 Value)
 {
 	return FLuaValue(Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateBool(bool bInBool)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateBool(const bool bInBool)
 {
 	return FLuaValue(bInBool);
 }
@@ -48,7 +48,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObject(UObject* InObject)
 	return FLuaValue(InObject);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateUFunction(UObject* InObject, FString FunctionName)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateUFunction(UObject* InObject, const FString& FunctionName)
 {
 	if (InObject && InObject->FindFunction(FName(FunctionName)))
 	{
@@ -195,27 +195,27 @@ bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(FLuaValue Value)
 	return Value.ToBool();
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(int32 Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(const int32 Value)
 {
 	return FLuaValue(Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_StringToLuaValue(FString Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_StringToLuaValue(const FString& Value)
 {
 	return FLuaValue(Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_TextToLuaValue(FText Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_TextToLuaValue(const FText& Value)
 {
 	return FLuaValue(Value.ToString());
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_NameToLuaValue(FName Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_NameToLuaValue(const FName Value)
 {
 	return FLuaValue(Value.ToString());
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Name)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
@@ -266,12 +266,12 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToBase64(FLuaValue Value)
 	return Value.ToBase64();
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromBase64(FString Base64)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromBase64(const FString& Base64)
 {
 	return FLuaValue::FromBase64(Base64);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF16(FString String)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF16(const FString& String)
 {
 	TArray<uint8> Bytes;
 	if (FGenericPlatformProperties::IsLittleEndian())
@@ -325,7 +325,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF16(FLuaValue Value)
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF8(FString String)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF8(const FString& String)
 {
 	FTCHARToUTF8 UTF8String(*String);
 	return FLuaValue((const char*)UTF8String.Get(), UTF8String.Length());
@@ -339,7 +339,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(FLuaValue Value)
 	return FString(UTF8_TO_TCHAR(Bytes.GetData()));
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(FString String)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(const FString& String)
 {
 #if ENGINE_MINOR_VERSION >= 25
 	FTCHARToUTF32 UTF32String(*String);
@@ -366,7 +366,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(FLuaValue Value)
 #endif
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Filename, const bool bIgnoreNonExistent)
 {
 	FLuaValue ReturnValue;
 
@@ -389,7 +389,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunFile(UObject* WorldContextObject, 
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Filename, const bool bIgnoreNonExistent)
 {
 	FLuaValue ReturnValue;
 
@@ -412,7 +412,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunNonContentFile(UObject* WorldConte
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString CodeString, FString CodePath)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& CodeString, FString CodePath)
 {
 	FLuaValue ReturnValue;
 
@@ -479,7 +479,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObject, TSubclassOf<ULuaState> State, TArray<uint8> ByteCode, FString CodePath)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObject, TSubclassOf<ULuaState> State, const TArray<uint8>& ByteCode, const FString& CodePath)
 {
 	FLuaValue ReturnValue;
 
@@ -600,7 +600,7 @@ USoundWave* ULuaBlueprintFunctionLibrary::LuaValueToTransientSoundWave(FLuaValue
 	return SoundWave;
 }
 
-void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Method, FString URL, TMap<FString, FString> Headers, FLuaValue Body, FLuaValue Context, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
+void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Method, const FString& URL, TMap<FString, FString> Headers, FLuaValue Body, FLuaValue Context, const FLuaHttpResponseReceived& ResponseReceived, const FLuaHttpError& Error)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
@@ -659,7 +659,7 @@ void ULuaBlueprintFunctionLibrary::HttpGenericRequestDone(FHttpRequestPtr Reques
 	ResponseReceived.ExecuteIfBound(SmartContext->Value, LuaHttpResponse);
 }
 
-void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString URL, TMap<FString, FString> Headers, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
+void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& URL, TMap<FString, FString> Headers, const FString& SecurityHeader, const FString& SignaturePublicExponent, const FString& SignatureModulus, FLuaHttpSuccess Completed)
 {
 
 	// Security CHECK
@@ -681,7 +681,7 @@ void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubcl
 	HttpRequest->ProcessRequest();
 }
 
-void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, FString SecurityHeader, FString SignaturePublicExponent, FString SignatureModulus, FLuaHttpSuccess Completed)
+void ULuaBlueprintFunctionLibrary::HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, const FString SecurityHeader, const FString SignaturePublicExponent, const FString SignatureModulus, FLuaHttpSuccess Completed)
 {
 	FLuaValue ReturnValue;
 	int32 StatusCode = -1;
@@ -794,7 +794,7 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 	L->Pop(); // pop the table
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FString Key)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, const FString& Key)
 {
 	ULuaState* L = Table.LuaState;
 	if (!L)
@@ -803,7 +803,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, FStrin
 	return Table.GetField(Key);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaComponentGetField(FLuaValue LuaComponent, FString Key)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaComponentGetField(FLuaValue LuaComponent, const FString& Key)
 {
 	FLuaValue ReturnValue;
 	if (LuaComponent.Type != ELuaValueType::UObject)
@@ -914,7 +914,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetByIndex(FLuaValue Table, int3
 	return Table.SetFieldByIndex(Index, Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, FString Key, FLuaValue Value)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, const FString& Key, FLuaValue Value)
 {
 	FLuaValue ReturnValue;
 	if (Table.Type != ELuaValueType::Table)
@@ -960,7 +960,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 	return FLuaValue();
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* Actor, FString Name)
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* Actor, const FString& Name)
 {
 	if (!Actor)
 		return FLuaValue();
@@ -986,7 +986,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 	return FLuaValue();
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, FString Name)
+FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, TSubclassOf<ULuaState> State, const FString& Name)
 {
 	if (!Actor)
 		return FLuaValue();
@@ -1020,7 +1020,7 @@ int32 ULuaBlueprintFunctionLibrary::LuaGetTop(UObject* WorldContextObject, TSubc
 	return L->GetTop();
 }
 
-void ULuaBlueprintFunctionLibrary::LuaSetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, FLuaValue Value)
+void ULuaBlueprintFunctionLibrary::LuaSetGlobal(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Name, FLuaValue Value)
 {
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
@@ -1028,7 +1028,7 @@ void ULuaBlueprintFunctionLibrary::LuaSetGlobal(UObject* WorldContextObject, TSu
 	L->SetFieldFromTree(Name, Value, true);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Name, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
@@ -1052,7 +1052,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaGlobalCall(UObject* WorldContextObjec
 	return ReturnValue;
 }
 
-TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Name, TArray<FLuaValue> Args)
+TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaGlobalCallMulti(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Name, TArray<FLuaValue> Args)
 {
 	TArray<FLuaValue> ReturnValue;
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
@@ -1187,7 +1187,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(FLuaValue Value, TA
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, const FString& Key, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 	if (InTable.Type != ELuaValueType::Table)
@@ -1204,7 +1204,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, FStri
 	return LuaValueCall(Value, Args);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCallWithSelf(FLuaValue InTable, FString Key, TArray<FLuaValue> Args)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCallWithSelf(FLuaValue InTable, const FString& Key, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 	if (InTable.Type != ELuaValueType::Table)
@@ -1757,7 +1757,7 @@ UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(FLuaValue Value)
 	return LoadedObject;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueFromJson(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Json, FLuaValue& LuaValue)
+bool ULuaBlueprintFunctionLibrary::LuaValueFromJson(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const FString& Json, FLuaValue& LuaValue)
 {
 	// default to nil
 	LuaValue = FLuaValue();
@@ -1785,7 +1785,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToJson(FLuaValue Value)
 	return Json;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(FString Filename, FString Mountpoint, TArray<FLuaValue>& Assets, FString ContentPath, FString AssetRegistryPath)
+bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(const FString& Filename, FString Mountpoint, TArray<FLuaValue>& Assets, FString ContentPath, FString AssetRegistryPath)
 {
 	if (!Mountpoint.StartsWith("/") || !Mountpoint.EndsWith("/"))
 	{

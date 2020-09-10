@@ -178,10 +178,10 @@ public:
 	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	FLuaDebug LuaGetInfo(int32 Level);
+	FLuaDebug LuaGetInfo(const int32 Level);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	TMap<FString, FLuaValue> LuaGetLocals(int32 Level);
+	TMap<FString, FLuaValue> LuaGetLocals(const int32 Level);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	TSubclassOf<ULuaState> GetSelfLuaState() const { return GetClass(); }
@@ -193,19 +193,19 @@ public:
 	}
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
-	void SetLuaUserDataField(FLuaValue UserData, FString Key, FLuaValue Value);
+	void SetLuaUserDataField(FLuaValue UserData, const FString& Key, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	FLuaValue GetLuaUserDataField(FLuaValue UserData, FString Key);
+	FLuaValue GetLuaUserDataField(FLuaValue UserData, const FString& Key);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
-	FLuaValue GetLuaValueFromProperty(UObject* InObject, FString PropertyName);
+	FLuaValue GetLuaValueFromProperty(UObject* InObject, const FString& PropertyName);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
-	bool SetPropertyFromLuaValue(UObject* InObject, FString PropertyName, FLuaValue Value);
+	bool SetPropertyFromLuaValue(UObject* InObject, const FString& PropertyName, FLuaValue Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "Lua")
-	FLuaValue GetLuaBlueprintPackageTable(FString PackageName);
+	FLuaValue GetLuaBlueprintPackageTable(const FString& PackageName);
 
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
@@ -272,9 +272,9 @@ public:
 
 	void GetGlobal(const char* Name);
 
-	int32 GetFieldFromTree(FString Tree, bool bGlobal = true);
+	int32 GetFieldFromTree(const FString& Tree, bool bGlobal = true);
 
-	void SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal, UObject* CallContext = nullptr);
+	void SetFieldFromTree(const FString& Tree, FLuaValue& Value, bool bGlobal, UObject* CallContext = nullptr);
 
 	void SetGlobal(const char* Name);
 
@@ -313,8 +313,8 @@ public:
 
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	bool RunCode(TArray<uint8> Code, FString CodePath, int NRet = 0);
-	bool RunCode(FString Code, FString CodePath, int NRet = 0);
+	bool RunCode(const TArray<uint8>& Code, const FString& CodePath, int NRet = 0);
+	bool RunCode(const FString& Code, const FString& CodePath, int NRet = 0);
 
 	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
 
@@ -323,7 +323,7 @@ public:
 
 	FLuaValue CreateLuaLazyTable();
 
-	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
+	bool RunFile(const FString& Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
 
 	static int MetaTableFunctionUserData__index(lua_State* L);
 	static int MetaTableFunctionUserData__newindex(lua_State* L);
@@ -341,7 +341,7 @@ public:
 	static void Debug_Hook(lua_State* L, lua_Debug* ar);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
+	static TArray<uint8> ToByteCode(const FString& Code, const FString& CodePath, FString& ErrorString);
 
 #if ENGINE_MINOR_VERSION >= 25
 	FLuaValue FromUProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
@@ -363,17 +363,17 @@ public:
 		return *LuaExtraSpacePtr;
 	}
 
-	void Log(FString Message)
+	void Log(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Log, TEXT("%s"), *Message);
 	}
 
-	void LogWarning(FString Message)
+	void LogWarning(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Warning, TEXT("%s"), *Message);
 	}
 
-	void LogError(FString Message)
+	void LogError(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Error, TEXT("%s"), *Message);
 	}

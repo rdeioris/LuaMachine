@@ -4,7 +4,7 @@
 #include "LuaState.h"
 #include "Misc/Base64.h"
 
-FString FLuaValue::ToString()
+FString FLuaValue::ToString() const
 {
 	switch (Type)
 	{
@@ -30,12 +30,12 @@ FString FLuaValue::ToString()
 	return FString(TEXT("nil"));
 }
 
-FName FLuaValue::ToName()
+FName FLuaValue::ToName() const
 {
 	return FName(*ToString());
 }
 
-int32 FLuaValue::ToInteger()
+int32 FLuaValue::ToInteger() const
 {
 	switch (Type)
 	{
@@ -51,7 +51,7 @@ int32 FLuaValue::ToInteger()
 	return 0;
 }
 
-float FLuaValue::ToFloat()
+float FLuaValue::ToFloat() const
 {
 	switch (Type)
 	{
@@ -67,7 +67,7 @@ float FLuaValue::ToFloat()
 	return 0.0f;
 }
 
-bool FLuaValue::ToBool()
+bool FLuaValue::ToBool() const
 {
 	switch (Type)
 	{
@@ -156,7 +156,7 @@ FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 	return *this;
 }
 
-FLuaValue FLuaValue::SetField(FString Key, FLuaValue Value)
+FLuaValue FLuaValue::SetField(const FString& Key, FLuaValue Value)
 {
 	if (Type != ELuaValueType::Table)
 		return *this;
@@ -188,7 +188,7 @@ FLuaValue FLuaValue::SetMetaTable(FLuaValue MetaTable)
 }
 
 
-FLuaValue FLuaValue::GetField(FString Key)
+FLuaValue FLuaValue::GetField(const FString& Key)
 {
 	if (Type != ELuaValueType::Table)
 		return FLuaValue();
@@ -361,7 +361,7 @@ TSharedPtr<FJsonValue> FLuaValue::ToJsonValue()
 	return MakeShared<FJsonValueNull>();
 }
 
-TArray<uint8> FLuaValue::ToBytes()
+TArray<uint8> FLuaValue::ToBytes() const
 {
 	TArray<uint8> Bytes;
 	if (Type != ELuaValueType::String)
@@ -385,14 +385,14 @@ TArray<uint8> FLuaValue::ToBytes()
 	return Bytes;
 }
 
-FLuaValue FLuaValue::FromBase64(FString Base64)
+FLuaValue FLuaValue::FromBase64(const FString& Base64)
 {
 	TArray<uint8> Bytes;
 	FBase64::Decode(Base64, Bytes);
 	return FLuaValue(Bytes);
 }
 
-FString FLuaValue::ToBase64()
+FString FLuaValue::ToBase64() const
 {
 	return FBase64::Encode(ToBytes());
 }

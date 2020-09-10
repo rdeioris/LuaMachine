@@ -49,7 +49,7 @@ void ULuaUserDataObject::RemoveLuaSmartReference(TSharedPtr<FLuaSmartReference> 
 	}
 }
 
-FLuaValue ULuaUserDataObject::LuaGetField(FString Name)
+FLuaValue ULuaUserDataObject::LuaGetField(const FString& Name)
 {
 	ULuaState* LuaState = Cast<ULuaState>(GetOuter());
 	if (!LuaState)
@@ -68,7 +68,7 @@ FLuaValue ULuaUserDataObject::LuaGetField(FString Name)
 	return ReturnValue;
 }
 
-void ULuaUserDataObject::LuaSetField(FString Name, FLuaValue Value)
+void ULuaUserDataObject::LuaSetField(const FString& Name, FLuaValue Value)
 {
 	ULuaState* LuaState = Cast<ULuaState>(GetOuter());
 	if (!LuaState)
@@ -137,7 +137,7 @@ FLuaValue ULuaUserDataObject::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
 	return FLuaValue();
 }
 
-FLuaValue ULuaUserDataObject::UFunctionToLuaValue(FString FunctionName)
+FLuaValue ULuaUserDataObject::UFunctionToLuaValue(const FString& FunctionName)
 {
 	FName FunctionFName = FName(*FunctionName);
 	UFunction* Function = FindFunction(FunctionFName);
@@ -147,7 +147,7 @@ FLuaValue ULuaUserDataObject::UFunctionToLuaValue(FString FunctionName)
 	return FLuaValue::Function(FunctionFName);
 }
 
-FLuaValue ULuaUserDataObject::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
+FLuaValue ULuaUserDataObject::LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;
 
