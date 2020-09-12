@@ -50,9 +50,9 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateObject(UObject* InObject)
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateUFunction(UObject* InObject, const FString& FunctionName)
 {
-	if (InObject && InObject->FindFunction(FName(FunctionName)))
+	if (InObject && InObject->FindFunction(FName(*FunctionName)))
 	{
-		FLuaValue Value = FLuaValue::Function(FName(FunctionName));
+		FLuaValue Value = FLuaValue::Function(FName(*FunctionName));
 		Value.Object = InObject;
 		return Value;
 	}
