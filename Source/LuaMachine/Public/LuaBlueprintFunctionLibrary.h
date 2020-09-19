@@ -130,7 +130,7 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category="Lua")
 	static FLuaValue LuaTableKeyCall(FLuaValue InTable, const FString& Key, TArray<FLuaValue> Args);
 
-	/* Calls a lua value taken from a table by key (must be callable), passing the table itself as teh first argument (useful for table:function syntax) */
+	/* Calls a lua value taken from a table by key (must be callable), passing the table itself as the first argument (useful for table:function syntax) */
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
 	static FLuaValue LuaTableKeyCallWithSelf(FLuaValue InTable, const FString& Key, TArray<FLuaValue> Args);
 
