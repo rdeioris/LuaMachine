@@ -116,6 +116,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	GetField(-1, "package");
 	if (!OverridePackagePath.IsEmpty())
 	{
+		OverridePackagePath.ReplaceInline(*FString("$(CONTENT_DIR)"), *FPaths::ProjectContentDir());
 		lua_pushstring(L, TCHAR_TO_ANSI(*OverridePackagePath));
 		SetField(-2, "path");
 	}
@@ -142,6 +143,21 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	if (!OverridePackageCPath.IsEmpty())
 	{
+		OverridePackageCPath.ReplaceInline(*FString("$(CONTENT_DIR)"), *FPaths::ProjectContentDir());
+
+		static const FString libExtension =
+#if PLATFORM_MAC || PLATFORM_IOS
+		FString("dylib");
+#elif PLATFORM_LINUX || PLATFORM_ANDROID
+		FString("so");
+#elif PLATFORM_WINDOWS
+		FString("dll");
+#else
+		FString("");
+#endif
+
+		OverridePackageCPath.ReplaceInline(*FString("$(LIB_EXT)"), *libExtension);
+		
 		lua_pushstring(L, TCHAR_TO_ANSI(*OverridePackageCPath));
 		SetField(-2, "cpath");
 	}
