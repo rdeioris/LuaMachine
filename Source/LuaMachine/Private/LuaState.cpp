@@ -190,12 +190,12 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
+	// pop global table
+	Pop();
+
 	// This allows subclasses to do any last minute initialization on lua state before
 	// we load code
 	ReceiveLuaStatePreInitialized();
-
-	// pop global table
-	Pop();
 
 	int DebugMask = 0;
 	// install hooks
