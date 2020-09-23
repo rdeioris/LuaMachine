@@ -246,6 +246,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Removed From World"))
 	void ReceiveLuaLevelRemovedFromWorld(ULevel* Level, UWorld* World);
 
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Package Initialization"))
+    void ReceiveLuaPackageInit();
+	
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua State Initialized"))
 	void ReceiveLuaStateInitialized();
 

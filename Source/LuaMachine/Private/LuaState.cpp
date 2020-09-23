@@ -190,6 +190,9 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
+	// Allows subclassed states to handle package init if they need to
+	ReceiveLuaPackageInit();
+
 	// pop global table
 	Pop();
 
@@ -638,6 +641,10 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 	}
 
 	return LuaValue;
+}
+
+void ULuaState::ReceiveLuaPackageInit_Implementation()
+{
 }
 
 int32 ULuaState::GetTop()
