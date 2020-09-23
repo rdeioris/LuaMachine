@@ -190,8 +190,9 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		SetField(-2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
-	// Allows subclassed states to handle package init if they need to
-	ReceiveLuaPackageInit();
+	// This allows subclasses to do any last minute initialization on lua state before
+	// we load code
+	ReceiveLuaStatePreInitialized();
 
 	// pop global table
 	Pop();
@@ -641,10 +642,6 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 	}
 
 	return LuaValue;
-}
-
-void ULuaState::ReceiveLuaPackageInit_Implementation()
-{
 }
 
 int32 ULuaState::GetTop()
@@ -1218,6 +1215,11 @@ void ULuaState::ReceiveLuaLevelRemovedFromWorld_Implementation(ULevel * Level, U
 void ULuaState::ReceiveLuaLevelAddedToWorld_Implementation(ULevel * Level, UWorld * World)
 {
 
+}
+
+void ULuaState::ReceiveLuaStatePreInitialized_Implementation()
+{
+	
 }
 
 void ULuaState::ReceiveLuaStateInitialized_Implementation()
