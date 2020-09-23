@@ -209,6 +209,10 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// pop global table
 	Pop();
 
+	// This allows subclasses to do any last minute initialization on lua state before
+	// we load code
+	ReceiveLuaStatePreInitialized();
+
 	int DebugMask = 0;
 	// install hooks
 	if (bEnableLineHook)
@@ -1227,6 +1231,11 @@ void ULuaState::ReceiveLuaLevelRemovedFromWorld_Implementation(ULevel * Level, U
 void ULuaState::ReceiveLuaLevelAddedToWorld_Implementation(ULevel * Level, UWorld * World)
 {
 
+}
+
+void ULuaState::ReceiveLuaStatePreInitialized_Implementation()
+{
+	
 }
 
 void ULuaState::ReceiveLuaStateInitialized_Implementation()
