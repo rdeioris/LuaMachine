@@ -152,6 +152,8 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		FString("so");
 #elif PLATFORM_WINDOWS
 		FString("dll");
+#else
+		FString("");
 #endif
 
 		OverridePackageCPath.ReplaceInline(*FString("$(LIB_EXT)"), *libExtension);
