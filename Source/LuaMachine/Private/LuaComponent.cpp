@@ -39,10 +39,15 @@ void ULuaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	// ...
 }
 
-FLuaValue ULuaComponent::LuaGetField(FString Name)
+ULuaState* ULuaComponent::LuaComponentGetState()
+{
+	return FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+}
+
+FLuaValue ULuaComponent::LuaGetField(const FString& Name)
 {
 	FLuaValue ReturnValue;
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 
@@ -59,9 +64,9 @@ FLuaValue ULuaComponent::LuaGetField(FString Name)
 	return ReturnValue;
 }
 
-void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
+void ULuaComponent::LuaSetField(const FString& Name, FLuaValue Value)
 {
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return;
 
@@ -76,11 +81,11 @@ void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
 
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
+FLuaValue ULuaComponent::LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 
@@ -119,7 +124,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 {
 	TArray<FLuaValue> ReturnValue;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 

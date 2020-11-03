@@ -126,7 +126,7 @@ FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
 	return Value.ToString();
 }
 
-FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(FLuaValue Value)
+FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(const FLuaValue& Value)
 {
 	return LuaTableToVector(Value);
 }
@@ -185,12 +185,12 @@ int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
 	return Value.ToInteger();
 }
 
-float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(FLuaValue Value)
+float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(const FLuaValue& Value)
 {
 	return Value.ToFloat();
 }
 
-bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(const FLuaValue& Value)
 {
 	return Value.ToBool();
 }
@@ -261,7 +261,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToHexPointer(UObject* WorldContext
 	return BytesToHex((const uint8*)&Ptr, sizeof(int64));
 }
 
-FString ULuaBlueprintFunctionLibrary::LuaValueToBase64(FLuaValue Value)
+FString ULuaBlueprintFunctionLibrary::LuaValueToBase64(const FLuaValue& Value)
 {
 	return Value.ToBase64();
 }
@@ -331,7 +331,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF8(const FString& String)
 	return FLuaValue((const char*)UTF8String.Get(), UTF8String.Length());
 }
 
-FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(FLuaValue Value)
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(const FLuaValue& Value)
 {
 	FString ReturnValue;
 	TArray<uint8> Bytes = Value.ToBytes();
@@ -350,7 +350,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(const FString& String)
 #endif
 }
 
-FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(FLuaValue Value)
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(const FLuaValue& Value)
 {
 #if ENGINE_MINOR_VERSION >= 25
 	FString ReturnValue;
@@ -1484,7 +1484,7 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 	if (Value.Type != ELuaValueType::Table)
 		return FVector(NAN);
 
-	auto GetVectorField = [](FLuaValue Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
+	auto GetVectorField = [](FLuaValue& Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
 	{
 		FLuaValue N = Table.GetField(Field_n);
 		if (N.IsNil())
@@ -1906,4 +1906,31 @@ bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(const FString& Filename, FStri
 #endif
 
 	return true;
+}
+
+void ULuaBlueprintFunctionLibrary::SwitchOnLuaValueType(const FLuaValue& LuaValue, ELuaValueType& LuaValueTypes)
+{
+	LuaValueTypes = LuaValue.Type;
+}
+
+void ULuaBlueprintFunctionLibrary::GetLuaReflectionType(UObject* InObject, const FString& Name, ELuaReflectionType& LuaReflectionTypes)
+{
+	LuaReflectionTypes = ELuaReflectionType::Unknown;
+	UClass* Class = InObject->GetClass();
+	if (!Class)
+	{
+		return;
+	}
+
+	if (Class->FindPropertyByName(FName(Name)) != nullptr)
+	{
+		LuaReflectionTypes = ELuaReflectionType::Property;
+		return;
+	}
+
+	if (Class->FindFunctionByName(FName(Name)))
+	{
+		LuaReflectionTypes = ELuaReflectionType::Function;
+		return;
+	}
 }

@@ -47,7 +47,7 @@ public:
 	bool bImplicitSelf;
 
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
+	FLuaValue LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal);
 
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args);
@@ -77,10 +77,10 @@ public:
 	TArray<FLuaValue> LuaCallTableIndexMulti(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
-	FLuaValue LuaGetField(FString Name);
+	FLuaValue LuaGetField(const FString& Name);
 
 	UFUNCTION(BlueprintCallable, Category="Lua")
-	void LuaSetField(FString Name, FLuaValue Value);
+	void LuaSetField(const FString& Name, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
 	FLuaComponentError OnLuaError;
@@ -90,4 +90,7 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __newindex"))
 	bool ReceiveLuaMetaNewIndex(FLuaValue Key, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	ULuaState* LuaComponentGetState();
 };

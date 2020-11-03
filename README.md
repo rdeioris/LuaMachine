@@ -340,9 +340,4 @@ Commercial support is offered by Unbit (based in Rome, Italy), just contact info
 
 ## Sponsors
 
-AIV, Accademia Italiana Videogiochi (http://www.aiv01.it). They are using it for Lua lessons in the Game Design classes.
-
 The LuaMachine logo has been designed by Nicolas Martel (aka. Nogitsu)
-
-
-

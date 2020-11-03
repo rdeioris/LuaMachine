@@ -21,6 +21,14 @@ DECLARE_DYNAMIC_DELEGATE_ThreeParams(FLuaHttpSuccess, FLuaValue, ReturnValue, bo
 DECLARE_DYNAMIC_DELEGATE_TwoParams(FLuaHttpResponseReceived, FLuaValue, Context, FLuaValue, Response);
 DECLARE_DYNAMIC_DELEGATE_OneParam(FLuaHttpError, FLuaValue, Context);
 
+UENUM(BlueprintType)
+enum class ELuaReflectionType : uint8
+{
+	Unknown,
+	Property,
+	Function,
+};
+
 
 UCLASS()
 class LUAMACHINE_API ULuaBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
@@ -204,7 +212,7 @@ public:
 	static FLuaValue LuaValueFromBase64(const FString& Base64);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	static FString LuaValueToBase64(FLuaValue Value);
+	static FString LuaValueToBase64(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static FLuaValue LuaValueFromUTF16(const FString& String);
@@ -216,13 +224,13 @@ public:
 	static FLuaValue LuaValueFromUTF8(const FString& String);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	static FString LuaValueToUTF8(FLuaValue Value);
+	static FString LuaValueToUTF8(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static FLuaValue LuaValueFromUTF32(const FString& String);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
-	static FString LuaValueToUTF32(FLuaValue Value);
+	static FString LuaValueToUTF32(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
 	static int64 LuaValueToPointer(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FLuaValue Value);
@@ -365,13 +373,13 @@ public:
 	static int32 Conv_LuaValueToInt(FLuaValue Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Float (LuaValue)", BlueprintAutocast), Category="Lua")
-	static float Conv_LuaValueToFloat(FLuaValue Value);
+	static float Conv_LuaValueToFloat(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Vector (LuaValue)", BlueprintAutocast), Category = "Lua")
-	static FVector Conv_LuaValueToFVector(FLuaValue Value);
+	static FVector Conv_LuaValueToFVector(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Bool (LuaValue)", BlueprintAutocast), Category="Lua")
-	static bool Conv_LuaValueToBool(FLuaValue Value);
+	static bool Conv_LuaValueToBool(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Int)", BlueprintAutocast), Category="Lua")
 	static FLuaValue Conv_IntToLuaValue(const int32 Value);
@@ -393,6 +401,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static FLuaValue LuaCreateUFunction(UObject* InObject, const FString& FunctionName);
+
+	UFUNCTION(BlueprintCallable, meta = (ExpandEnumAsExecs = "LuaValueTypes"), Category = "Lua")
+	static void SwitchOnLuaValueType(const FLuaValue& LuaValue, ELuaValueType& LuaValueTypes);
+
+	UFUNCTION(BlueprintCallable, meta = (ExpandEnumAsExecs = "LuaReflectionTypes"), Category = "Lua")
+	static void GetLuaReflectionType(UObject* InObject, const FString& Name, ELuaReflectionType& LuaReflectionTypes);
 
 private:
 	static void HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, const FString SecurityHeader, const FString SignaturePublicExponent, const FString SignatureModulus, FLuaHttpSuccess Completed);
