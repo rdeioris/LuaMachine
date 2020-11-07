@@ -169,6 +169,8 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue GetField(const FString& Key);
 	FLuaValue SetField(const FString& Key, FLuaValue Value);
 
+	FLuaValue SetField(const FString& Key, lua_CFunction CFunction);
+
 	FLuaValue GetFieldByIndex(const int32 Index);
 	FLuaValue SetFieldByIndex(const int32 Index, FLuaValue Value);
 

@@ -171,6 +171,21 @@ FLuaValue FLuaValue::SetField(const FString& Key, FLuaValue Value)
 	return *this;
 }
 
+FLuaValue FLuaValue::SetField(const FString& Key, lua_CFunction CFunction)
+{
+	if (Type != ELuaValueType::Table)
+		return *this;
+
+	if (!LuaState)
+		return *this;
+
+	LuaState->FromLuaValue(*this);
+	LuaState->PushCFunction(CFunction);
+	LuaState->SetField(-2, TCHAR_TO_ANSI(*Key));
+	LuaState->Pop();
+	return *this;
+}
+
 FLuaValue FLuaValue::SetMetaTable(FLuaValue MetaTable)
 {
 	if (Type != ELuaValueType::Table || MetaTable.Type != ELuaValueType::Table)

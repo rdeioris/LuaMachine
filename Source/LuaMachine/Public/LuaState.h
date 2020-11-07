@@ -9,6 +9,7 @@
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "Runtime/Launch/Resources/Version.h"
+#include "LuaDelegate.h"
 #include "LuaState.generated.h"
 
 LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
@@ -335,6 +336,7 @@ public:
 	static int TableFunction_package_preload(lua_State* L);
 
 	static int MetaTableFunction__call(lua_State* L);
+	static int MetaTableFunction__rawcall(lua_State* L);
 
 	static int MetaTableFunctionUserData__eq(lua_State* L);
 	static int MetaTableFunctionUserData__gc(lua_State* L);
@@ -394,6 +396,14 @@ public:
 
 	const void* ToPointer(int Index);
 
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bRawLuaFunctionCall;
+
+	void GCLuaDelegatesCheck();
+
+	UPROPERTY()
+	TMap<TWeakObjectPtr<UObject>, ULuaDelegate*> LuaDelegatesMap;
+
 protected:
 	lua_State* L;
 	bool bDisabled;
@@ -401,4 +411,38 @@ protected:
 	UWorld* CurrentWorld;
 
 	FLuaValue UserDataMetaTable;
+
+	virtual void LuaStateInit();
+
+	FDelegateHandle GCLuaDelegatesHandle;
 };
+
+#define LUACFUNCTION(FuncClass, FuncName, NumRetValues, NumArgs) static int FuncName ## _C(lua_State* L)\
+{\
+	FuncClass* LuaState = (FuncClass*)ULuaState::GetFromExtraSpace(L);\
+	int TrueNumArgs = lua_gettop(L);\
+	if (TrueNumArgs != NumArgs)\
+	{\
+		return luaL_error(L, "invalid number of arguments for %s (got %d, expected %d)", #FuncName, TrueNumArgs, NumArgs);\
+	}\
+	TArray<FLuaValue> LuaArgs;\
+	for (int32 LuaArgIndex = 0; LuaArgIndex < NumArgs; LuaArgIndex++)\
+	{\
+		LuaArgs.Add(LuaState->ToLuaValue(LuaArgIndex + 1, L));\
+	}\
+	FLuaValue NilValue;\
+	TArray<FLuaValue> RetValues = LuaState->FuncName(LuaArgs);\
+	for (int32 RetIndex = 0; RetIndex < NumRetValues; RetIndex++)\
+	{\
+		if (RetIndex < RetValues.Num())\
+		{\
+			LuaState->FromLuaValue(RetValues[RetIndex]);\
+		}\
+		else\
+		{\
+			LuaState->FromLuaValue(NilValue);\
+		}\
+	}\
+	return NumRetValues;\
+}\
+TArray<FLuaValue> FuncName(TArray<FLuaValue> LuaArgs)

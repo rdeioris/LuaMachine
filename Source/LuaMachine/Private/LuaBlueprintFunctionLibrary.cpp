@@ -1934,3 +1934,8 @@ void ULuaBlueprintFunctionLibrary::GetLuaReflectionType(UObject* InObject, const
 		return;
 	}
 }
+
+FLuaValue ULuaBlueprintFunctionLibrary::StructToLuaValue(UScriptStruct* InStruct)
+{
+	return FLuaValue();
+}
