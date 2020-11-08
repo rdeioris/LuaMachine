@@ -5,6 +5,7 @@
 #include "LuaUserDataObject.h"
 #include "LuaMachine.h"
 #include "LuaBlueprintPackage.h"
+#include "LuaBlueprintFunctionLibrary.h"
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
 #include "Runtime/Core/Public/Misc/Paths.h"
@@ -1917,6 +1918,26 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	}
 
 #if ENGINE_MINOR_VERSION >= 25
+	if (FMapProperty* MapProperty = CastField<FMapProperty>(Property))
+#else
+	if (UMapProperty* MapProperty = Cast<UMapProperty>(Property))
+#endif
+	{
+		FLuaValue NewLuaTable = CreateLuaTable();
+		FScriptMapHelper_InContainer Helper(MapProperty, Buffer, Index);
+		for (int32 MapIndex = 0; MapIndex < Helper.Num(); MapIndex++)
+		{
+			uint8* ArrayKeyPtr = Helper.GetKeyPtr(MapIndex);
+			uint8* ArrayValuePtr = Helper.GetValuePtr(MapIndex);
+			bool bArrayItemSuccess = false;
+			NewLuaTable.SetField(
+				FromProperty(ArrayKeyPtr, MapProperty->KeyProp, bArrayItemSuccess, 0).ToString(),
+				FromProperty(ArrayValuePtr, MapProperty->ValueProp, bArrayItemSuccess, 0));
+		}
+		return NewLuaTable;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
 	if (FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 #else
 	if (USetProperty* SetProperty = Cast<USetProperty>(Property))
@@ -1939,12 +1960,13 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
 #endif
 	{
-		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
 		// fast path
 		if (StructProperty->Struct == FLuaValue::StaticStruct())
 		{
 			return *(StructProperty->ContainerPtrToValuePtr<FLuaValue>(Buffer));
 		}
+
+		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
 
 		FLuaValue NewLuaTable = CreateLuaTable();
 #if ENGINE_MINOR_VERSION >= 25
@@ -2058,6 +2080,75 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 			*LuaValuePtr = Value;
 			return;
 		}
+
+		TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(Value);
+		for (FLuaValue TableKey : TableKeys)
+		{
+#if ENGINE_MINOR_VERSION >= 25
+			FProperty* StructProp = StructProperty->Struct->FindPropertyByName(TableKey.ToName());
+#else
+			UProperty* StructProp = StructProperty->Struct->FindPropertyByName(TableKey.ToName());
+#endif
+			if (StructProp)
+			{
+				const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
+				bool bStructValueSuccess = false;
+				ToProperty((void*)StructContainer, StructProp, Value.GetField(TableKey.ToString()), bStructValueSuccess, 0);
+			}
+		}
+		return;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
+#else
+	if (UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property))
+#endif
+	{
+		FScriptArrayHelper_InContainer Helper(ArrayProperty, Buffer, Index);
+		TArray<FLuaValue> ArrayValues = ULuaBlueprintFunctionLibrary::LuaTableGetValues(Value);
+		Helper.Resize(ArrayValues.Num());
+		for (int32 ArrayIndex = 0; ArrayIndex < Helper.Num(); ArrayIndex++)
+		{
+			uint8* ArrayItemPtr = Helper.GetRawPtr(ArrayIndex);
+			bool bArrayItemSuccess = false;
+			ToProperty(ArrayItemPtr, ArrayProperty->Inner, ArrayValues[ArrayIndex], bArrayItemSuccess, 0);
+		}
+		return;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FMapProperty* MapProperty = CastField<FMapProperty>(Property))
+#else
+	if (UMapProperty* MapProperty = Cast<UMapProperty>(Property))
+#endif
+	{
+		FScriptMapHelper_InContainer Helper(MapProperty, Buffer, Index);
+		Helper.EmptyValues();
+		TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(Value);
+		for (FLuaValue TableKey : TableKeys)
+		{
+			// TODO Manage Key/Value
+		}
+		return;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FSetProperty* SetProperty = CastField<FSetProperty>(Property))
+#else
+	if (USetProperty* SetProperty = Cast<USetProperty>(Property))
+#endif
+	{
+		FScriptSetHelper_InContainer Helper(SetProperty, Buffer, Index);
+		TArray<FLuaValue> ArrayValues = ULuaBlueprintFunctionLibrary::LuaTableGetValues(Value);
+		Helper.EmptyElements(ArrayValues.Num());
+		for (int32 ArrayIndex = 0; ArrayIndex < Helper.Num(); ArrayIndex++)
+		{
+			uint8* SetItemPtr = Helper.GetElementPtr(ArrayIndex);
+			bool bArrayItemSuccess = false;
+			ToProperty(SetItemPtr, SetProperty->ElementProp, ArrayValues[ArrayIndex], bArrayItemSuccess, 0);
+		}
+		return;
 	}
 
 	bSuccess = false;
@@ -2287,7 +2378,7 @@ void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDele
 	}
 }
 
-TArray<FString> ULuaState::GetPropertiesNames(UObject* InObject)
+TArray<FString> ULuaState::GetPropertiesNames(UObject * InObject)
 {
 	TArray<FString> Names;
 
@@ -2314,7 +2405,7 @@ TArray<FString> ULuaState::GetPropertiesNames(UObject* InObject)
 	return Names;
 }
 
-TArray<FString> ULuaState::GetFunctionsNames(UObject* InObject)
+TArray<FString> ULuaState::GetFunctionsNames(UObject * InObject)
 {
 	TArray<FString> Names;
 
