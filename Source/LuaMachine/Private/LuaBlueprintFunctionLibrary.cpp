@@ -1922,13 +1922,13 @@ void ULuaBlueprintFunctionLibrary::GetLuaReflectionType(UObject* InObject, const
 		return;
 	}
 
-	if (Class->FindPropertyByName(FName(Name)) != nullptr)
+	if (Class->FindPropertyByName(FName(*Name)) != nullptr)
 	{
 		LuaReflectionTypes = ELuaReflectionType::Property;
 		return;
 	}
 
-	if (Class->FindFunctionByName(FName(Name)))
+	if (Class->FindFunctionByName(FName(*Name)))
 	{
 		LuaReflectionTypes = ELuaReflectionType::Function;
 		return;
