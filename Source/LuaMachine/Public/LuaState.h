@@ -238,7 +238,7 @@ public:
 		return *LuaExtraSpacePtr;
 	}
 
-	void Log(FString Message)
+	virtual void Log(FString Message)
 	{
 		UE_LOG(LogLuaMachine, Log, TEXT("%s"), *Message);
 	}
