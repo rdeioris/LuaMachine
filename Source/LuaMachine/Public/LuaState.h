@@ -106,6 +106,15 @@ struct FLuaDebug
 	FString What;
 };
 
+USTRUCT(BlueprintType)
+struct FLuaDelegateGroup
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	TArray<ULuaDelegate*> LuaDelegates;
+};
+
 
 struct FLuaSmartReference : public TSharedFromThis<FLuaSmartReference>
 {
@@ -401,8 +410,7 @@ public:
 
 	void GCLuaDelegatesCheck();
 
-	UPROPERTY()
-	TMap<TWeakObjectPtr<UObject>, ULuaDelegate*> LuaDelegatesMap;
+	void RegisterLuaDelegate(UObject* InObject, ULuaDelegate* InLuaDelegate);
 
 protected:
 	lua_State* L;
@@ -415,6 +423,9 @@ protected:
 	virtual void LuaStateInit();
 
 	FDelegateHandle GCLuaDelegatesHandle;
+
+	UPROPERTY()
+	TMap<TWeakObjectPtr<UObject>, FLuaDelegateGroup> LuaDelegatesMap;
 };
 
 #define LUACFUNCTION(FuncClass, FuncName, NumRetValues, NumArgs) static int FuncName ## _C(lua_State* L)\

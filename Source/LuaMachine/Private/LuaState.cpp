@@ -1936,12 +1936,29 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	{
 		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
 		LuaDelegate->SetupLuaDelegate(MulticastProperty->SignatureFunction, this, Value);
-		LuaDelegatesMap.Add((UObject*)Buffer, LuaDelegate);
+		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
 
 		FScriptDelegate Delegate;
 		Delegate.BindUFunction(LuaDelegate, FName("LuaDelegateFunction"));
 
 		MulticastProperty->AddDelegate(Delegate, (UObject*)Buffer);
+		return;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FDelegateProperty* DelegateProperty = CastField<FDelegateProperty>(Property))
+#else
+	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
+#endif
+	{
+		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
+		LuaDelegate->SetupLuaDelegate(DelegateProperty->SignatureFunction, this, Value);
+		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
+
+		FScriptDelegate Delegate;
+		Delegate.BindUFunction(LuaDelegate, FName("LuaDelegateFunction"));
+
+		DelegateProperty->SetPropertyValue_InContainer(Buffer, Delegate, Index);
 		return;
 	}
 
@@ -2012,7 +2029,7 @@ bool ULuaState::SetPropertyFromLuaValue(UObject * InObject, const FString & Prop
 		bool bSuccess = false;
 		ToProperty(InObject, Property, Value, bSuccess);
 		return bSuccess;
-}
+	}
 
 	return false;
 }
@@ -2143,7 +2160,7 @@ void ULuaState::LuaStateInit()
 void ULuaState::GCLuaDelegatesCheck()
 {
 	TSet<TWeakObjectPtr<UObject>> DeadObjects;
-	for (TPair<TWeakObjectPtr<UObject>, ULuaDelegate*>& Pair : LuaDelegatesMap)
+	for (TPair<TWeakObjectPtr<UObject>, FLuaDelegateGroup>& Pair : LuaDelegatesMap)
 	{
 		if (!Pair.Key.IsValid())
 		{
@@ -2154,5 +2171,20 @@ void ULuaState::GCLuaDelegatesCheck()
 	for (TWeakObjectPtr<UObject>& WeakObjectPtr : DeadObjects)
 	{
 		LuaDelegatesMap.Remove(WeakObjectPtr);
+	}
+}
+
+void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDelegate)
+{
+	FLuaDelegateGroup* LuaDelegateGroup = LuaDelegatesMap.Find(InObject);
+	if (LuaDelegateGroup)
+	{
+		LuaDelegateGroup->LuaDelegates.Add(InLuaDelegate);
+	}
+	else
+	{
+		FLuaDelegateGroup NewLuaDelegateGroup;
+		NewLuaDelegateGroup.LuaDelegates.Add(InLuaDelegate);
+		LuaDelegatesMap.Add(InObject, NewLuaDelegateGroup);
 	}
 }
