@@ -32,7 +32,6 @@ void ULuaDelegate::ProcessEvent(UFunction* Function, void* Parms)
 	{
 		UProperty* Prop = *It;
 #endif
-
 		bool bPropSuccess = false;
 		LuaArgs.Add(LuaState->FromProperty(Parms, Prop, bPropSuccess, 0));
 	}

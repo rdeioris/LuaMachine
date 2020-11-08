@@ -412,6 +412,9 @@ public:
 
 	void RegisterLuaDelegate(UObject* InObject, ULuaDelegate* InLuaDelegate);
 
+	TArray<FString> GetPropertiesNames(UObject* InObject);
+	TArray<FString> GetFunctionsNames(UObject* InObject);
+
 protected:
 	lua_State* L;
 	bool bDisabled;

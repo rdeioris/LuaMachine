@@ -1878,6 +1878,89 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return FLuaValue(WeakPtr.Get());
 	}
 
+#if ENGINE_MINOR_VERSION >= 25
+	if (FMulticastDelegateProperty* MulticastProperty = CastField<FMulticastDelegateProperty>(Property))
+#else
+	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
+#endif
+	{
+		// Unfortunately we have no way to iterate the content of a FMulticastScriptDelegate
+		const FMulticastScriptDelegate* MulticastScriptDelegate = MulticastProperty->GetMulticastDelegate((UObject*)Buffer);
+		return CreateLuaTable();
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FDelegateProperty* DelegateProperty = CastField<FDelegateProperty>(Property))
+#else
+	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
+#endif
+	{
+		const FScriptDelegate& ScriptDelegate = DelegateProperty->GetPropertyValue_InContainer(Buffer, Index);
+		return FLuaValue::FunctionOfObject((UObject*)ScriptDelegate.GetUObject(), ScriptDelegate.GetFunctionName());
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
+#else
+	if (UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property))
+#endif
+	{
+		FLuaValue NewLuaArray = CreateLuaTable();
+		FScriptArrayHelper_InContainer Helper(ArrayProperty, Buffer, Index);
+		for (int32 ArrayIndex = 0; ArrayIndex < Helper.Num(); ArrayIndex++)
+		{
+			uint8* ArrayItemPtr = Helper.GetRawPtr(ArrayIndex);
+			bool bArrayItemSuccess = false;
+			NewLuaArray.SetFieldByIndex(ArrayIndex + 1, FromProperty(ArrayItemPtr, ArrayProperty->Inner, bArrayItemSuccess, 0));
+		}
+		return NewLuaArray;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FSetProperty* SetProperty = CastField<FSetProperty>(Property))
+#else
+	if (USetProperty* SetProperty = Cast<USetProperty>(Property))
+#endif
+	{
+		FLuaValue NewLuaArray = CreateLuaTable();
+		FScriptSetHelper_InContainer Helper(SetProperty, Buffer, Index);
+		for (int32 SetIndex = 0; SetIndex < Helper.Num(); SetIndex++)
+		{
+			uint8* ArrayItemPtr = Helper.GetElementPtr(SetIndex);
+			bool bArrayItemSuccess = false;
+			NewLuaArray.SetFieldByIndex(SetIndex + 1, FromProperty(ArrayItemPtr, SetProperty->ElementProp, bArrayItemSuccess, 0));
+		}
+		return NewLuaArray;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+#else
+	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
+#endif
+	{
+		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
+		// fast path
+		if (StructProperty->Struct == FLuaValue::StaticStruct())
+		{
+			return *(StructProperty->ContainerPtrToValuePtr<FLuaValue>(Buffer));
+		}
+
+		FLuaValue NewLuaTable = CreateLuaTable();
+#if ENGINE_MINOR_VERSION >= 25
+		for (TFieldIterator<FProperty> It(StructProperty->Struct); It; ++It)
+#else
+		for (TFieldIterator<UProperty> It(StructProperty->Struct); It; ++It)
+#endif
+		{
+			FProperty* FieldProp = *It;
+			FString PropName = FieldProp->GetName();
+			bool bTableItemSuccess = false;
+			NewLuaTable.SetField(PropName, FromProperty((uint8*)StructContainer, FieldProp, bTableItemSuccess, 0));
+		}
+		return NewLuaTable;
+	}
+
 	bSuccess = false;
 	return FLuaValue();
 }
@@ -1960,6 +2043,21 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 
 		DelegateProperty->SetPropertyValue_InContainer(Buffer, Delegate, Index);
 		return;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
+#else
+	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
+#endif
+	{
+		// fast path
+		if (StructProperty->Struct == FLuaValue::StaticStruct())
+		{
+			FLuaValue* LuaValuePtr = StructProperty->ContainerPtrToValuePtr<FLuaValue>(Buffer);
+			*LuaValuePtr = Value;
+			return;
+		}
 	}
 
 	bSuccess = false;
@@ -2187,4 +2285,54 @@ void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDele
 		NewLuaDelegateGroup.LuaDelegates.Add(InLuaDelegate);
 		LuaDelegatesMap.Add(InObject, NewLuaDelegateGroup);
 	}
+}
+
+TArray<FString> ULuaState::GetPropertiesNames(UObject* InObject)
+{
+	TArray<FString> Names;
+
+	if (!InObject)
+	{
+		return Names;
+	}
+
+	UClass* Class = InObject->GetClass();
+	if (!Class)
+	{
+		return Names;
+	}
+
+#if ENGINE_MINOR_VERSION >= 25
+	for (TFieldIterator<FProperty> It(Class); It; ++It)
+#else
+	for (TFieldIterator<UProperty> It(Class); It; ++It)
+#endif
+	{
+		Names.Add((*It)->GetName());
+	}
+
+	return Names;
+}
+
+TArray<FString> ULuaState::GetFunctionsNames(UObject* InObject)
+{
+	TArray<FString> Names;
+
+	if (!InObject)
+	{
+		return Names;
+	}
+
+	UClass* Class = InObject->GetClass();
+	if (!Class)
+	{
+		return Names;
+	}
+
+	for (TFieldIterator<UFunction> It(Class); It; ++It)
+	{
+		Names.Add((*It)->GetName());
+	}
+
+	return Names;
 }
