@@ -162,6 +162,9 @@ public:
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "UserData MetaTable from CodeAsset"), Category = "Lua")
 	ULuaCode* UserDataMetaTableFromCodeAsset;
 
+	UFUNCTION(BlueprintCallable)
+	void Error();
+
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Error"))
 	void ReceiveLuaError(const FString& Message);
 
@@ -173,6 +176,9 @@ public:
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Return Hook"))
 	void ReceiveLuaReturnHook(const FLuaDebug& LuaDebug);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Count Hook"))
+	void ReceiveLuaCountHook(const FLuaDebug& LuaDebug);
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
@@ -231,6 +237,9 @@ public:
 	/* Enable debug of each Lua return. The LuaReturnHook event will be triggered */
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bEnableReturnHook;
+
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	uint32 CountHookInterval = 0;
 
 	UPROPERTY()
 	TMap<FString, ULuaBlueprintPackage*> LuaBlueprintPackages;

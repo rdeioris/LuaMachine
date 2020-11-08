@@ -27,6 +27,11 @@ ULuaState::ULuaState()
 
 }
 
+void ULuaState::Error()
+{
+	luaL_error(L, "Instruction limit");
+}
+
 ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 {
 	CurrentWorld = InWorld;
@@ -227,11 +232,28 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		DebugMask |= LUA_MASKRET;
 	}
+	if (CountHookInterval > 0)
+	{
+		DebugMask |= LUA_MASKCOUNT;
+	}
 
 	if (DebugMask != 0)
 	{
-		lua_sethook(L, Debug_Hook, DebugMask, 0);
+		lua_sethook(L, Debug_Hook, DebugMask, CountHookInterval);
 	}
+
+	lua_getglobal(L, "os");
+	lua_pushnil(L);
+	lua_setfield(L, -2, "execute");
+	lua_pushnil(L);
+	lua_setfield(L, -2, "rename");
+	lua_pushnil(L);
+	lua_setfield(L, -2, "remove");
+	lua_pushnil(L);
+	lua_setfield(L, -2, "exit");
+	lua_pushnil(L);
+	lua_setfield(L, -2, "setlocale");
+	lua_pop(L, 1);
 
 	if (LuaCodeAsset)
 	{
@@ -833,6 +855,8 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 		break;
 	case LUA_HOOKRET:
 		LuaState->ReceiveLuaReturnHook(LuaDebug);
+	case LUA_HOOKCOUNT:
+		LuaState->ReceiveLuaCountHook(LuaDebug);
 		break;
 	default:
 		break;
@@ -1214,6 +1238,11 @@ void ULuaState::ReceiveLuaCallHook_Implementation(const FLuaDebug & LuaDebug)
 }
 
 void ULuaState::ReceiveLuaReturnHook_Implementation(const FLuaDebug & LuaDebug)
+{
+
+}
+
+void ULuaState::ReceiveLuaCountHook_Implementation(const FLuaDebug & LuaDebug)
 {
 
 }
