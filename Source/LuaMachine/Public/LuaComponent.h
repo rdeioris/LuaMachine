@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #pragma once
 
@@ -11,7 +11,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FLuaComponentError, FString, Message);
 
 
-UCLASS( ClassGroup=(Scripting), meta=(BlueprintSpawnableComponent) )
+UCLASS(Blueprintable, ClassGroup=(Scripting), meta=(BlueprintSpawnableComponent) )
 class LUAMACHINE_API ULuaComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -43,8 +43,11 @@ public:
 	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bLogError;
 
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bImplicitSelf;
+
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
-	FLuaValue LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal);
+	FLuaValue LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal);
 
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args);
@@ -74,14 +77,20 @@ public:
 	TArray<FLuaValue> LuaCallTableIndexMulti(FLuaValue InTable, int32 Index, TArray<FLuaValue> Args);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
-	FLuaValue LuaGetField(FString Name);
+	FLuaValue LuaGetField(const FString& Name);
 
 	UFUNCTION(BlueprintCallable, Category="Lua")
-	void LuaSetField(FString Name, FLuaValue Value);
+	void LuaSetField(const FString& Name, FLuaValue Value);
 
 	UPROPERTY(BlueprintAssignable, Category = "Lua", meta = (DisplayName = "On Lua Error"))
 	FLuaComponentError OnLuaError;
 
-	void SetupMetatable(lua_State* State);
-	
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __index"))
+	FLuaValue ReceiveLuaMetaIndex(FLuaValue Key);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Component Metatable __newindex"))
+	bool ReceiveLuaMetaNewIndex(FLuaValue Key, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	ULuaState* LuaComponentGetState();
 };

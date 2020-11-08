@@ -1,10 +1,34 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
+// Reimport system by yama2akira (Akira Yamamoto)
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
 #include "LuaCode.generated.h"
+
+struct LUAMACHINE_API FLuaCodeObjectVersion
+{
+    enum Type
+    {
+        // Before any version changes were made
+        BeforeCustomVersionWasAdded = 0,
+
+        // Fixed duplication of properties
+        FixDuplicationOfProperties,
+
+		VersionPlusOne,
+		LatestVersion = VersionPlusOne - 1
+
+    };
+
+    // The GUID for this custom version number
+    const static FGuid GUID;
+
+private:
+	FLuaCodeObjectVersion() {}
+};
+
 
 /**
  * 
@@ -33,4 +57,12 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 
 	virtual void PreSave(const ITargetPlatform* TargetPlatform) override;
+
+#if WITH_EDITORONLY_DATA
+	virtual void PostInitProperties() override;
+	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+
+	UPROPERTY(VisibleAnywhere, Instanced, Category = Reimport)
+	class UAssetImportData* AssetImportData;
+#endif
 };

@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #include "LuaMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"
@@ -15,6 +15,8 @@
 #include "Runtime/Slate/Public/Widgets/Input/STextComboBox.h"
 #include "LuaMachine/Public/LuaMachine.h"
 #include "LuaMachine/Public/LuaBlueprintFunctionLibrary.h"
+#include "Widgets/Layout/SScrollBox.h"
+#include "LuaUserDataObject.h"
 
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
@@ -72,7 +74,7 @@ struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
 	TArray<TSharedRef<FTableViewLuaValue>> Children;
 };
 
-class SLuaMachineDebugger : public SCompoundWidget
+class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 {
 	SLATE_BEGIN_ARGS(SLuaMachineDebugger)
 	{}
@@ -87,7 +89,6 @@ class SLuaMachineDebugger : public SCompoundWidget
 			return;
 
 		SelectedLuaState->PushGlobalTable();
-		FLuaValue CurrentLuaTableOwner = SelectedLuaState->ToLuaValue(-1);
 		SelectedLuaState->PushNil(); // first key
 		while (SelectedLuaState->Next(-2))
 		{
@@ -134,13 +135,36 @@ class SLuaMachineDebugger : public SCompoundWidget
 			}
 			OutChildren.Append(Item->Children);
 		}
-
+		else if (Item->LuaTableValue.Type == ELuaValueType::UObject && Item->LuaTableValue.Object)
+		{
+			if (Item->LuaTableValue.Object->IsA<ULuaUserDataObject>())
+			{
+				if (!Item->bExpanded)
+				{
+					ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(Item->LuaTableValue.Object);
+					if (LuaUserDataObject)
+					{
+						for (TPair<FString, FLuaValue> Pair : LuaUserDataObject->Table)
+						{
+							TSharedRef<FTableViewLuaValue> LuaItem = MakeShared<FTableViewLuaValue>();
+							LuaItem->LuaTableKey = Pair.Key;
+							LuaItem->LuaTableValue = Pair.Value;
+							LuaItem->bExpanded = false;
+							Item->Children.Add(LuaItem);
+						}
+					}
+					Item->bExpanded = true;
+					Item->Children.Sort([](const TSharedRef<FTableViewLuaValue>& LHS, const TSharedRef<FTableViewLuaValue>& RHS) { return LHS->LuaTableKey < RHS->LuaTableKey; });
+				}
+				OutChildren.Append(Item->Children);
+			}
+		}
 	}
 
 	void OnRegisteredLuaStatesChanged()
 	{
 		DetectedLuaStates.Empty();
-		TArray<ULuaState *> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
+		TArray<ULuaState*> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
 		for (ULuaState* State : States)
 		{
 			DetectedLuaStates.Add(MakeShared<FString>(State->GetClass()->GetName()));
@@ -154,29 +178,71 @@ class SLuaMachineDebugger : public SCompoundWidget
 		RefreshDebugText();
 	}
 
+	FReply CallGC()
+	{
+		GEngine->ForceGarbageCollection(true);
+		return RefreshDebugger();
+	}
+
+	FReply CallLuaGC()
+	{
+		// avoid calling Lua GC on invalid lua state
+		RefreshDebugger();
+		if (SelectedLuaState && SelectedLuaState->GetInternalLuaState())
+		{
+			SelectedLuaState->GC(LUA_GCCOLLECT);
+		}
+		return RefreshDebugger();
+	}
+
 	void RefreshDebugText()
 	{
 		DebugTextContext.Empty();
+		ReferencersTextContext.Empty();
 
 		for (TObjectIterator<ULuaState> StatesIterator; StatesIterator; ++StatesIterator)
 		{
 			ULuaState* LuaState = *StatesIterator;
 			if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
 			{
+				TArray<UObject*> Referencers;
+				FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
+				Collector.FindReferences(LuaState);
+
 				if (LuaState->GetInternalLuaState())
 				{
-					DebugTextContext += FString::Printf(TEXT("%s (used memory: %dk) (top of the stack: %d)\n"), *LuaState->GetName(), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop());
+					LuaState->PushRegistryTable();
+					int32 RegistrySize = LuaState->ILen(-1);
+					LuaState->Pop();
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (%sused memory: %dk) (top of the stack: %d) (registry size: %d) (uobject refs: %d) (tracked user data: %d)\n"), *LuaState->GetName(), LuaState, LuaState->bPersistent ? TEXT("persistent, ") : TEXT(""), LuaState->GC(LUA_GCCOUNT), LuaState->GetTop(), RegistrySize, Referencers.Num(), LuaState->TrackedLuaUserDataObjects.Num());
 				}
 				else
 				{
-					DebugTextContext += FString::Printf(TEXT("%s (not initialized)\n"), *LuaState->GetName());
+					DebugTextContext += FString::Printf(TEXT("%s at 0x%p (%sinactive) (uobject refs: %d)\n"), *LuaState->GetName(), LuaState, LuaState->bPersistent ? TEXT("persistent, ") : TEXT(""), Referencers.Num());
 				}
+			}
+		}
+
+		if (SelectedLuaState)
+		{
+			TArray<UObject*> Referencers;
+			FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
+			Collector.FindReferences(SelectedLuaState);
+
+			for (UObject* Referencer : Referencers)
+			{
+				ReferencersTextContext += FString::Printf(TEXT("%s\n"), *Referencer->GetFullName());
 			}
 		}
 
 		if (DebugText.IsValid())
 		{
 			DebugText->SetText(FText::FromString(DebugTextContext));
+		}
+
+		if (ReferencersText.IsValid())
+		{
+			ReferencersText->SetText(FText::FromString(ReferencersTextContext));
 		}
 	}
 
@@ -193,8 +259,11 @@ class SLuaMachineDebugger : public SCompoundWidget
 		case ELuaValueType::Bool:
 			return FSlateColor(FColor::Purple);
 		case ELuaValueType::UFunction:
+			return FSlateColor(FColor::Magenta);
 		case ELuaValueType::UObject:
 			return FSlateColor(FColor::Cyan);
+		case ELuaValueType::Thread:
+			return FSlateColor(FColor::Yellow);
 		default:
 			return FSlateColor(FLinearColor::White);
 		}
@@ -252,6 +321,12 @@ class SLuaMachineDebugger : public SCompoundWidget
 		case ELuaValueType::UObject:
 			Value = Item->LuaTableValue.ToString();
 			break;
+		case ELuaValueType::Thread:
+			if (SelectedLuaState == Item->LuaTableValue.LuaState)
+			{
+				Value = "status: " + FindObject<UEnum>(ANY_PACKAGE, TEXT("ELuaThreadStatus"), true)->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
+			}
+			break;
 		default:
 			break;
 		}
@@ -269,12 +344,13 @@ class SLuaMachineDebugger : public SCompoundWidget
 				TSharedPtr<FString> SelectedText = LuaStatesComboBox->GetSelectedItem();
 				if (SelectedText.IsValid())
 				{
-					TArray<ULuaState *> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
+					TArray<ULuaState*> States = FLuaMachineModule::Get().GetRegisteredLuaStates();
 					for (ULuaState* State : States)
 					{
 						if (State->GetClass()->GetName() == *SelectedText.Get())
 						{
-							SelectedLuaState = State;
+							if (State->GetInternalLuaState())
+								SelectedLuaState = State;
 							break;
 						}
 					}
@@ -297,7 +373,7 @@ class SLuaMachineDebugger : public SCompoundWidget
 			[
 				SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
 			]
-		+ SHorizontalBox::Slot()
+		+ SHorizontalBox::Slot().FillWidth(0.2)
 			[
 				SNew(STextBlock).Text(GetLuaTypeText(Item))
 			]
@@ -317,7 +393,15 @@ class SLuaMachineDebugger : public SCompoundWidget
 			SNew(SVerticalBox)
 				+ SVerticalBox::Slot().AutoHeight()
 				[
+					SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
+				[
+					SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
+				]
+			+ SHorizontalBox::Slot().FillWidth(0.6)
+				[
 					SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
+				]
 				]
 
 			+ SVerticalBox::Slot().AutoHeight()
@@ -326,9 +410,32 @@ class SLuaMachineDebugger : public SCompoundWidget
 				]
 			+ SVerticalBox::Slot().AutoHeight()
 				[
+					SNew(SButton).Text(FText::FromString("Call Unreal GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
+				]
+			+ SVerticalBox::Slot().AutoHeight()
+				[
+					SNew(SButton).Text(FText::FromString("Call Lua GC")).OnClicked(this, &SLuaMachineDebugger::CallLuaGC)
+				]
+			+ SVerticalBox::Slot().FillHeight(1)
+				[
+					SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+					+ SScrollBox::Slot()
+				[
 					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
 				]
-			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom)
+				]
+			+ SVerticalBox::Slot().FillHeight(0.1)
+				[
+					SNew(SBorder).BorderBackgroundColor(FColor::White).Padding(4)
+					[
+						SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+						+ SScrollBox::Slot()
+				[
+					SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+				]
+					]
+				]
+			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
 					[
@@ -339,6 +446,11 @@ class SLuaMachineDebugger : public SCompoundWidget
 		FLuaMachineModule::Get().OnRegisteredLuaStatesChanged.AddSP(this, &SLuaMachineDebugger::OnRegisteredLuaStatesChanged);
 	}
 
+	void AddReferencedObjects(FReferenceCollector& Collector) override
+	{
+		Collector.AddReferencedObject(SelectedLuaState);
+	}
+
 protected:
 	TArray<TSharedRef<FTableViewLuaValue>> LuaValues;
 	TSharedPtr<STreeView<TSharedRef<FTableViewLuaValue>>> LuaTreeView;
@@ -347,6 +459,8 @@ protected:
 	TSharedPtr<STextComboBox> LuaStatesComboBox;
 	TSharedPtr<STextBlock> DebugText;
 	FString DebugTextContext;
+	TSharedPtr<STextBlock> ReferencersText;
+	FString ReferencersTextContext;
 };
 
 TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSpawnTabArgs& Args)

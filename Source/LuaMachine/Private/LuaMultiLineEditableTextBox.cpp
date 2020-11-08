@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #include "LuaMultiLineEditableTextBox.h"
 #include "Runtime/Slate/Public/Widgets/Input/SMultiLineEditableTextBox.h"
@@ -47,6 +47,15 @@ FText ULuaMultiLineEditableTextBox::GetText() const
 	if (EditableTextBoxPtr.IsValid())
 	{
 		return EditableTextBoxPtr->GetText();
+	}
+	return FText::GetEmpty();
+}
+
+FText ULuaMultiLineEditableTextBox::GetSelectedText() const
+{
+	if (EditableTextBoxPtr.IsValid())
+	{
+		return EditableTextBoxPtr->GetSelectedText();
 	}
 	return FText::GetEmpty();
 }

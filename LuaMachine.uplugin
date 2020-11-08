@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "20190904",
+  "VersionName": "20200904",
   "FriendlyName": "LuaMachine",
   "Description": "Expose a Lua api for your project",
   "Category": "Scripting",
@@ -17,11 +17,12 @@
     {
       "Name": "LuaMachine",
       "Type": "Runtime",
-      "LoadingPhase": "Default",
+      "LoadingPhase": "PreDefault",
       "WhitelistPlatforms": [
         "Mac",
         "Win64",
         "Linux",
+        "LinuxAArch64",
         "Android",
         "IOS"
       ]

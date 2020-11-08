@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #pragma once
 
@@ -97,6 +97,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Widget", meta = (DisplayName = "CursorGoTo (Lua Code Box)"))
 	void CursorGoTo(int32 Line, int32 Column);
+
+	UFUNCTION(BlueprintPure, Category = "Widget", meta = (DisplayName = "GetSelectedText (Lua Code Box)"))
+	FText GetSelectedText() const;
 
 	virtual FReply OnKeyChar(const FGeometry& InGeometry, const FCharacterEvent& InCharacterEvent);
 

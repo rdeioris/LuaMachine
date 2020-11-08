@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 using UnrealBuildTool;
 
@@ -7,7 +7,6 @@ public class LuaMachineEditor : ModuleRules
     public LuaMachineEditor(ReadOnlyTargetRules Target) : base(Target)
     {
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-        bFasterWithoutUnity = true;
 
         PublicIncludePaths.AddRange(
             new string[] {

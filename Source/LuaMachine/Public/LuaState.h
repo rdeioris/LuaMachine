@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #pragma once
 
@@ -8,7 +8,7 @@
 #include "LuaValue.h"
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
-#include "Runtime/Engine/Classes/Kismet/BlueprintFunctionLibrary.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "LuaState.generated.h"
 
 LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
@@ -16,6 +16,8 @@ LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
 /**
  *
  */
+
+class ULuaBlueprintPackage;
 
 struct FLuaUserData
 {
@@ -37,6 +39,49 @@ struct FLuaUserData
 		Context = InObject;
 		Function = InFunction;
 	}
+};
+
+UENUM(BlueprintType)
+enum class ELuaThreadStatus : uint8
+{
+	Invalid,
+	Ok,
+	Suspended,
+	Error,
+};
+
+USTRUCT()
+struct FLuaLibsLoader
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load base"))
+	bool bLoadBase;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load coroutine"))
+	bool bLoadCoroutine;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load table"))
+	bool bLoadTable;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load io"))
+	bool bLoadIO;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load os"))
+	bool bLoadOS;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load string"))
+	bool bLoadString;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load math"))
+	bool bLoadMath;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load utf8"))
+	bool bLoadUTF8;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load debug"))
+	bool bLoadDebug;
+
 };
 
 USTRUCT(BlueprintType)
@@ -61,6 +106,15 @@ struct FLuaDebug
 };
 
 
+struct FLuaSmartReference : public TSharedFromThis<FLuaSmartReference>
+{
+	ULuaState* LuaState;
+	FLuaValue Value;
+};
+
+
+class ULuaUserDataObject;
+
 UCLASS(Abstract, Blueprintable, HideDropdown)
 class LUAMACHINE_API ULuaState : public UObject
 {
@@ -81,14 +135,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	TMap<FString, FLuaValue> Table;
 
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Lua Blueprint Packages Table"))
+	TMap<FString, TSubclassOf<ULuaBlueprintPackage>> LuaBlueprintPackagesTable;
+
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	TMap<FString, ULuaCode*> RequireTable;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
-	TMap<FString, TSubclassOf<UBlueprintFunctionLibrary>> RequireBlueprintFunctionLibraryTable;
-
-	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLuaOpenLibs;
+
+	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load Specific Lua Libraries (only if \"Lua Open Libs\" is false)"))
+	FLuaLibsLoader LuaLibsLoader;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bAddProjectContentDirToPackagePath;
@@ -117,8 +174,44 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Return Hook"))
 	void ReceiveLuaReturnHook(const FLuaDebug& LuaDebug);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaDebug LuaGetInfo(const int32 Level);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	TMap<FString, FLuaValue> LuaGetLocals(const int32 Level);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	TSubclassOf<ULuaState> GetSelfLuaState() const { return GetClass(); }
+
+	template<class T>
+	FLuaValue NewLuaUserDataObject(bool bTrackObject = true)
+	{
+		return NewLuaUserDataObject(T::StaticClass(), bTrackObject);
+	}
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void SetLuaUserDataField(FLuaValue UserData, const FString& Key, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	FLuaValue GetLuaUserDataField(FLuaValue UserData, const FString& Key);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue GetLuaValueFromProperty(UObject* InObject, const FString& PropertyName);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	bool SetPropertyFromLuaValue(UObject* InObject, const FString& PropertyName, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "Lua")
+	FLuaValue GetLuaBlueprintPackageTable(const FString& PackageName);
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
+
+	ELuaThreadStatus GetLuaThreadStatus(FLuaValue Value);
+	int32 GetLuaThreadStackTop(FLuaValue Value);
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bLogError;
@@ -138,6 +231,26 @@ public:
 	/* Enable debug of each Lua return. The LuaReturnHook event will be triggered */
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bEnableReturnHook;
+
+	UPROPERTY()
+	TMap<FString, ULuaBlueprintPackage*> LuaBlueprintPackages;
+
+	TArray<TSharedRef<FLuaSmartReference>> LuaSmartReferences;
+
+	UPROPERTY()
+	TArray<ULuaUserDataObject*> TrackedLuaUserDataObjects;
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Added To World"))
+	void ReceiveLuaLevelAddedToWorld(ULevel* Level, UWorld* World);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Level Removed From World"))
+	void ReceiveLuaLevelRemovedFromWorld(ULevel* Level, UWorld* World);
+
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua State Pre Initialization"))
+	void ReceiveLuaStatePreInitialized();
+	
+	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua State Initialized"))
+	void ReceiveLuaStateInitialized();
 
 	int32 GetTop();
 
@@ -162,9 +275,9 @@ public:
 
 	void GetGlobal(const char* Name);
 
-	int32 GetFieldFromTree(FString Tree, bool bGlobal = true);
+	int32 GetFieldFromTree(const FString& Tree, bool bGlobal = true);
 
-	void SetFieldFromTree(FString Tree, FLuaValue& Value, bool bGlobal = true);
+	void SetFieldFromTree(const FString& Tree, FLuaValue& Value, bool bGlobal, UObject* CallContext = nullptr);
 
 	void SetGlobal(const char* Name);
 
@@ -180,17 +293,21 @@ public:
 	void PushNil();
 
 	void Unref(int Ref);
+	void UnrefChecked(int Ref);
 	int NewRef();
 	void GetRef(int Ref);
 	int Next(int Index);
 
 	bool Resume(int Index, int NArgs);
+	bool Yield(int Index, int NArgs);
 
 	int GC(int What, int Data = 0);
 
 	int32 ToInteger(int Index);
 
 	void Len(int Index);
+
+	int32 ILen(int Index);
 
 	void RawGetI(int Index, int N);
 	void RawSetI(int Index, int N);
@@ -199,56 +316,67 @@ public:
 
 	ULuaState* GetLuaState(UWorld* InWorld);
 
-	bool RunCode(TArray<uint8> Code, FString CodePath, int NRet = 0);
-	bool RunCode(FString Code, FString CodePath, int NRet = 0);
+	bool RunCode(const TArray<uint8>& Code, const FString& CodePath, int NRet = 0);
+	bool RunCode(const FString& Code, const FString& CodePath, int NRet = 0);
 
 	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
 
 	FLuaValue CreateLuaTable();
+	FLuaValue CreateLuaThread(FLuaValue Value);
 
-	bool RunFile(FString Filename, bool bIgnoreNonExistent, int NRet = 0);
+	FLuaValue CreateLuaLazyTable();
 
-	static int MetaTableFunctionLuaComponent__index(lua_State *L);
-	static int MetaTableFunctionLuaComponent__newindex(lua_State *L);
+	bool RunFile(const FString& Filename, bool bIgnoreNonExistent, int NRet = 0, bool bNonContentDirectory=false);
 
-	static int MetaTableFunctionState__index(lua_State *L);
-	static int MetaTableFunctionState__newindex(lua_State *L);
+	static int MetaTableFunctionUserData__index(lua_State* L);
+	static int MetaTableFunctionUserData__newindex(lua_State* L);
 
-	static int MetaTableBlueprintFunctionLibraryState__index(lua_State *L);
-	
-	static int TableFunction_print(lua_State *L);
-	static int TableFunction_package_preload(lua_State *L);
+	static int TableFunction_print(lua_State* L);
+	static int TableFunction_package_preload(lua_State* L);
 
-	static int MetaTableFunction__call(lua_State *L);
+	static int MetaTableFunction__call(lua_State* L);
 
-	static int MetaTableFunctionUserData__eq(lua_State *L);
+	static int MetaTableFunctionUserData__eq(lua_State* L);
+	static int MetaTableFunctionUserData__gc(lua_State* L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
 
 	static void Debug_Hook(lua_State* L, lua_Debug* ar);
 
-	static TArray<uint8> ToByteCode(FString Code, FString CodePath, FString& ErrorString);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static TArray<uint8> ToByteCode(const FString& Code, const FString& CodePath, FString& ErrorString);
 
+#if ENGINE_MINOR_VERSION >= 25
+	FLuaValue FromUProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToUProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromFProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToFProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+#else
 	FLuaValue FromUProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToUProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+	FLuaValue FromProperty(void* Buffer, UProperty* Property, bool& bSuccess, int32 Index = 0);
+	void ToProperty(void* Buffer, UProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
+#endif
 
-	static ULuaState* GetFromExtraSpace(lua_State *L)
+	static ULuaState* GetFromExtraSpace(lua_State* L)
 	{
 		ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
 		return *LuaExtraSpacePtr;
 	}
 
-	virtual void Log(FString Message)
+	virtual void Log(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Log, TEXT("%s"), *Message);
 	}
 
-	void LogWarning(FString Message)
+	void LogWarning(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Warning, TEXT("%s"), *Message);
 	}
 
-	void LogError(FString Message)
+	void LogError(const FString& Message)
 	{
 		UE_LOG(LogLuaMachine, Error, TEXT("%s"), *Message);
 	}
@@ -256,6 +384,15 @@ public:
 	void SetUserDataMetaTable(FLuaValue MetaTable);
 
 	FORCEINLINE lua_State* GetInternalLuaState() const { return L; }
+
+	void PushRegistryTable();
+
+	TSharedRef<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
+	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
+
+	void SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
+
+	const void* ToPointer(int Index);
 
 protected:
 	lua_State* L;

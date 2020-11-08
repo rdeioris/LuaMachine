@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #include "LuaComponent.h"
 #include "LuaMachine.h"
@@ -16,6 +16,7 @@ ULuaComponent::ULuaComponent()
 
 	bLazy = false;
 	bLogError = false;
+	bImplicitSelf = false;
 }
 
 // Called when the game starts
@@ -38,62 +39,21 @@ void ULuaComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	// ...
 }
 
-void ULuaComponent::SetupMetatable(lua_State* State)
+ULuaState* ULuaComponent::LuaComponentGetState()
 {
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
-	if (!L)
-		return;
-
-	lua_newtable(State);
-	lua_pushcfunction(State, ULuaState::MetaTableFunctionLuaComponent__index);
-	lua_setfield(State, -2, "__index");
-	lua_pushcfunction(State, ULuaState::MetaTableFunctionLuaComponent__newindex);
-	lua_setfield(State, -2, "__newindex");
-	lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__eq);
-	lua_setfield(State, -2, "__eq");
-
-	for (TPair<FString, FLuaValue>& Pair : Metatable)
-	{
-		// first check for UFunction
-		if (Pair.Value.Type == ELuaValueType::UFunction)
-		{
-			UFunction* Function = GetOwner()->FindFunction(Pair.Value.FunctionName);
-			if (Function)
-			{
-				FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
-				LuaCallContext->Type = ELuaValueType::UFunction;
-				LuaCallContext->Context = GetOwner();
-				LuaCallContext->Function = Function;
-
-				lua_newtable(State);
-				lua_pushcfunction(State, ULuaState::MetaTableFunction__call);
-				lua_setfield(State, -2, "__call");
-				lua_setmetatable(State, -2);
-			}
-			else
-			{
-				lua_pushnil(State);
-			}
-		}
-		else {
-			L->FromLuaValue(Pair.Value);
-		}
-		lua_setfield(State, -2, TCHAR_TO_UTF8(*Pair.Key));
-	}
-
-	lua_setmetatable(State, -2);
+	return FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
 }
 
-FLuaValue ULuaComponent::LuaGetField(FString Name)
+FLuaValue ULuaComponent::LuaGetField(const FString& Name)
 {
 	FLuaValue ReturnValue;
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, false);
 	ReturnValue = L->ToLuaValue(-1);
@@ -104,15 +64,15 @@ FLuaValue ULuaComponent::LuaGetField(FString Name)
 	return ReturnValue;
 }
 
-void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
+void ULuaComponent::LuaSetField(const FString& Name, FLuaValue Value)
 {
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return;
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	L->SetFieldFromTree(Name, Value, false);
 
@@ -121,17 +81,17 @@ void ULuaComponent::LuaSetField(FString Name, FLuaValue Value)
 
 }
 
-FLuaValue ULuaComponent::LuaCallFunction(FString Name, TArray<FLuaValue> Args, bool bGlobal)
+FLuaValue ULuaComponent::LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal)
 {
 	FLuaValue ReturnValue;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
@@ -164,13 +124,13 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 {
 	TArray<FLuaValue> ReturnValue;
 
-	ULuaState* L = FLuaMachineModule::Get().GetLuaState(LuaState, GetWorld());
+	ULuaState* L = LuaComponentGetState();
 	if (!L)
 		return ReturnValue;
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 	int32 StackTop = L->GetTop();
@@ -225,7 +185,7 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	L->FromLuaValue(Value);
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)
@@ -308,7 +268,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 
 	// push component pointer as userdata
 	L->NewUObject(this);
-	SetupMetatable(L->GetInternalLuaState());
+	L->SetupAndAssignUserDataMetatable(this, Metatable);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)
@@ -388,4 +348,14 @@ TArray<FLuaValue> ULuaComponent::LuaCallTableIndexMulti(FLuaValue InTable, int32
 		return ReturnValue;
 
 	return LuaCallValueMulti(Value, Args);
+}
+
+FLuaValue ULuaComponent::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
+{
+	return FLuaValue();
+}
+
+bool ULuaComponent::ReceiveLuaMetaNewIndex_Implementation(FLuaValue Key, FLuaValue Value)
+{
+	return false;
 }

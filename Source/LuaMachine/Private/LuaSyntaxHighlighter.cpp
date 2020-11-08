@@ -1,4 +1,4 @@
-// Copyright 2019 - Roberto De Ioris
+// Copyright 2018-2020 - Roberto De Ioris
 
 #include "LuaSyntaxHighlighter.h"
 #include "Runtime/Slate/Public/Framework/Text/IRun.h"
