@@ -15,9 +15,17 @@ DEFINE_FUNCTION(ULuaFunction::CallLuaNative)
 	// add object ass the first argument
 	LuaArgs.Add(FLuaValue(Context));
 	
+#if ENGINE_MINOR_VERSION >= 25
 	for (TFieldIterator<FProperty> ParamsIt(Function); ParamsIt; ++ParamsIt)
+#else
+	for (TFieldIterator<UProperty> ParamsIt(Function); ParamsIt; ++ParamsIt)
+#endif
 	{
+#if ENGINE_MINOR_VERSION >= 25
 		FProperty* Param = *ParamsIt;
+#else
+		UProperty* Param = *ParamsIt;
+#endif
 		// skip return value
 		if (Param->HasAnyPropertyFlags(CPF_ReturnParm))
 		{
@@ -25,7 +33,11 @@ DEFINE_FUNCTION(ULuaFunction::CallLuaNative)
 		}
 
 		void* LocalValue = Param->ContainerPtrToValuePtr<void>(LocalStruct);
+#if ENGINE_MINOR_VERSION >= 25
 		Stack.StepCompiledIn<FProperty>(LocalValue);
+#else
+		Stack.StepCompiledIn<UProperty>(LocalValue);
+#endif
 		bool bSuccess = false;
 		FLuaValue LuaArg = Function->LuaState->FromProperty(LocalValue, Param, bSuccess, 0);
 		LuaArgs.Add(LuaArg);
@@ -39,7 +51,11 @@ DEFINE_FUNCTION(ULuaFunction::CallLuaNative)
 
 	FLuaValue LuaReturnValue = ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(Function->LuaFunction, LuaArgs);
 
+#if ENGINE_MINOR_VERSION >= 25
 	FProperty* ReturnProp = Function->GetReturnProperty();
+#else
+	UProperty* ReturnProp = Function->GetReturnProperty();
+#endif
 
 	if (ReturnProp)
 	{

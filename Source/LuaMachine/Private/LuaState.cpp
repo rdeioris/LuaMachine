@@ -1975,7 +1975,11 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		for (TFieldIterator<UProperty> It(StructProperty->Struct); It; ++It)
 #endif
 		{
+#if ENGINE_MINOR_VERSION >= 25
 			FProperty* FieldProp = *It;
+#else
+			UProperty* FieldProp = *It;
+#endif
 			FString PropName = FieldProp->GetName();
 			bool bTableItemSuccess = false;
 			NewLuaTable.SetField(PropName, FromProperty((uint8*)StructContainer, FieldProp, bTableItemSuccess, 0));
