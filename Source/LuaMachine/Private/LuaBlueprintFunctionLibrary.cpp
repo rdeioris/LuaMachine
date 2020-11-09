@@ -121,7 +121,7 @@ void ULuaBlueprintFunctionLibrary::LuaStateReload(UObject* WorldContextObject, T
 	FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 }
 
-FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(FLuaValue Value)
+FString ULuaBlueprintFunctionLibrary::Conv_LuaValueToString(const FLuaValue& Value)
 {
 	return Value.ToString();
 }
@@ -131,17 +131,17 @@ FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(const FLuaValue& Va
 	return LuaTableToVector(Value);
 }
 
-FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(FLuaValue Value)
+FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(const FLuaValue& Value)
 {
 	return FName(*Value.ToString());
 }
 
-FText ULuaBlueprintFunctionLibrary::Conv_LuaValueToText(FLuaValue Value)
+FText ULuaBlueprintFunctionLibrary::Conv_LuaValueToText(const FLuaValue& Value)
 {
 	return FText::FromString(Value.ToString());
 }
 
-UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
+UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(const FLuaValue& Value)
 {
 	if (Value.Type == ELuaValueType::UObject)
 	{
@@ -150,7 +150,7 @@ UObject* ULuaBlueprintFunctionLibrary::Conv_LuaValueToObject(FLuaValue Value)
 	return nullptr;
 }
 
-UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(FLuaValue Value)
+UClass* ULuaBlueprintFunctionLibrary::Conv_LuaValueToClass(const FLuaValue& Value)
 {
 	if (Value.Type == ELuaValueType::UObject)
 	{
@@ -170,17 +170,17 @@ FLuaValue ULuaBlueprintFunctionLibrary::Conv_ObjectToLuaValue(UObject* Object)
 }
 
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_FloatToLuaValue(float Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_FloatToLuaValue(const float Value)
 {
 	return FLuaValue(Value);
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::Conv_BoolToLuaValue(bool Value)
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_BoolToLuaValue(const bool Value)
 {
 	return FLuaValue(Value);
 }
 
-int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(FLuaValue Value)
+int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(const FLuaValue& Value)
 {
 	return Value.ToInteger();
 }
@@ -295,7 +295,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF16(const FString& String)
 	return FLuaValue(Bytes);
 }
 
-FString ULuaBlueprintFunctionLibrary::LuaValueToUTF16(FLuaValue Value)
+FString ULuaBlueprintFunctionLibrary::LuaValueToUTF16(const FLuaValue& Value)
 {
 	FString ReturnValue;
 	TArray<uint8> Bytes = Value.ToBytes();
@@ -501,7 +501,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObj
 	return FLuaValue();
 }
 
-UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, FLuaValue Value, EPixelFormat PixelFormat, bool bDetectFormat)
+UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, const FLuaValue& Value, EPixelFormat PixelFormat, bool bDetectFormat)
 {
 	if (Value.Type != ELuaValueType::String)
 	{
@@ -569,7 +569,7 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 	return Texture;
 }
 
-USoundWave* ULuaBlueprintFunctionLibrary::LuaValueToTransientSoundWave(FLuaValue Value, bool bLoop)
+USoundWave* ULuaBlueprintFunctionLibrary::LuaValueToTransientSoundWave(const FLuaValue& Value, bool bLoop)
 {
 	TArray<uint8> RawData = Value.ToBytes();
 
@@ -824,59 +824,61 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaComponentGetField(FLuaValue LuaCompon
 	return ReturnValue;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsNil(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Nil;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsOwned(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsOwned(const FLuaValue& Value)
 {
 	return Value.LuaState != nullptr;
 }
 
-TSubclassOf<ULuaState> ULuaBlueprintFunctionLibrary::LuaValueGetOwner(FLuaValue Value)
+TSubclassOf<ULuaState> ULuaBlueprintFunctionLibrary::LuaValueGetOwner(const FLuaValue& Value)
 {
 	if (!Value.LuaState)
+	{
 		return nullptr;
+	}
 	return Value.LuaState->GetClass();
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsNotNil(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsNotNil(const FLuaValue& Value)
 {
 	return Value.Type != ELuaValueType::Nil;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsTable(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsTable(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Table;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsBoolean(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsBoolean(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Bool;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsThread(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsThread(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Thread;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsFunction(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsFunction(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Function;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsNumber(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsNumber(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Number;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsInteger(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsInteger(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::Integer;
 }
 
-bool ULuaBlueprintFunctionLibrary::LuaValueIsString(FLuaValue Value)
+bool ULuaBlueprintFunctionLibrary::LuaValueIsString(const FLuaValue& Value)
 {
 	return Value.Type == ELuaValueType::String;
 }
@@ -1696,7 +1698,7 @@ bool ULuaBlueprintFunctionLibrary::LuaValueIsReferencedInLuaRegistry(FLuaValue V
 	return Value.IsReferencedInLuaRegistry();
 }
 
-UClass* ULuaBlueprintFunctionLibrary::LuaValueToBlueprintGeneratedClass(FLuaValue Value)
+UClass* ULuaBlueprintFunctionLibrary::LuaValueToBlueprintGeneratedClass(const FLuaValue& Value)
 {
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
@@ -1717,7 +1719,7 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueToBlueprintGeneratedClass(FLuaValu
 	return Cast<UClass>(Blueprint->GeneratedClass);
 }
 
-UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(FLuaValue Value, bool bDetectBlueprintGeneratedClass)
+UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(const FLuaValue& Value, bool bDetectBlueprintGeneratedClass)
 {
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
@@ -1742,7 +1744,7 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(FLuaValue Value, bool bD
 	return Cast<UClass>(LoadedObject);
 }
 
-UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(FLuaValue Value)
+UObject* ULuaBlueprintFunctionLibrary::LuaValueLoadObject(const FLuaValue& Value)
 {
 	UObject* LoadedObject = nullptr;
 	if (Value.Type == ELuaValueType::String)
@@ -1933,9 +1935,4 @@ void ULuaBlueprintFunctionLibrary::GetLuaReflectionType(UObject* InObject, const
 		LuaReflectionTypes = ELuaReflectionType::Function;
 		return;
 	}
-}
-
-FLuaValue ULuaBlueprintFunctionLibrary::StructToLuaValue(UScriptStruct* InStruct)
-{
-	return FLuaValue();
 }

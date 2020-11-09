@@ -38,5 +38,3 @@ void ULuaDelegate::ProcessEvent(UFunction* Function, void* Parms)
 
 	ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(LuaState->GetWorld(), LuaState->GetClass(), LuaValue, LuaArgs);
 }
-
-

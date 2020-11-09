@@ -2128,7 +2128,13 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(Value);
 		for (FLuaValue TableKey : TableKeys)
 		{
-			// TODO Manage Key/Value
+			int32 NewIndex = Helper.AddUninitializedValue();
+			uint8* KeyBuffer = Helper.GetKeyPtr(NewIndex);
+			uint8* ValueBuffer = Helper.GetValuePtr(NewIndex);
+			bool bTableItemSuccess = false;
+			ToProperty(KeyBuffer, Helper.GetKeyProperty(), TableKey, bTableItemSuccess, 0);
+			ToProperty(ValueBuffer, Helper.GetValueProperty(), TableKey, bTableItemSuccess, 0);
+			UDynamicClass FOo;
 		}
 		return;
 	}
@@ -2343,7 +2349,6 @@ const void* ULuaState::ToPointer(int Index)
 
 void ULuaState::LuaStateInit()
 {
-
 }
 
 void ULuaState::GCLuaDelegatesCheck()
