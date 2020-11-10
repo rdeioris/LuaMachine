@@ -408,6 +408,12 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (ExpandEnumAsExecs = "LuaReflectionTypes"), Category = "Lua")
 	static void GetLuaReflectionType(UObject* InObject, const FString& Name, ELuaReflectionType& LuaReflectionTypes);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static void RegisterLuaConsoleCommand(const FString& CommandName, const FLuaValue& LuaConsoleCommand);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	static void UnregisterLuaConsoleCommand(const FString& CommandName);
+
 private:
 	static void HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, const FString SecurityHeader, const FString SignaturePublicExponent, const FString SignatureModulus, FLuaHttpSuccess Completed);
 	static void HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakPtr<FLuaSmartReference> Context, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error);

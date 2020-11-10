@@ -277,6 +277,12 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	LuaStateInit();
 	ReceiveLuaStateInitialized();
 
+#if WITH_EDITOR
+	LuaConsole.LuaState = this;
+	IModularFeatures::Get().RegisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), &LuaConsole);
+#endif
+
+
 	return this;
 }
 
@@ -1776,6 +1782,14 @@ void ULuaState::RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref)
 ULuaState::~ULuaState()
 {
 	FCoreUObjectDelegates::GetPostGarbageCollect().Remove(GCLuaDelegatesHandle);
+
+#if WITH_EDITOR
+	if (LuaConsole.LuaState)
+	{
+		IModularFeatures::Get().UnregisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), &LuaConsole);
+	}
+#endif
+
 	FLuaMachineModule::Get().UnregisterLuaState(this);
 
 	if (L)

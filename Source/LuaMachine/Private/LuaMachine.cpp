@@ -1,6 +1,7 @@
 // Copyright 2018-2020 - Roberto De Ioris
 
 #include "LuaMachine.h"
+#include "LuaBlueprintFunctionLibrary.h"
 #if WITH_EDITOR
 #include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
@@ -125,6 +126,41 @@ void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
 
 	// trick for waking up on low-level destructor
 	OnRegisteredLuaStatesChanged.Broadcast();
+}
+
+void FLuaMachineModule::RegisterLuaConsoleCommand(const FString& CommandName, const FLuaValue& LuaConsoleCommand)
+{
+	// first check in lua console commands
+	UnregisterLuaConsoleCommand(CommandName);
+	if (IConsoleManager::Get().FindConsoleObject(*CommandName))
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("Lua Console Command Name \"%s\" is already in use."), *CommandName);
+		return;
+	}
+
+	if (IConsoleManager::Get().RegisterConsoleCommand(*CommandName, *CommandName, FConsoleCommandWithArgsDelegate::CreateRaw(this, &FLuaMachineModule::RunLuaConsoleCommand, LuaConsoleCommand)))
+	{
+		LuaConsoleCommands.Add(CommandName);
+	}
+}
+
+void FLuaMachineModule::UnregisterLuaConsoleCommand(const FString& CommandName)
+{
+	if (LuaConsoleCommands.Contains(CommandName))
+	{
+		IConsoleManager::Get().UnregisterConsoleObject(*CommandName);
+		LuaConsoleCommands.Remove(CommandName);
+	}
+}
+
+void FLuaMachineModule::RunLuaConsoleCommand(const TArray<FString>& Args, FLuaValue LuaConsoleCommand)
+{
+	TArray<FLuaValue> LuaArgs;
+	for (FString Arg : Args)
+	{
+		LuaArgs.Add(FLuaValue(Arg));
+	}
+	ULuaBlueprintFunctionLibrary::LuaValueCallIfNotNil(LuaConsoleCommand, LuaArgs);
 }
 
 FLuaMachineModule& FLuaMachineModule::Get()

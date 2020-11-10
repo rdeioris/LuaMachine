@@ -1936,3 +1936,13 @@ void ULuaBlueprintFunctionLibrary::GetLuaReflectionType(UObject* InObject, const
 		return;
 	}
 }
+
+void ULuaBlueprintFunctionLibrary::RegisterLuaConsoleCommand(const FString& CommandName, const FLuaValue& LuaConsoleCommand)
+{
+	FLuaMachineModule::Get().RegisterLuaConsoleCommand(CommandName, LuaConsoleCommand);
+}
+
+void ULuaBlueprintFunctionLibrary::UnregisterLuaConsoleCommand(const FString& CommandName)
+{
+	FLuaMachineModule::Get().UnregisterLuaConsoleCommand(CommandName);
+}

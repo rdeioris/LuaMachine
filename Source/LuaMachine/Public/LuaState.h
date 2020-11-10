@@ -10,6 +10,7 @@
 #include "Runtime/Core/Public/Containers/Queue.h"
 #include "Runtime/Launch/Resources/Version.h"
 #include "LuaDelegate.h"
+#include "LuaCommandExecutor.h"
 #include "LuaState.generated.h"
 
 LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
@@ -429,6 +430,8 @@ protected:
 
 	UPROPERTY()
 	TMap<TWeakObjectPtr<UObject>, FLuaDelegateGroup> LuaDelegatesMap;
+
+	FLuaCommandExecutor LuaConsole;
 };
 
 #define LUACFUNCTION(FuncClass, FuncName, NumRetValues, NumArgs) static int FuncName ## _C(lua_State* L)\

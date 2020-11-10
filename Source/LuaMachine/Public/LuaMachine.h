@@ -6,6 +6,7 @@
 #include "Modules/ModuleManager.h"
 #include "UObject/GCObject.h"
 #include "LuaState.h"
+#include "HAL/IConsoleManager.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnRegisteredLuaStatesChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewLuaState, ULuaState*);
@@ -35,6 +36,12 @@ public:
 
 	void AddReferencedObjects(FReferenceCollector& Collector) override;
 
+	void RegisterLuaConsoleCommand(const FString& CommandName, const FLuaValue& LuaConsoleCommand);
+	void UnregisterLuaConsoleCommand(const FString& CommandName);
+
+	void RunLuaConsoleCommand(const TArray<FString>& Args, FLuaValue LuaConsoleCommand);
+
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
+	TSet<FString> LuaConsoleCommands;
 };
