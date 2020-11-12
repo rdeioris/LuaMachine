@@ -3,14 +3,14 @@
 
 Unreal Engine 4 Plugin for adding Lua scripting to your projects.
 
-If you want modders to customize your game/project, or you need to allow game designers to script parts of the logic, this plugin is for you.
+If you want modders to customize your game/project, or you need to allow game designers to script parts of the logic, or more generally you want a framework for adding lua scripting capabilities to your projects, this plugin is for you.
 
 ![LuaMachine](Docs/Screenshots/SyntaxColor.PNG?raw=true "LuaMachine")
 
 ## How it works
 
-Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to expose the Unreal Engine 4 api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
-In addition to this, a full featued C++ API for adding generic Lua scripting capabilities to your project is included.
+Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to automatically expose the Unreal Engine 4 api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+An advanced api for using/abusing Unreal Engine Reflection is included too.
 
 Currently Windows 64bit, Mac, Linux x86_64 (both Runtime and Editor), Linux AArch64, Android (32 and 64 bit) and iOS are supported. Minimal supported Engine version is 4.20.
 
@@ -156,6 +156,16 @@ A Simple Lua Debugger is included in the plugin (you can find it under the Windo
 ![Debugger](Docs/Screenshots/Debugger.PNG?raw=true "Quickstart8")
 
 You can control/monitor active LuaStates as well as triggering both Unreal and Lua GC's
+
+### LuaMachine Console
+
+As a great companion for the debugger, each LuaState automatically activates a lua console in your output log window:
+
+![LuaConsole](Docs/Screenshots/LuaConsole.PNG?raw=true "LuaConsole")
+
+LuaConsoles allow multiline input (shift-return for newlines, return for submitting the commands) and are automatically destroyed when the state is destroyed.
+
+Obviously they are only available in the editor.
 
 ### LuaState in C++
 
