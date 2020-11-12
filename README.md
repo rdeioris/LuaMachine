@@ -163,7 +163,7 @@ As a great companion for the debugger, each LuaState automatically activates a l
 
 ![LuaConsole](Docs/Screenshots/LuaConsole.PNG?raw=true "LuaConsole")
 
-LuaConsoles allows multiline input (shift-return for newlines, return for submitting the commands) and are automatically destroyed when the state is destroyed.
+LuaConsoles allow multiline input (shift-return for newlines, return for submitting the commands) and are automatically destroyed when the state is destroyed.
 
 Obviously they are only available in the editor.
 
