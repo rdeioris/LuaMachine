@@ -43,7 +43,7 @@ EVisibility FLuaValueCustomization::IsPropertyVisible(TSharedRef<IPropertyHandle
 
 void FLuaValueCustomization::LuaFunctionChanged(TSharedPtr<FString> Value, ESelectInfo::Type SelectionType, TSharedRef<IPropertyHandle> PropertyHandle)
 {
-	TArray<UObject *> Objects;
+	TArray<UObject*> Objects;
 	PropertyHandle->GetOuterObjects(Objects);
 
 	if (Objects.Num() != 1)
@@ -79,7 +79,7 @@ void FLuaValueCustomization::LuaFunctionChanged(TSharedPtr<FString> Value, ESele
 
 void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& Builder, IPropertyTypeCustomizationUtils& CustomizationUtils)
 {
-	TArray<UObject *> Objects;
+	TArray<UObject*> Objects;
 	PropertyHandle->GetOuterObjects(Objects);
 
 	if (Objects.Num() != 1)
@@ -114,6 +114,8 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 
 	UClass* ObjectClass = Objects[0]->GetClass();
 
+	bool bAllowsRawCall = false;
+
 	ULuaComponent* LuaComponent = Cast<ULuaComponent>(Objects[0]);
 	if (LuaComponent)
 	{
@@ -131,63 +133,73 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 			}
 		}
 	}
+	else if (ULuaState* LuaState = Cast<ULuaState>(Objects[0]))
+	{
+		bAllowsRawCall = LuaState->bRawLuaFunctionCall;
+	}
 
 	for (TFieldIterator<UFunction> Funcs(ObjectClass); Funcs; ++Funcs)
 	{
-		UFunction *Function = *Funcs;
+		UFunction* Function = *Funcs;
 
 		/*if (!Function->HasAnyFunctionFlags(EFunctionFlags::FUNC_Public))
 			continue;*/
 
 		bool bIsValid = true;
-#if ENGINE_MINOR_VERSION >= 25
-		for (TFieldIterator<FProperty> FArgs(Function); FArgs&& FArgs->PropertyFlags& CPF_Parm; ++FArgs)
-#else
-		for (TFieldIterator<UProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
-#endif
+
+		if (!bAllowsRawCall)
 		{
 #if ENGINE_MINOR_VERSION >= 25
-			FProperty *Prop = *FArgs;
-			FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
+			for (TFieldIterator<FProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
 #else
-			UProperty* Prop = *FArgs;
-			UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
+			for (TFieldIterator<UProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
 #endif
-			if (!LuaProp)
 			{
-				// check for array ?
 #if ENGINE_MINOR_VERSION >= 25
-				FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
+				FProperty* Prop = *FArgs;
+				FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
 #else
-				UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
+				UProperty* Prop = *FArgs;
+				UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
 #endif
-				if (ArrayProp)
+				if (!LuaProp)
 				{
+					// check for array ?
 #if ENGINE_MINOR_VERSION >= 25
-					LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
+					FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
 #else
-					LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+					UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
 #endif
-					if (!LuaProp)
+					if (ArrayProp)
 					{
+#if ENGINE_MINOR_VERSION >= 25
+						LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
+#else
+						LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+#endif
+						if (!LuaProp)
+						{
+							bIsValid = false;
+							break;
+						}
+					}
+					else {
 						bIsValid = false;
 						break;
 					}
 				}
-				else {
+				if (LuaProp->Struct != FLuaValue::StaticStruct())
+				{
 					bIsValid = false;
 					break;
 				}
 			}
-			if (LuaProp->Struct != FLuaValue::StaticStruct())
-			{
-				bIsValid = false;
-				break;
-			}
 		}
 
 		if (!bIsValid)
+		{
 			continue;
+		}
 
 		TSharedPtr<FString> FunctionNameSP = MakeShareable(new FString(Function->GetName()));
 

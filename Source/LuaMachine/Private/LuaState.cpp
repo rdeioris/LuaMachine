@@ -1977,7 +1977,11 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		// fast path
 		if (StructProperty->Struct == FLuaValue::StaticStruct())
 		{
-			return *(StructProperty->ContainerPtrToValuePtr<FLuaValue>(Buffer));
+			FLuaValue* LuaValuePtr = StructProperty->ContainerPtrToValuePtr<FLuaValue>(Buffer);
+			// trick for allowing lazy tables creation
+			FromLuaValue(*LuaValuePtr);
+			Pop();
+			return *LuaValuePtr;
 		}
 
 		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
