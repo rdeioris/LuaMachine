@@ -1,7 +1,7 @@
 // Copyright 2018-2020 - Roberto De Ioris
 
-#include "LuaBlueprintFunctionLibrary.h"
 #include "LuaGlobalNameComponent.h"
+#include "LuaBlueprintFunctionLibrary.h"
 
 // Sets default values for this component's properties
 ULuaGlobalNameComponent::ULuaGlobalNameComponent()
