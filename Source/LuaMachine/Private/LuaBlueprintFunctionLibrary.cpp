@@ -606,7 +606,11 @@ void ULuaBlueprintFunctionLibrary::LuaHttpRequest(UObject* WorldContextObject, T
 	if (!L)
 		return;
 
+#if ENGINE_MINOR_VERSION >= 26
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+#else
 	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
+#endif
 	HttpRequest->SetVerb(Method);
 	HttpRequest->SetURL(URL);
 	for (TPair<FString, FString> Header : Headers)
@@ -671,7 +675,11 @@ void ULuaBlueprintFunctionLibrary::LuaRunURL(UObject* WorldContextObject, TSubcl
 			return;
 		}
 	}
+#if ENGINE_MINOR_VERSION >= 26
+	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> HttpRequest = FHttpModule::Get().CreateRequest();
+#else
 	TSharedRef<IHttpRequest> HttpRequest = FHttpModule::Get().CreateRequest();
+#endif
 	HttpRequest->SetURL(URL);
 	for (TPair<FString, FString> Header : Headers)
 	{
