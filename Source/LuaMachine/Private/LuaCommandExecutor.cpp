@@ -15,7 +15,7 @@ FLuaCommandExecutor::~FLuaCommandExecutor()
 
 FName FLuaCommandExecutor::GetName() const
 {
-	return FName(FString::Printf(TEXT("LuaMachine:%s"), *LuaState->GetName()));
+	return FName(*FString::Printf(TEXT("LuaMachine:%s"), *LuaState->GetName()));
 }
 
 FText FLuaCommandExecutor::GetDisplayName() const
