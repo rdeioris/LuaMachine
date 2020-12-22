@@ -280,7 +280,7 @@ public:
 
 	void GetField(int Index, const char* FieldName);
 
-	void NewUObject(UObject* Object);
+	void NewUObject(UObject* Object, lua_State* State);
 
 	void* NewUserData(size_t DataSize);
 
@@ -402,7 +402,7 @@ public:
 	TSharedRef<FLuaSmartReference> AddLuaSmartReference(FLuaValue Value);
 	void RemoveLuaSmartReference(TSharedRef<FLuaSmartReference> Ref);
 
-	void SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable);
+	void SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable, lua_State* State);
 
 	const void* ToPointer(int Index);
 

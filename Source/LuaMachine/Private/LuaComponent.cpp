@@ -52,8 +52,8 @@ FLuaValue ULuaComponent::LuaGetField(const FString& Name)
 		return ReturnValue;
 
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, false);
 	ReturnValue = L->ToLuaValue(-1);
@@ -71,8 +71,8 @@ void ULuaComponent::LuaSetField(const FString& Name, FLuaValue Value)
 		return;
 
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	L->SetFieldFromTree(Name, Value, false);
 
@@ -90,8 +90,8 @@ FLuaValue ULuaComponent::LuaCallFunction(const FString& Name, TArray<FLuaValue> 
 		return ReturnValue;
 
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
@@ -129,8 +129,8 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 		return ReturnValue;
 
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 	int32 StackTop = L->GetTop();
@@ -184,8 +184,8 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	// push function
 	L->FromLuaValue(Value);
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)
@@ -267,8 +267,8 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 	int32 StackTop = L->GetTop();
 
 	// push component pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int NArgs = 1;
 	for (FLuaValue& Arg : Args)

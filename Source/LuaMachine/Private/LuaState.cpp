@@ -414,7 +414,9 @@ TArray<uint8> ULuaState::ToByteCode(const FString& Code, const FString& CodePath
 void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_State* State)
 {
 	if (!State)
+	{
 		State = this->L;
+	}
 
 	switch (LuaValue.Type)
 	{
@@ -488,7 +490,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			break;
 		}
 
-		NewUObject(LuaValue.Object);
+		NewUObject(LuaValue.Object, State);
 		if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(LuaValue.Object))
 		{
 			if (!LuaComponent->LuaState)
@@ -498,7 +500,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			// ensure we are in the same LuaState
 			else if (LuaComponent->LuaState == GetClass())
 			{
-				SetupAndAssignUserDataMetatable(LuaComponent, LuaComponent->Metatable);
+				SetupAndAssignUserDataMetatable(LuaComponent, LuaComponent->Metatable, State);
 			}
 		}
 		else if (ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(LuaValue.Object))
@@ -510,7 +512,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			// ensure we are in the same LuaState
 			else if (LuaUserDataObject->GetLuaState() == GetClass())
 			{
-				SetupAndAssignUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable);
+				SetupAndAssignUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable, State);
 			}
 		}
 		else {
@@ -1517,9 +1519,13 @@ void ULuaState::SetFieldFromTree(const FString & Tree, FLuaValue & Value, bool b
 }
 
 
-void ULuaState::NewUObject(UObject * Object)
+void ULuaState::NewUObject(UObject * Object, lua_State* State)
 {
-	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+	if (!State)
+	{
+		State = this->L;
+	}
+	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
 	UserData->Type = ELuaValueType::UObject;
 	UserData->Context = Object;
 	UserData->Function = nullptr;
@@ -2256,19 +2262,24 @@ void ULuaState::SetUserDataMetaTable(FLuaValue MetaTable)
 	UserDataMetaTable = MetaTable;
 }
 
-void ULuaState::SetupAndAssignUserDataMetatable(UObject * Context, TMap<FString, FLuaValue> & Metatable)
+void ULuaState::SetupAndAssignUserDataMetatable(UObject* Context, TMap<FString, FLuaValue>& Metatable, lua_State* State)
 {
-	lua_newtable(L);
-	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__index);
-	lua_setfield(L, -2, "__index");
-	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__newindex);
-	lua_setfield(L, -2, "__newindex");
-	lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__eq);
-	lua_setfield(L, -2, "__eq");
+	if (!State)
+	{
+		State = this->L;
+	}
+
+	lua_newtable(State);
+	lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__index);
+	lua_setfield(State, -2, "__index");
+	lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__newindex);
+	lua_setfield(State, -2, "__newindex");
+	lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__eq);
+	lua_setfield(State, -2, "__eq");
 	if (Context->IsA<ULuaUserDataObject>())
 	{
-		lua_pushcfunction(L, ULuaState::MetaTableFunctionUserData__gc);
-		lua_setfield(L, -2, "__gc");
+		lua_pushcfunction(State, ULuaState::MetaTableFunctionUserData__gc);
+		lua_setfield(State, -2, "__gc");
 	}
 
 	for (TPair<FString, FLuaValue>& Pair : Metatable)
@@ -2287,29 +2298,29 @@ void ULuaState::SetupAndAssignUserDataMetatable(UObject * Context, TMap<FString,
 				UFunction* Function = FunctionOwner->FindFunction(Pair.Value.FunctionName);
 				if (Function)
 				{
-					FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(L, sizeof(FLuaUserData));
+					FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
 					LuaCallContext->Type = ELuaValueType::UFunction;
 					LuaCallContext->Context = Context;
 					LuaCallContext->Function = Function;
 
-					lua_newtable(L);
-					lua_pushcfunction(L, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawcall : ULuaState::MetaTableFunction__call);
-					lua_setfield(L, -2, "__call");
-					lua_setmetatable(L, -2);
+					lua_newtable(State);
+					lua_pushcfunction(State, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawcall : ULuaState::MetaTableFunction__call);
+					lua_setfield(State, -2, "__call");
+					lua_setmetatable(State, -2);
 				}
 				else
 				{
-					lua_pushnil(L);
+					lua_pushnil(State);
 				}
 			}
 		}
 		else {
-			FromLuaValue(Pair.Value);
+			FromLuaValue(Pair.Value, nullptr, State);
 		}
-		lua_setfield(L, -2, TCHAR_TO_ANSI(*Pair.Key));
+		lua_setfield(State, -2, TCHAR_TO_ANSI(*Pair.Key));
 	}
 
-	lua_setmetatable(L, -2);
+	lua_setmetatable(State, -2);
 }
 
 FLuaValue ULuaState::NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject)

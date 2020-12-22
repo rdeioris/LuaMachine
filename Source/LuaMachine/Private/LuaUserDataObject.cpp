@@ -56,8 +56,8 @@ FLuaValue ULuaUserDataObject::LuaGetField(const FString& Name)
 		return FLuaValue();
 
 	// push component pointer as userdata
-	LuaState->NewUObject(this);
-	LuaState->SetupAndAssignUserDataMetatable(this, Metatable);
+	LuaState->NewUObject(this, nullptr);
+	LuaState->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int32 ItemsToPop = LuaState->GetFieldFromTree(Name, false);
 	FLuaValue ReturnValue = LuaState->ToLuaValue(-1);
@@ -75,8 +75,8 @@ void ULuaUserDataObject::LuaSetField(const FString& Name, FLuaValue Value)
 		return;
 
 	// push component pointer as userdata
-	LuaState->NewUObject(this);
-	LuaState->SetupAndAssignUserDataMetatable(this, Metatable);
+	LuaState->NewUObject(this, nullptr);
+	LuaState->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	LuaState->SetFieldFromTree(Name, Value, false, this);
 
@@ -156,8 +156,8 @@ FLuaValue ULuaUserDataObject::LuaCallFunction(const FString& Name, TArray<FLuaVa
 		return ReturnValue;
 
 	// push userdata pointer as userdata
-	L->NewUObject(this);
-	L->SetupAndAssignUserDataMetatable(this, Metatable);
+	L->NewUObject(this, nullptr);
+	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
