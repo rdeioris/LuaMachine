@@ -1992,27 +1992,37 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 
 		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
 
-		FLuaValue NewLuaTable = CreateLuaTable();
-#if ENGINE_MINOR_VERSION >= 25
-		for (TFieldIterator<FProperty> It(StructProperty->Struct); It; ++It)
-#else
-		for (TFieldIterator<UProperty> It(StructProperty->Struct); It; ++It)
-#endif
-		{
-#if ENGINE_MINOR_VERSION >= 25
-			FProperty* FieldProp = *It;
-#else
-			UProperty* FieldProp = *It;
-#endif
-			FString PropName = FieldProp->GetName();
-			bool bTableItemSuccess = false;
-			NewLuaTable.SetField(PropName, FromProperty((uint8*)StructContainer, FieldProp, bTableItemSuccess, 0));
-		}
-		return NewLuaTable;
+		return StructToLuaTable(StructProperty->Struct, StructContainer);
 	}
 
 	bSuccess = false;
 	return FLuaValue();
+}
+
+FLuaValue ULuaState::StructToLuaTable(UScriptStruct* InScriptStruct, const uint8* StructData)
+{
+	FLuaValue NewLuaTable = CreateLuaTable();
+#if ENGINE_MINOR_VERSION >= 25
+	for (TFieldIterator<FProperty> It(InScriptStruct); It; ++It)
+#else
+	for (TFieldIterator<UProperty> It(InScriptStruct); It; ++It)
+#endif
+	{
+#if ENGINE_MINOR_VERSION >= 25
+		FProperty* FieldProp = *It;
+#else
+		UProperty* FieldProp = *It;
+#endif
+		FString PropName = FieldProp->GetName();
+		bool bTableItemSuccess = false;
+		NewLuaTable.SetField(PropName, FromProperty((void*)StructData, FieldProp, bTableItemSuccess, 0));
+	}
+	return NewLuaTable;
+}
+
+FLuaValue ULuaState::StructToLuaTable(UScriptStruct* InScriptStruct, const TArray<uint8>& StructData)
+{
+	return StructToLuaTable(InScriptStruct, StructData.GetData());
 }
 
 #if ENGINE_MINOR_VERSION >= 25
@@ -2109,21 +2119,8 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 			return;
 		}
 
-		TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(Value);
-		for (FLuaValue TableKey : TableKeys)
-		{
-#if ENGINE_MINOR_VERSION >= 25
-			FProperty* StructProp = StructProperty->Struct->FindPropertyByName(TableKey.ToName());
-#else
-			UProperty* StructProp = StructProperty->Struct->FindPropertyByName(TableKey.ToName());
-#endif
-			if (StructProp)
-			{
-				const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
-				bool bStructValueSuccess = false;
-				ToProperty((void*)StructContainer, StructProp, Value.GetField(TableKey.ToString()), bStructValueSuccess, 0);
-			}
-		}
+		const uint8* StructContainer = StructProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
+		LuaTableToStruct(Value, StructProperty->Struct, (uint8*)StructContainer);
 		return;
 	}
 
@@ -2186,6 +2183,24 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	}
 
 	bSuccess = false;
+}
+
+void ULuaState::LuaTableToStruct(FLuaValue& LuaValue, UScriptStruct* InScriptStruct, uint8* StructData)
+{
+	TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(LuaValue);
+	for (FLuaValue TableKey : TableKeys)
+	{
+#if ENGINE_MINOR_VERSION >= 25
+		FProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
+#else
+		UProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
+#endif
+		if (StructProp)
+		{
+			bool bStructValueSuccess = false;
+			ToProperty((void*)StructData, StructProp, LuaValue.GetField(TableKey.ToString()), bStructValueSuccess, 0);
+		}
+	}
 }
 
 #if ENGINE_MINOR_VERSION >= 25

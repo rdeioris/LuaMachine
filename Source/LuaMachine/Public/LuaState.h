@@ -416,6 +416,35 @@ public:
 	TArray<FString> GetPropertiesNames(UObject* InObject);
 	TArray<FString> GetFunctionsNames(UObject* InObject);
 
+	FLuaValue StructToLuaTable(UScriptStruct* InScriptStruct, const uint8* StructData);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue StructToLuaTable(UScriptStruct* InScriptStruct, const TArray<uint8>& StructData);
+
+	void LuaTableToStruct(FLuaValue& LuaValue, UScriptStruct* InScriptStruct, uint8* StructData);
+
+	template<class T>
+	FLuaValue StructToLuaValue(T& InStruct)
+	{
+		return StructToLuaTable(T::StaticStruct(), (const uint8*)&InStruct);
+	}
+
+	template<class T>
+	T LuaValueToStruct(FLuaValue& LuaValue)
+	{
+		T InStruct;
+		LuaTableToStruct(LuaValue, T::StaticStruct(), (uint8*)&InStruct);
+		return InStruct;
+	}
+
+	template<class T>
+	T LuaValueToBaseStruct(FLuaValue& LuaValue)
+	{
+		T InStruct;
+		LuaTableToStruct(LuaValue, TBaseStructure<T>::Get(), (uint8*)&InStruct);
+		return InStruct;
+	}
+
 protected:
 	lua_State* L;
 	bool bDisabled;
