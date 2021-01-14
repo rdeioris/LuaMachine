@@ -30,3 +30,29 @@ FLuaValue UStructManagerLuaState::SetActorLocation(FLuaValue Actor, FLuaValue Lo
 	return FLuaValue();
 }
 ```
+
+## Setting property by name
+
+cpp function (expose it to lua)
+
+```cpp
+void UStructManagerLuaState::SetActorProperty(FLuaValue Actor, FLuaValue Property, FLuaValue Value)
+{
+	AActor* ActorObject = Cast<AActor>(Actor.Object);
+	if (ActorObject)
+	{
+		SetPropertyFromLuaValue(ActorObject, Property.ToString(), Value);
+	}
+}
+```
+
+lua example for setting a delegate:
+
+```lua
+function setup(actor)
+  set_actor_property(actor, 'OnActorHit', function(me, other, normal, hitresult)
+    print('hit with', other)
+  end
+  )
+end
+```
