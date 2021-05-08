@@ -498,7 +498,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObj
 		ReturnValue = L->ToLuaValue(-1);
 	}
 	L->Pop();
-	return FLuaValue();
+	return ReturnValue;
 }
 
 UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width, int32 Height, const FLuaValue& Value, EPixelFormat PixelFormat, bool bDetectFormat)
