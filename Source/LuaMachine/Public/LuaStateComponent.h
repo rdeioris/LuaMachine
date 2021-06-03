@@ -26,6 +26,7 @@ public:
 	TSubclassOf<ULuaState> LuaStateClass;
 
 private:
+	UPROPERTY()
 	ULuaState* LuaState;
-		
+	
 };
