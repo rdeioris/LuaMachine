@@ -1877,6 +1877,15 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	LUAVALUE_PROP_CAST(ClassProperty, UObject*);
 	LUAVALUE_PROP_CAST(ObjectProperty, UObject*);
 
+#if ENGINE_MINOR_VERSION >= 25
+	FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
+
+	if (EnumProperty)
+	{
+		const uint8* EnumValue = EnumProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
+		return FLuaValue((int32)*EnumValue);
+	}
+#endif
 
 #if ENGINE_MINOR_VERSION >= 25
 	FObjectPropertyBase* ObjectPropertyBase = CastField<FObjectPropertyBase>(Property);
