@@ -296,6 +296,451 @@ FLuaValue ULuaState::GetLuaBlueprintPackageTable(const FString& PackageName)
 	return LuaBlueprintPackages[PackageName]->SelfTable;
 }
 
+FLuaValue ULuaState::LuaCreateTable()
+{
+	return CreateLuaTable();
+}
+
+FLuaValue ULuaState::LuaCreateThread(FLuaValue Value /* Function */)
+{
+	return CreateLuaThread(Value);
+}
+
+FLuaValue ULuaState::LuaCreateObjectInState(UObject* InObject)
+{
+	FLuaValue LuaValue;
+	if (!InObject)
+		return LuaValue;
+
+	LuaValue = FLuaValue(InObject);
+	LuaValue.LuaState = this;
+	return LuaValue;
+}
+
+FLuaValue ULuaState::LuaGetGlobal(const FString& Name)
+{
+	uint32 ItemsToPop = GetFieldFromTree(Name);
+	FLuaValue ReturnValue = ToLuaValue(-1);
+	Pop(ItemsToPop);
+	return ReturnValue;
+}
+
+void ULuaState::LuaSetGlobal(const FString& Name, FLuaValue Value)
+{
+	SetFieldFromTree(Name, Value, true);
+}
+
+void ULuaState::LuaSetUserDataMetaTable(FLuaValue MetaTable)
+{
+	SetUserDataMetaTable(MetaTable);
+}
+
+FLuaValue ULuaState::AssignLuaValueToLuaState(FLuaValue Value)
+{
+	Value.LuaState = this;
+	return Value;
+}
+
+FLuaValue ULuaState::GetLuaComponentByStateAsLuaValue(AActor* Actor)
+{
+	if (!Actor)
+		return FLuaValue();
+#if ENGINE_MINOR_VERSION < 24
+	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#else
+	TArray<UActorComponent*> Components;
+	Actor->GetComponents(Components);
+#endif
+	for (UActorComponent* Component : Components)
+	{
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+		if (LuaComponent)
+		{
+			if (LuaComponent->LuaState == this->GetClass())
+			{
+				return FLuaValue(LuaComponent);
+			}
+		}
+	}
+
+	return FLuaValue();
+}
+
+FLuaValue ULuaState::GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, const FString& Name)
+{
+	if (!Actor)
+		return FLuaValue();
+
+#if ENGINE_MINOR_VERSION < 24
+	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
+#else
+	TArray<UActorComponent*> Components;
+	Actor->GetComponents(Components);
+#endif
+	for (UActorComponent* Component : Components)
+	{
+		ULuaComponent* LuaComponent = Cast<ULuaComponent>(Component);
+		if (LuaComponent)
+		{
+			if (LuaComponent->LuaState == this->GetClass() && LuaComponent->GetName() == Name)
+			{
+				return FLuaValue(LuaComponent);
+			}
+		}
+	}
+
+	return FLuaValue();
+}
+
+FLuaValue ULuaState::LuaGlobalCall(const FString& Name, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	int32 ItemsToPop = GetFieldFromTree(Name);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	PCall(NArgs, ReturnValue);
+
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	Pop(ItemsToPop);
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaState::LuaGlobalCallMulti(const FString& Name, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	int32 ItemsToPop = GetFieldFromTree(Name);
+
+	int32 StackTop = GetTop();
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	FLuaValue LastReturnValue;
+	if (PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+
+		int32 NumOfReturnValues = (GetTop() - StackTop) + 1;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(ToLuaValue(i), 0);
+			}
+			Pop(NumOfReturnValues - 1);
+		}
+
+	}
+
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	Pop(ItemsToPop);
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaGlobalCallValue(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+
+	FromLuaValue(Value);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	PCall(NArgs, ReturnValue);
+
+	Pop();
+
+	return ReturnValue;
+}
+
+TArray<FLuaValue> ULuaState::LuaGlobalCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args)
+{
+	TArray<FLuaValue> ReturnValue;
+
+	FromLuaValue(Value);
+
+	int32 StackTop = GetTop();
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	FLuaValue LastReturnValue;
+	if (PCall(NArgs, LastReturnValue, LUA_MULTRET))
+	{
+
+		int32 NumOfReturnValues = (GetTop() - StackTop) + 1;
+		if (NumOfReturnValues > 0)
+		{
+			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
+			{
+				ReturnValue.Insert(ToLuaValue(i), 0);
+			}
+			Pop(NumOfReturnValues - 1);
+		}
+
+	}
+
+	Pop();
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaTablePack(TArray<FLuaValue> Values)
+{
+	FLuaValue ReturnValue;
+
+	ReturnValue = CreateLuaTable();
+
+	int32 Index = 1;
+
+	for (FLuaValue& Value : Values)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
+	}
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaTableMergePack(TArray<FLuaValue> Values1, TArray<FLuaValue> Values2)
+{
+	FLuaValue ReturnValue;
+
+	ReturnValue = CreateLuaTable();
+
+	int32 Index = 1;
+
+	for (FLuaValue& Value : Values1)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
+	}
+
+	for (FLuaValue& Value : Values2)
+	{
+		ReturnValue.SetFieldByIndex(Index++, Value);
+	}
+
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaTableFromMap(TMap<FString, FLuaValue> Map)
+{
+	FLuaValue ReturnValue;
+
+	ReturnValue = CreateLuaTable();
+
+	for (TPair<FString, FLuaValue>& Pair : Map)
+	{
+		ReturnValue.SetField(Pair.Key, Pair.Value);
+	}
+
+	return ReturnValue;
+}
+
+bool ULuaState::LuaValueFromJson(const FString& Json, FLuaValue& Value)
+{
+	// default to nil
+	Value = FLuaValue();
+
+	TSharedPtr<FJsonValue> JsonValue;
+	TSharedRef< TJsonReader<TCHAR> > JsonReader = TJsonReaderFactory<TCHAR>::Create(Json);
+	if (!FJsonSerializer::Deserialize(JsonReader, JsonValue))
+	{
+		return false;
+	}
+
+	Value = FLuaValue::FromJsonValue(this, *JsonValue);
+	return true;
+}
+
+int64 ULuaState::LuaValueToPointer(FLuaValue Value)
+{
+	FromLuaValue(Value);
+	const void* Ptr = ToPointer(-1);
+	Pop();
+
+	return (int64)Ptr;
+}
+
+FString ULuaState::LuaValueToHexPointer(FLuaValue Value)
+{
+	int64 Ptr = LuaValueToPointer(Value);
+	if (FGenericPlatformProperties::IsLittleEndian())
+	{
+		uint8 BEPtr[8] =
+		{
+			(uint8)((Ptr >> 56) & 0xff),
+			(uint8)((Ptr >> 48) & 0xff),
+			(uint8)((Ptr >> 40) & 0xff),
+			(uint8)((Ptr >> 32) & 0xff),
+			(uint8)((Ptr >> 24) & 0xff),
+			(uint8)((Ptr >> 16) & 0xff),
+			(uint8)((Ptr >> 8) & 0xff),
+			(uint8)((Ptr) & 0xff),
+		};
+		return BytesToHex((const uint8*)BEPtr, sizeof(int64));
+	}
+	return BytesToHex((const uint8*)&Ptr, sizeof(int64));
+}
+
+int32 ULuaState::LuaGetTop()
+{
+	return GetTop();
+}
+
+FLuaValue ULuaState::LuaRunFile(const FString& Filename, const bool bIgnoreNonExistent)
+{
+	FLuaValue ReturnValue;
+
+	if (!RunFile(Filename, bIgnoreNonExistent, 1))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else
+	{
+		ReturnValue = ToLuaValue(-1);
+	}
+
+	Pop();
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaRunNonContentFile(const FString& Filename, const bool bIgnoreNonExistent)
+{
+	FLuaValue ReturnValue;
+
+	if (!RunFile(Filename, bIgnoreNonExistent, 1, true))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else
+	{
+		ReturnValue = ToLuaValue(-1);
+	}
+
+	Pop();
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaRunCodeAsset(ULuaCode* CodeAsset)
+{
+	FLuaValue ReturnValue;
+
+	if (!CodeAsset)
+		return ReturnValue;
+
+	if (!RunCodeAsset(CodeAsset, 1))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else {
+		ReturnValue = ToLuaValue(-1);
+	}
+	Pop();
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaRunByteCode(const TArray<uint8>& ByteCode, const FString& CodePath)
+{
+	FLuaValue ReturnValue;
+
+	if (!RunCode(ByteCode, CodePath, 1))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else
+	{
+		ReturnValue = ToLuaValue(-1);
+	}
+	Pop();
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaRunString(const FString& CodeString, FString CodePath /*= ""*/)
+{
+	FLuaValue ReturnValue;
+
+	if (CodePath.IsEmpty())
+	{
+		CodePath = CodeString;
+	}
+
+	if (!RunCode(CodeString, CodePath, 1))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else
+	{
+		ReturnValue = ToLuaValue(-1);
+	}
+	Pop();
+	return ReturnValue;
+}
+
+FLuaValue ULuaState::LuaNewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> UserDataObjectClass, bool bTrackObject /*= true*/)
+{
+	return NewLuaUserDataObject(UserDataObjectClass, bTrackObject);
+}
+
+int32 ULuaState::LuaGetUsedMemory()
+{
+	return GC(LUA_GCCOUNT);
+}
+
+void ULuaState::LuaGCCollect()
+{
+	GC(LUA_GCCOLLECT);
+}
+
+void ULuaState::LuaGCStop()
+{
+	GC(LUA_GCSTOP);
+}
+
+void ULuaState::LuaGCRestart()
+{
+	GC(LUA_GCRESTART);
+}
+
+FLuaValue ULuaState::LuaTableAssetToLuaTable(ULuaTableAsset* TableAsset)
+{
+	return TableAsset->ToLuaTable(this);
+}
+
+FLuaValue ULuaState::LuaCreateLazyTable()
+{
+	return CreateLuaLazyTable();
+}
+
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 {
 
