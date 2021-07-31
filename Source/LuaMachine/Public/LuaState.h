@@ -344,6 +344,9 @@ public:
 
 	static int TableFunction_print(lua_State* L);
 	static int TableFunction_package_preload(lua_State* L);
+	static int TableFunction_package_loader(lua_State* L);
+	static int TableFunction_package_loader_codeasset(lua_State* L);
+	static int TableFunction_package_loader_asset(lua_State* L);
 
 	static int MetaTableFunction__call(lua_State* L);
 	static int MetaTableFunction__rawcall(lua_State* L);
