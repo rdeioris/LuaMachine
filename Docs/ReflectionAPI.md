@@ -6,6 +6,23 @@ Albeit the api is usable from blueprints, it is strongly suggested to go to C++ 
 
 ## Converting between structs and lua tables
 
+The reflection API is pretty big, so before going into a more-or-less-useful implementation of Lua Reflection, we will cover some low-level details.
+
+The first one is the automatic conversion between USTRUCTs and lua tables. The following 3 template functions allows easy conversion from any USTRUCT to an FLuaValue and the opposite.
+
+```cpp
+template<class T>
+FLuaValue StructToLuaValue(T& InStruct);
+
+template<class T>
+T LuaValueToStruct(FLuaValue& LuaValue);
+
+template<class T>
+T LuaValueToBaseStruct(FLuaValue& LuaValue)
+```
+
+Let's implement a SetActorLocation() wrapper for a LuaState:
+
 ```cpp
 #include "StructManagerLuaState.h"
 #include "GameFramework/Actor.h"
@@ -31,9 +48,21 @@ FLuaValue UStructManagerLuaState::SetActorLocation(FLuaValue Actor, FLuaValue Lo
 }
 ```
 
-## Setting property by name
+## Getting/Setting properties by name
 
-cpp function (expose it to lua)
+The following c++/blueprint functions allow to access the Unreal properties using the reflection system:
+
+```cpp
+UFUNCTION(BlueprintCallable, Category = "Lua")
+FLuaValue GetLuaValueFromProperty(UObject* InObject, const FString& PropertyName);
+
+UFUNCTION(BlueprintCallable, Category = "Lua")
+bool SetPropertyFromLuaValue(UObject* InObject, const FString& PropertyName, FLuaValue Value);
+```
+
+Properties Values are always converted to FLuaValue.
+
+This is a simple (and pretty useless) example:
 
 ```cpp
 void UStructManagerLuaState::SetActorProperty(FLuaValue Actor, FLuaValue Property, FLuaValue Value)
@@ -46,7 +75,9 @@ void UStructManagerLuaState::SetActorProperty(FLuaValue Actor, FLuaValue Propert
 }
 ```
 
-lua example for setting a delegate:
+Delegates are automatically managed as lua functions:
+
+lua example for setting a delegate (assuming the previous defined UStructManagerLuaState::SetActorProperty has been exposed as 'set_actor_property') :
 
 ```lua
 function setup(actor)
