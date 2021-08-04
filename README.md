@@ -343,6 +343,10 @@ https://github.com/rdeioris/LuaMachine/blob/master/Tutorials/RickAndMortyAPI.md
 ## C++ Tips & Tricks
 
 https://github.com/rdeioris/LuaMachine/blob/master/Docs/TipsAndTricks.md
+	
+## Reflection API
+	
+https://github.com/rdeioris/LuaMachine/blob/master/Docs/ReflectionAPI.md
 
 ## Commercial Support
 
