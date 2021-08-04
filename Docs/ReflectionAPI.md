@@ -4,7 +4,7 @@ While 'safety' of scripting api exposure is one of the main objective of LuaMach
 
 Albeit the api is usable from blueprints, it is strongly suggested to go to C++ when defining more advanced states.
 
-## Converting between structs and lua tables
+## Converting between structs and Lua tables
 
 The reflection API is pretty big, so before going into a more-or-less-useful implementation of Lua Reflection, we will cover some low-level details.
 
@@ -86,4 +86,161 @@ function setup(actor)
   end
   )
 end
+```
+
+## Implementing a LuaState that automatically exposes everything to the Lua VM
+
+This is probably the reason you are reading this page ;)
+
+In the following lines i will show you a 'simple' LuaState that automatically uses the Unreal reflection to expose UObject, UFunction, Properties, Structs, Delegates directly to lua without additional steps (in addition to assigning a lua name/variable to them when required).
+
+Let's start by defining the header (LuaReflectionState.h):
+
+```cpp
+#pragma once
+
+#include "CoreMinimal.h"
+#include "LuaState.h"
+#include "LuaReflectionState.generated.h"
+
+UCLASS()
+class ULuaReflectionState : public ULuaState
+{
+	GENERATED_BODY()
+
+public:
+	ULuaReflectionState();
+
+protected:
+	void LuaStateInit() override;
+
+	// __index(object, key) -> returning 1 value
+	LUACFUNCTION(ULuaReflectionState, MetaMethodIndex, 1, 2);
+
+	// __newindex(object, key, value)
+	LUACFUNCTION(ULuaReflectionState, MetaMethodNewIndex, 0, 3);
+
+	// __eq(object1, object2) -> returning bool
+	LUACFUNCTION(ULuaReflectionState, MetaMethodEq, 1, 2);
+
+	// __string(object) -> returning string
+	LUACFUNCTION(ULuaReflectionState, MetaMethodToString, 1, 1);
+};
+```
+
+The new (and most important) stuff here is the usage of the LUACFUNCTION definition.
+
+Here we are defining 4 metamethods to be called whenever an Unreal object is passed around in the lua state. UObjects are mapped to userdata, so this method defines what to do when using them. As an example, if the 'mannequin' lua variable is mapped to a Character, we want to make it jump by calling mannequin.Jump(). So our system needs to resolve Jump as a function and call it.
+
+We cannot use plain UFunctions for those metamethods (as they are userdata under the hood), so we need to code them using lower level LUA c api. The LUACFUNCTION wraps those low-level functions in Unreal C++ api-friendly ones.
+
+Now let's define the cpp part (LuaReflectionState.cpp):
+
+```cpp
+#include "LuaReflectionState.h"
+#include "LuaBlueprintFunctionLibrary.h"
+
+ULuaReflectionState::ULuaReflectionState()
+{
+	// allow to call native UFunctions with implicit FLuaValue conversions
+	bRawLuaFunctionCall = true;
+}
+
+void ULuaReflectionState::LuaStateInit()
+{
+	UserDataMetaTable = CreateLuaTable();
+	UserDataMetaTable.SetField("__index", ULuaReflectionState::MetaMethodIndex_C);
+	UserDataMetaTable.SetField("__newindex", ULuaReflectionState::MetaMethodNewIndex_C);
+	UserDataMetaTable.SetField("__eq", ULuaReflectionState::MetaMethodEq_C);
+	UserDataMetaTable.SetField("__tostring", ULuaReflectionState::MetaMethodToString_C);
+}
+
+TArray<FLuaValue> ULuaReflectionState::MetaMethodIndex(TArray<FLuaValue> LuaArgs)
+{
+	TArray<FLuaValue> ReturnValues;
+
+	UObject* Object = LuaArgs[0].Object;
+	FString Key = LuaArgs[1].ToString();
+
+	// skip nullptr and classes
+	if (!Object || Object->IsA<UClass>())
+	{
+		return ReturnValues;
+	}
+
+	ELuaReflectionType ReflectionType = ELuaReflectionType::Unknown;
+	ULuaBlueprintFunctionLibrary::GetLuaReflectionType(Object, Key, ReflectionType);
+
+	if (ReflectionType == ELuaReflectionType::Property)
+	{
+		ReturnValues.Add(GetLuaValueFromProperty(Object, Key));
+	}
+	else if (ReflectionType == ELuaReflectionType::Function)
+	{
+		ReturnValues.Add(FLuaValue::FunctionOfObject(Object, FName(Key)));
+	}
+
+	return ReturnValues;
+}
+
+TArray<FLuaValue> ULuaReflectionState::MetaMethodNewIndex(TArray<FLuaValue> LuaArgs)
+{
+	TArray<FLuaValue> ReturnValues;
+
+	UObject* Object = LuaArgs[0].Object;
+	FString Key = LuaArgs[1].ToString();
+	FLuaValue Value = LuaArgs[2];
+
+	// skip nullptr and classes
+	if (!Object || Object->IsA<UClass>())
+	{
+		return ReturnValues;
+	}
+
+	ELuaReflectionType ReflectionType = ELuaReflectionType::Unknown;
+	ULuaBlueprintFunctionLibrary::GetLuaReflectionType(Object, Key, ReflectionType);
+
+	if (ReflectionType == ELuaReflectionType::Property)
+	{
+		SetPropertyFromLuaValue(Object, Key, Value);
+	}
+
+	return ReturnValues;
+}
+
+TArray<FLuaValue> ULuaReflectionState::MetaMethodEq(TArray<FLuaValue> LuaArgs)
+{
+	TArray<FLuaValue> ReturnValues;
+
+	UObject* Object = LuaArgs[0].Object;
+	UObject* OtherObject = LuaArgs[1].Object;
+
+	if (!Object || !OtherObject)
+	{
+		ReturnValues.Add(FLuaValue(false));
+	}
+	else
+	{
+		ReturnValues.Add(FLuaValue(Object == OtherObject));
+	}
+
+	return ReturnValues;
+}
+
+TArray<FLuaValue> ULuaReflectionState::MetaMethodToString(TArray<FLuaValue> LuaArgs)
+{
+	TArray<FLuaValue> ReturnValues;
+
+	UObject* Object = LuaArgs[0].Object;
+
+	// skip nullptr and classes
+	if (!Object || Object->IsA<UClass>())
+	{
+		return ReturnValues;
+	}
+
+	ReturnValues.Add(Object->GetFullName());
+
+	return ReturnValues;
+}
 ```
