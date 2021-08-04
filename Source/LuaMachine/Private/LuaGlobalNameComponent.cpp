@@ -16,7 +16,11 @@ ULuaGlobalNameComponent::ULuaGlobalNameComponent()
 void ULuaGlobalNameComponent::OnRegister()
 {
 	Super::OnRegister();
-	ULuaBlueprintFunctionLibrary::LuaSetGlobal(GetWorld(), LuaState, LuaGlobalName, FLuaValue(GetOwner()));
+
+	if (GetWorld()->IsGameWorld() && !LuaGlobalName.IsEmpty())
+	{
+		ULuaBlueprintFunctionLibrary::LuaSetGlobal(GetWorld(), LuaState, LuaGlobalName, FLuaValue(GetOwner()));
+	}
 }
 
 // Called when the game starts
