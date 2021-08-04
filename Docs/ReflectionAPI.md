@@ -244,3 +244,25 @@ TArray<FLuaValue> ULuaReflectionState::MetaMethodToString(TArray<FLuaValue> LuaA
 	return ReturnValues;
 }
 ```
+
+We are now ready for building a simple logic in lua (put this in a script or a LuaCodeAsset):
+
+```lua
+mannequin.OnActorBeginOverlap = function(me, other)
+  print(tostring(me) .. ' colliding with ' .. tostring(other))
+  other.K2_AddActorLocalRotation({Yaw=10, Pitch=0, Roll=0})
+end
+
+mannequin.Jump()
+```
+
+Here we have a script that assumes a character can overlap with a (movable) object that will be rotated of 10 degrees on overlapping.
+
+You can run this script in the LuaReflectionState using a blueprint. The only missing part is assigning your character to the lua 'mannequin' variable. For doing this automatically just add to the character a LuaGlobalNameComponent on which you can specify the state and the name.
+
+Notes:
+
+* You do not need to attach LuaComponents to actors (everything is automatic)
+* You can attach multiple LuaGlobalNameComponents on the same actor (allowing it to be available on multiple states or with multiple names)
+* The LuaGlobalNameComponent is super easy, just give it a look to adapt it to more complex scenario
+* The LuaReflectionState class is not part of the official sources to encourage users/developers to implement their own solutions (like hiding dangeours methods or exposing subsets of them)
