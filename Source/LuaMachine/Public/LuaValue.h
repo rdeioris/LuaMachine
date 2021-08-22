@@ -140,7 +140,7 @@ struct LUAMACHINE_API FLuaValue
 
 	TArray<uint8> ToBytes() const;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
 	ELuaValueType Type;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
