@@ -965,7 +965,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
@@ -987,7 +987,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	}
 
 	// arguments
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1000,7 +1000,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 #endif
 		if (!LuaProp)
 		{
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 			FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
 			if (ArrayProp)
 			{
@@ -1077,7 +1077,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	int ReturnedValues = 0;
 
 	// get return value
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1096,7 +1096,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		{
 			continue;
 		}
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 		FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
 		if (!LuaProp)
 		{
@@ -1142,7 +1142,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		}
 	}
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1205,7 +1205,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
@@ -1227,7 +1227,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	}
 
 	// arguments
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1273,7 +1273,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	int ReturnedValues = 0;
 
 	// get return value
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1299,7 +1299,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 		LuaState->FromLuaValue(LuaValue, nullptr, L);
 	}
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1913,7 +1913,7 @@ ULuaState::~ULuaState()
 		lua_close(L);
 }
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 #define LUAVALUE_PROP_CAST(Type, Type2) F##Type* __##Type##__ = CastField<F##Type>(Property);\
 	if (__##Type##__)\
 	{\
@@ -1953,7 +1953,7 @@ ULuaState::~ULuaState()
 	}
 #endif
 
-#if	ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 FLuaValue ULuaState::FromUProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 {
 	return FromFProperty(Buffer, Property, bSuccess, Index);
@@ -1964,7 +1964,7 @@ void ULuaState::ToUProperty(void* Buffer, FProperty * Property, FLuaValue Value,
 }
 #endif
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 FLuaValue ULuaState::FromFProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 #else
 FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
@@ -1988,7 +1988,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	LUAVALUE_PROP_CAST(ClassProperty, UObject*);
 	LUAVALUE_PROP_CAST(ObjectProperty, UObject*);
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
 
 	if (EnumProperty)
@@ -1998,7 +1998,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	}
 #endif
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FObjectPropertyBase* ObjectPropertyBase = CastField<FObjectPropertyBase>(Property);
 #else
 	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
@@ -2008,7 +2008,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return FLuaValue(ObjectPropertyBase->GetObjectPropertyValue_InContainer(Buffer, Index));
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
 #else
 	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
@@ -2019,7 +2019,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return FLuaValue(WeakPtr.Get());
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FMulticastDelegateProperty* MulticastProperty = CastField<FMulticastDelegateProperty>(Property))
 #else
 	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
@@ -2030,7 +2030,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return CreateLuaTable();
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FDelegateProperty* DelegateProperty = CastField<FDelegateProperty>(Property))
 #else
 	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
@@ -2040,7 +2040,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return FLuaValue::FunctionOfObject((UObject*)ScriptDelegate.GetUObject(), ScriptDelegate.GetFunctionName());
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 #else
 	if (UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property))
@@ -2057,7 +2057,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return NewLuaArray;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 #else
 	if (UMapProperty* MapProperty = Cast<UMapProperty>(Property))
@@ -2077,7 +2077,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return NewLuaTable;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 #else
 	if (USetProperty* SetProperty = Cast<USetProperty>(Property))
@@ -2094,7 +2094,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 		return NewLuaArray;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 #else
 	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
@@ -2122,13 +2122,13 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 FLuaValue ULuaState::StructToLuaTable(UScriptStruct * InScriptStruct, const uint8 * StructData)
 {
 	FLuaValue NewLuaTable = CreateLuaTable();
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(InScriptStruct); It; ++It)
 #else
 	for (TFieldIterator<UProperty> It(InScriptStruct); It; ++It)
 #endif
 	{
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 		FProperty* FieldProp = *It;
 #else
 		UProperty* FieldProp = *It;
@@ -2145,7 +2145,7 @@ FLuaValue ULuaState::StructToLuaTable(UScriptStruct * InScriptStruct, const TArr
 	return StructToLuaTable(InScriptStruct, StructData.GetData());
 }
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 void ULuaState::ToFProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #else
 void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
@@ -2169,7 +2169,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	LUAVALUE_PROP_SET(ClassProperty, Value.Object);
 	LUAVALUE_PROP_SET(ObjectProperty, Value.Object);
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FObjectPropertyBase* ObjectPropertyBase = CastField<FObjectPropertyBase>(Property);
 #else
 	UObjectPropertyBase* ObjectPropertyBase = Cast<UObjectPropertyBase>(Property);
@@ -2179,7 +2179,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		ObjectPropertyBase->SetObjectPropertyValue_InContainer(Buffer, Value.Object, Index);
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FWeakObjectProperty* WeakObjectProperty = CastField<FWeakObjectProperty>(Property);
 #else
 	UWeakObjectProperty* WeakObjectProperty = Cast<UWeakObjectProperty>(Property);
@@ -2191,7 +2191,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FMulticastDelegateProperty* MulticastProperty = CastField<FMulticastDelegateProperty>(Property))
 #else
 	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
@@ -2208,7 +2208,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FDelegateProperty* DelegateProperty = CastField<FDelegateProperty>(Property))
 #else
 	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
@@ -2225,7 +2225,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 #else
 	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
@@ -2244,7 +2244,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FArrayProperty* ArrayProperty = CastField<FArrayProperty>(Property))
 #else
 	if (UArrayProperty* ArrayProperty = Cast<UArrayProperty>(Property))
@@ -2262,7 +2262,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FMapProperty* MapProperty = CastField<FMapProperty>(Property))
 #else
 	if (UMapProperty* MapProperty = Cast<UMapProperty>(Property))
@@ -2284,7 +2284,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 		return;
 	}
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	if (FSetProperty* SetProperty = CastField<FSetProperty>(Property))
 #else
 	if (USetProperty* SetProperty = Cast<USetProperty>(Property))
@@ -2310,7 +2310,7 @@ void ULuaState::LuaTableToStruct(FLuaValue & LuaValue, UScriptStruct * InScriptS
 	TArray<FLuaValue> TableKeys = ULuaBlueprintFunctionLibrary::LuaTableGetKeys(LuaValue);
 	for (FLuaValue TableKey : TableKeys)
 	{
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 		FProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
 #else
 		UProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
@@ -2323,7 +2323,7 @@ void ULuaState::LuaTableToStruct(FLuaValue & LuaValue, UScriptStruct * InScriptS
 	}
 }
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 void ULuaState::ToProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
 	ToFProperty(Buffer, Property, Value, bSuccess, Index);
@@ -2353,7 +2353,7 @@ FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, const FString &
 	}
 
 	UClass* Class = InObject->GetClass();
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FProperty* Property = nullptr;
 #else
 	UProperty* Property = nullptr;
@@ -2376,7 +2376,7 @@ bool ULuaState::SetPropertyFromLuaValue(UObject * InObject, const FString & Prop
 	}
 
 	UClass* Class = InObject->GetClass();
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FProperty* Property = nullptr;
 #else
 	UProperty* Property = nullptr;
@@ -2566,7 +2566,7 @@ TArray<FString> ULuaState::GetPropertiesNames(UObject * InObject)
 		return Names;
 	}
 
-#if ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	for (TFieldIterator<FProperty> It(Class); It; ++It)
 #else
 	for (TFieldIterator<UProperty> It(Class); It; ++It)

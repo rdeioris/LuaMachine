@@ -8,7 +8,7 @@
 #include "LuaValue.h"
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
-#include "Runtime/Launch/Resources/Version.h"
+#include "VersionInfo.h"
 #include "LuaDelegate.h"
 #include "LuaCommandExecutor.h"
 #include "LuaState.generated.h"
@@ -361,7 +361,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static TArray<uint8> ToByteCode(const FString& Code, const FString& CodePath, FString& ErrorString);
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+#if UE4_AT_LEAST(25)
 	FLuaValue FromUProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
 	void ToUProperty(void* Buffer, FProperty* Property, FLuaValue Value, bool& bSuccess, int32 Index = 0);
 	FLuaValue FromFProperty(void* Buffer, FProperty* Property, bool& bSuccess, int32 Index = 0);
