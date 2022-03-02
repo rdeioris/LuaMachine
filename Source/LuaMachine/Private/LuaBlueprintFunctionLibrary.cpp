@@ -341,7 +341,7 @@ FString ULuaBlueprintFunctionLibrary::LuaValueToUTF8(const FLuaValue& Value)
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(const FString& String)
 {
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	FTCHARToUTF32 UTF32String(*String);
 	return FLuaValue((const char*)UTF32String.Get(), UTF32String.Length());
 #else
@@ -352,7 +352,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueFromUTF32(const FString& String)
 
 FString ULuaBlueprintFunctionLibrary::LuaValueToUTF32(const FLuaValue& Value)
 {
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	FString ReturnValue;
 	TArray<uint8> Bytes = Value.ToBytes();
 	Bytes.Add(0);
@@ -560,7 +560,7 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 		return nullptr;
 	}
 
-	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];
+	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
 	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
 	FMemory::Memcpy(Data, Bytes.GetData(), Bytes.Num());
 	Mip.BulkData.Unlock();
@@ -949,7 +949,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 {
 	if (!Actor)
 		return FLuaValue();
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION < 24
+#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION < 24
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;
@@ -975,7 +975,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 	if (!Actor)
 		return FLuaValue();
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION < 24
+#if ENGINE_MAJOR_VERSION <= 4 && ENGINE_MINOR_VERSION < 24
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;
@@ -1000,8 +1000,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(
 {
 	if (!Actor)
 		return FLuaValue();
-
-#if ENGINE_MINOR_VERSION < 24
+#if ENGINE_MINOR_VERSION < 24 && ENGINE_MAJOR_VERSION <= 4
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;

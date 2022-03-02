@@ -23,7 +23,7 @@ void ULuaDelegate::ProcessEvent(UFunction* Function, void* Parms)
 	}
 
 	TArray<FLuaValue> LuaArgs;
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> It(LuaDelegateSignature); (It && (It->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++It)
 	{
 		FProperty* Prop = *It;

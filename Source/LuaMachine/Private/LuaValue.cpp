@@ -90,7 +90,7 @@ void FLuaValue::Unref()
 		if (LuaRef != LUA_NOREF)
 		{
 			// special case for when the engine is shutting down
-#if ENGINE_MINOR_VERSION >= 24
+#if ENGINE_MINOR_VERSION >= 24 || ENGINE_MAJOR_VERSION >= 5
 			if (IsEngineExitRequested())
 #else
 			if (GIsRequestingExit)

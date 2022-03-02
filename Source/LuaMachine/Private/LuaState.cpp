@@ -965,7 +965,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
@@ -987,7 +987,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	}
 
 	// arguments
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -996,11 +996,11 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	for (TFieldIterator<UProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		UProperty* Prop = *FArgs;
-		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
+		FStructProperty* LuaProp = Cast<FStructProperty>(Prop);
 #endif
 		if (!LuaProp)
 		{
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 			FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
 			if (ArrayProp)
 			{
@@ -1009,7 +1009,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
 			if (ArrayProp)
 			{
-				LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+				LuaProp = Cast<FStructProperty>(ArrayProp->Inner);
 #endif
 				if (!LuaProp)
 				{
@@ -1077,7 +1077,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	int ReturnedValues = 0;
 
 	// get return value
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1096,7 +1096,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		{
 			continue;
 		}
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 		FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
 		if (!LuaProp)
 		{
@@ -1105,13 +1105,13 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 			{
 				LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
 #else
-		UStructProperty* LuaProp = Cast<UStructProperty>(Prop);
+		FStructProperty* LuaProp = Cast<FStructProperty>(Prop);
 		if (!LuaProp)
 		{
 			UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
 			if (ArrayProp)
 			{
-				LuaProp = Cast<UStructProperty>(ArrayProp->Inner);
+				LuaProp = Cast<FStructProperty>(ArrayProp->Inner);
 #endif
 				if (!LuaProp)
 					break;
@@ -1142,7 +1142,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		}
 	}
 
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1205,7 +1205,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
@@ -1227,7 +1227,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	}
 
 	// arguments
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1273,7 +1273,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	int ReturnedValues = 0;
 
 	// get return value
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
@@ -1299,7 +1299,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 		LuaState->FromLuaValue(LuaValue, nullptr, L);
 	}
 
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
@@ -1913,7 +1913,7 @@ ULuaState::~ULuaState()
 		lua_close(L);
 }
 
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MINOR_VERSION >= 25 || ENGINE_MAJOR_VERSION >= 5
 #define LUAVALUE_PROP_CAST(Type, Type2) F##Type* __##Type##__ = CastField<F##Type>(Property);\
 	if (__##Type##__)\
 	{\
@@ -1967,7 +1967,7 @@ void ULuaState::ToUProperty(void* Buffer, FProperty * Property, FLuaValue Value,
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 FLuaValue ULuaState::FromFProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 #else
-FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromUProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
@@ -2097,7 +2097,7 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 #else
-	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
+	if (FStructProperty* StructProperty = Cast<FStructProperty>(Property))
 #endif
 	{
 		// fast path
@@ -2125,13 +2125,13 @@ FLuaValue ULuaState::StructToLuaTable(UScriptStruct * InScriptStruct, const uint
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	for (TFieldIterator<FProperty> It(InScriptStruct); It; ++It)
 #else
-	for (TFieldIterator<UProperty> It(InScriptStruct); It; ++It)
+	for (TFieldIterator<FProperty> It(InScriptStruct); It; ++It)
 #endif
 	{
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 		FProperty* FieldProp = *It;
 #else
-		UProperty* FieldProp = *It;
+		FProperty* FieldProp = *It;
 #endif
 		FString PropName = FieldProp->GetName();
 		bool bTableItemSuccess = false;
@@ -2148,7 +2148,7 @@ FLuaValue ULuaState::StructToLuaTable(UScriptStruct * InScriptStruct, const TArr
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 void ULuaState::ToFProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #else
-void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToUProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 #endif
 {
 	bSuccess = true;
@@ -2228,7 +2228,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	if (FStructProperty* StructProperty = CastField<FStructProperty>(Property))
 #else
-	if (UStructProperty* StructProperty = Cast<UStructProperty>(Property))
+	if (FStructProperty* StructProperty = Cast<FStructProperty>(Property))
 #endif
 	{
 		// fast path
@@ -2279,7 +2279,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 			bool bTableItemSuccess = false;
 			ToProperty(KeyBuffer, Helper.GetKeyProperty(), TableKey, bTableItemSuccess, 0);
 			ToProperty(ValueBuffer, Helper.GetValueProperty(), TableKey, bTableItemSuccess, 0);
-			UDynamicClass FOo;
+			// UDynamicClass FOo; // Removed for Unreal 5 compatibility... Did it do anything?
 		}
 		return;
 	}
@@ -2313,7 +2313,7 @@ void ULuaState::LuaTableToStruct(FLuaValue & LuaValue, UScriptStruct * InScriptS
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 		FProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
 #else
-		UProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
+		FProperty* StructProp = InScriptStruct->FindPropertyByName(TableKey.ToName());
 #endif
 		if (StructProp)
 		{
@@ -2334,11 +2334,11 @@ FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuc
 	return FromFProperty(Buffer, Property, bSuccess, Index);
 }
 #else
-void ULuaState::ToProperty(void* Buffer, UProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
+void ULuaState::ToProperty(void* Buffer, FProperty * Property, FLuaValue Value, bool& bSuccess, int32 Index)
 {
 	ToUProperty(Buffer, Property, Value, bSuccess, Index);
 }
-FLuaValue ULuaState::FromProperty(void* Buffer, UProperty * Property, bool& bSuccess, int32 Index)
+FLuaValue ULuaState::FromProperty(void* Buffer, FProperty * Property, bool& bSuccess, int32 Index)
 {
 	return FromUProperty(Buffer, Property, bSuccess, Index);
 }
@@ -2356,7 +2356,7 @@ FLuaValue ULuaState::GetLuaValueFromProperty(UObject * InObject, const FString &
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	FProperty* Property = nullptr;
 #else
-	UProperty* Property = nullptr;
+	FProperty* Property = nullptr;
 #endif
 	Property = Class->FindPropertyByName(*PropertyName);
 	if (Property)
@@ -2379,7 +2379,7 @@ bool ULuaState::SetPropertyFromLuaValue(UObject * InObject, const FString & Prop
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	FProperty* Property = nullptr;
 #else
-	UProperty* Property = nullptr;
+	FProperty* Property = nullptr;
 #endif
 	Property = Class->FindPropertyByName(*PropertyName);
 	if (Property)
@@ -2569,7 +2569,7 @@ TArray<FString> ULuaState::GetPropertiesNames(UObject * InObject)
 #if ENGINE_MINOR_VERSION >= 25
 	for (TFieldIterator<FProperty> It(Class); It; ++It)
 #else
-	for (TFieldIterator<UProperty> It(Class); It; ++It)
+	for (TFieldIterator<FProperty> It(Class); It; ++It)
 #endif
 	{
 		Names.Add((*It)->GetName());

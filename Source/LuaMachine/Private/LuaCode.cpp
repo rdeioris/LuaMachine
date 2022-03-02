@@ -5,6 +5,7 @@
 #include "LuaMachine.h"
 #include "Serialization/CustomVersion.h"
 #include "EditorFramework/AssetImportData.h"
+#include "UObject/ObjectSaveContext.h"
 
 const FGuid FLuaCodeObjectVersion::GUID(0x01C2E96A1, 0xE24436EA, 0x6C69B025, 0x14E7FC3);
 FCustomVersionRegistration GRegisterLuaCodeCustomVersion(FLuaCodeObjectVersion::GUID, FLuaCodeObjectVersion::LatestVersion, TEXT("LuaCodeVer"));
@@ -65,9 +66,9 @@ void ULuaCode::Serialize(FArchive& Ar)
 	}
 }
 
-void ULuaCode::PreSave(const ITargetPlatform* TargetPlatform)
+void ULuaCode::PreSave(FObjectPreSaveContext ObjectSaveContext)
 {
-	Super::PreSave(TargetPlatform);
+	Super::PreSave(ObjectSaveContext);
 
 	for (ULuaState* LuaState : FLuaMachineModule::Get().GetRegisteredLuaStates())
 	{

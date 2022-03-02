@@ -56,7 +56,7 @@ public:
 
 	virtual void Serialize(FArchive& Ar) override;
 
-	virtual void PreSave(const ITargetPlatform* TargetPlatform) override;
+	virtual void PreSave(FObjectPreSaveContext ObjectSaveContext) override;
 
 #if WITH_EDITORONLY_DATA
 	virtual void PostInitProperties() override;

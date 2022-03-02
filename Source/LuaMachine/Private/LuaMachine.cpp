@@ -29,7 +29,7 @@ void FLuaMachineModule::LuaLevelAddedToWorld(ULevel* Level, UWorld* World)
 {
 	for (ULuaState* LuaState : GetRegisteredLuaStates())
 	{
-		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+		if (LuaState->IsValidLowLevel() && IsValid(LuaState))
 			LuaState->ReceiveLuaLevelAddedToWorld(Level, World);
 	}
 }
@@ -38,7 +38,7 @@ void FLuaMachineModule::LuaLevelRemovedFromWorld(ULevel* Level, UWorld* World)
 {
 	for (ULuaState* LuaState : GetRegisteredLuaStates())
 	{
-		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+		if (LuaState->IsValidLowLevel() && IsValid(LuaState))
 			LuaState->ReceiveLuaLevelRemovedFromWorld(Level, World);
 	}
 }

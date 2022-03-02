@@ -203,7 +203,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		for (TObjectIterator<ULuaState> StatesIterator; StatesIterator; ++StatesIterator)
 		{
 			ULuaState* LuaState = *StatesIterator;
-			if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+			if (LuaState->IsValidLowLevel() && IsValid(LuaState))
 			{
 				TArray<UObject*> Referencers;
 				FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
