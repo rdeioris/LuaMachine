@@ -5,6 +5,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#if ENGINE_MAJOR_VERSION > 4
+#include "UObject/ObjectSaveContext.h"
+#endif
 #include "LuaCode.generated.h"
 
 struct LUAMACHINE_API FLuaCodeObjectVersion
@@ -56,7 +59,11 @@ public:
 
 	virtual void Serialize(FArchive& Ar) override;
 
+#if ENGINE_MAJOR_VERSION > 4
+	virtual void PreSave(FObjectPreSaveContext ObjectSaveContext) override;
+#else
 	virtual void PreSave(const ITargetPlatform* TargetPlatform) override;
+#endif
 
 #if WITH_EDITORONLY_DATA
 	virtual void PostInitProperties() override;

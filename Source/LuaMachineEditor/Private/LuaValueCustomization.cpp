@@ -149,13 +149,13 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 
 		if (!bAllowsRawCall)
 		{
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 			for (TFieldIterator<FProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
 #else
 			for (TFieldIterator<UProperty> FArgs(Function); FArgs && FArgs->PropertyFlags & CPF_Parm; ++FArgs)
 #endif
 			{
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 				FProperty* Prop = *FArgs;
 				FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
 #else
@@ -165,14 +165,14 @@ void FLuaValueCustomization::CustomizeChildren(TSharedRef<IPropertyHandle> Prope
 				if (!LuaProp)
 				{
 					// check for array ?
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 					FArrayProperty* ArrayProp = CastField<FArrayProperty>(Prop);
 #else
 					UArrayProperty* ArrayProp = Cast<UArrayProperty>(Prop);
 #endif
 					if (ArrayProp)
 					{
-#if ENGINE_MINOR_VERSION >= 25
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 						LuaProp = CastField<FStructProperty>(ArrayProp->Inner);
 #else
 						LuaProp = Cast<UStructProperty>(ArrayProp->Inner);

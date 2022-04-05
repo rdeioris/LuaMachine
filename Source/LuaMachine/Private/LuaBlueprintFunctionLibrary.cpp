@@ -560,7 +560,11 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 		return nullptr;
 	}
 
+#if ENGINE_MAJOR_VERSION > 4
+	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+#else
 	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];
+#endif
 	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
 	FMemory::Memcpy(Data, Bytes.GetData(), Bytes.Num());
 	Mip.BulkData.Unlock();
@@ -949,7 +953,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAsLuaValue(AActor*
 {
 	if (!Actor)
 		return FLuaValue();
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION < 24
+#if ENGINE_MAJOR_VERSION < 5 && ENGINE_MINOR_VERSION < 24
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;
@@ -975,7 +979,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByNameAsLuaValue(AActor* 
 	if (!Actor)
 		return FLuaValue();
 
-#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION < 24
+#if ENGINE_MAJOR_VERSION < 5 && ENGINE_MINOR_VERSION < 24
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;
@@ -1001,7 +1005,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::GetLuaComponentByStateAndNameAsLuaValue(
 	if (!Actor)
 		return FLuaValue();
 
-#if ENGINE_MINOR_VERSION < 24
+#if ENGINE_MAJOR_VERSION < 5 && ENGINE_MINOR_VERSION < 24
 	TArray<UActorComponent*> Components = Actor->GetComponentsByClass(ULuaComponent::StaticClass());
 #else
 	TArray<UActorComponent*> Components;

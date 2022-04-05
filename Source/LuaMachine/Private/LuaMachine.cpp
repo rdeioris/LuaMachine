@@ -29,8 +29,14 @@ void FLuaMachineModule::LuaLevelAddedToWorld(ULevel* Level, UWorld* World)
 {
 	for (ULuaState* LuaState : GetRegisteredLuaStates())
 	{
+#if ENGINE_MAJOR_VERSION > 4
+		if (LuaState->IsValidLowLevel() && !IsValid(LuaState))
+#else
 		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+#endif
+		{
 			LuaState->ReceiveLuaLevelAddedToWorld(Level, World);
+		}
 	}
 }
 
@@ -38,8 +44,14 @@ void FLuaMachineModule::LuaLevelRemovedFromWorld(ULevel* Level, UWorld* World)
 {
 	for (ULuaState* LuaState : GetRegisteredLuaStates())
 	{
+#if ENGINE_MAJOR_VERSION > 4
+		if (LuaState->IsValidLowLevel() && !IsValid(LuaState))
+#else
 		if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+#endif
+		{
 			LuaState->ReceiveLuaLevelRemovedFromWorld(Level, World);
+		}
 	}
 }
 
@@ -90,6 +102,7 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 			return nullptr;
 		ULuaState* NewLuaState = NewObject<ULuaState>((UObject*)GetTransientPackage(), LuaStateClass);
 		LuaStates.Add(LuaStateClass, NewLuaState);
+		NewLuaState->AddToRoot();
 		OnNewLuaState.Broadcast(NewLuaState);
 		OnRegisteredLuaStatesChanged.Broadcast();
 	}

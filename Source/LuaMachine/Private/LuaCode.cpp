@@ -65,9 +65,15 @@ void ULuaCode::Serialize(FArchive& Ar)
 	}
 }
 
-void ULuaCode::PreSave(const ITargetPlatform* TargetPlatform)
+#if ENGINE_MAJOR_VERSION > 4
+void ULuaCode::PreSave(FObjectPreSaveContext ObjectSaveContext)
+{
+	Super::PreSave(ObjectSaveContext);
+#else
+void ULuaCode::PreSave(const ITargetPlatform * TargetPlatform)
 {
 	Super::PreSave(TargetPlatform);
+#endif
 
 	for (ULuaState* LuaState : FLuaMachineModule::Get().GetRegisteredLuaStates())
 	{
