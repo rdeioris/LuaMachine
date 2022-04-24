@@ -455,6 +455,13 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		Collector.AddReferencedObject(SelectedLuaState);
 	}
 
+#if ENGINE_MAJOR_VERSION > 4
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("SLuaMachineDebugger");
+	}
+#endif
+
 protected:
 	TArray<TSharedRef<FTableViewLuaValue>> LuaValues;
 	TSharedPtr<STreeView<TSharedRef<FTableViewLuaValue>>> LuaTreeView;
