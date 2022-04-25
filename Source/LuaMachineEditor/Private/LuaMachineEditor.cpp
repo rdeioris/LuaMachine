@@ -203,7 +203,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		for (TObjectIterator<ULuaState> StatesIterator; StatesIterator; ++StatesIterator)
 		{
 			ULuaState* LuaState = *StatesIterator;
+#if ENGINE_MAJOR_VERSION > 4
+			if (LuaState->IsValidLowLevel() && !IsValid(LuaState))
+#else
 			if (LuaState->IsValidLowLevel() && !LuaState->IsPendingKill())
+#endif
 			{
 				TArray<UObject*> Referencers;
 				FReferenceFinder Collector(Referencers, nullptr, false, true, false, false);
@@ -450,6 +454,13 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 	{
 		Collector.AddReferencedObject(SelectedLuaState);
 	}
+
+#if ENGINE_MAJOR_VERSION > 4
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("SLuaMachineDebugger");
+	}
+#endif
 
 protected:
 	TArray<TSharedRef<FTableViewLuaValue>> LuaValues;

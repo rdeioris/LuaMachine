@@ -560,7 +560,11 @@ UTexture2D* ULuaBlueprintFunctionLibrary::LuaValueToTransientTexture(int32 Width
 		return nullptr;
 	}
 
+#if UE5_AT_LEAST(0)
+	FTexture2DMipMap& Mip = Texture->GetPlatformData()->Mips[0];
+#else
 	FTexture2DMipMap& Mip = Texture->PlatformData->Mips[0];
+#endif
 	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
 	FMemory::Memcpy(Data, Bytes.GetData(), Bytes.Num());
 	Mip.BulkData.Unlock();

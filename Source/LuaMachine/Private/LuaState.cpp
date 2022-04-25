@@ -1910,7 +1910,10 @@ ULuaState::~ULuaState()
 	FLuaMachineModule::Get().UnregisterLuaState(this);
 
 	if (L)
+	{
 		lua_close(L);
+		L = nullptr;
+	}
 }
 
 #if UE4_AT_LEAST(25)
@@ -2279,7 +2282,6 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 			bool bTableItemSuccess = false;
 			ToProperty(KeyBuffer, Helper.GetKeyProperty(), TableKey, bTableItemSuccess, 0);
 			ToProperty(ValueBuffer, Helper.GetValueProperty(), TableKey, bTableItemSuccess, 0);
-			UDynamicClass FOo;
 		}
 		return;
 	}

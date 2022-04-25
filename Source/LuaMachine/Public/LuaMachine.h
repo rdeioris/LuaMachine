@@ -41,6 +41,13 @@ public:
 
 	void RunLuaConsoleCommand(const TArray<FString>& Args, FLuaValue LuaConsoleCommand);
 
+#if ENGINE_MAJOR_VERSION > 4
+	virtual FString GetReferencerName() const override
+	{
+		return TEXT("FLuaMachineModule");
+	}
+#endif
+
 private:
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
 	TSet<FString> LuaConsoleCommands;

@@ -1,15 +1,17 @@
 # LuaMachine
 ![LuaMachine Logo](Docs/LuaMachine_Logo.png?raw=true "LuaMachine Logo")
 
-Unreal Engine 4 Plugin for adding Lua scripting to your projects.
+Unreal Engine Plugin for adding Lua scripting to your projects.
 
 If you want modders to customize your game/project, or you need to allow game designers to script parts of the logic, or more generally you want a framework for adding lua scripting capabilities to your projects, this plugin is for you.
 
 ![LuaMachine](Docs/Screenshots/SyntaxColor.PNG?raw=true "LuaMachine")
 
+Note: The master branch is focused on Unreal Engine 5, if you need Unreal Engine 4 support use the ue4 branch.
+
 ## How it works
 
-Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to automatically expose the Unreal Engine 4 api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to automatically expose the Unreal Engine api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
 An advanced api for using/abusing Unreal Engine Reflection is included too.
 
 Currently Windows 64bit, Mac, Linux x86_64 (both Runtime and Editor), Linux AArch64, Android (32 and 64 bit) and iOS are supported. Minimal supported Engine version is 4.20.
@@ -23,6 +25,10 @@ Join the LuaMachine Discord channel: https://discord.gg/eTXDfEU
 Albeit fully open source and free, you can find the plugin in the Unreal Engine Marketplace for about 30$. If you want to sponsor the project consider buying it:
 
 https://www.unrealengine.com/marketplace/en-US/product/luamachine
+
+## Becoming a patron
+
+Consider sponsoring the project using patreon: https://www.patreon.com/rdeioris
 
 ## Quickstart
 
