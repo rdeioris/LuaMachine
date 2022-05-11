@@ -182,6 +182,13 @@ const FText ULuaMultiLineEditableTextBox::GetPaletteCategory()
 }
 #endif
 
+void ULuaMultiLineEditableTextBox::ReleaseSlateResources(bool bReleaseChildren)
+{
+	Super::ReleaseSlateResources(bReleaseChildren);
+
+	EditableTextBoxPtr.Reset();
+}
+
 TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 {
 	FLuaSyntaxTextStyle Style;
