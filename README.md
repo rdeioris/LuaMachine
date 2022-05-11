@@ -11,7 +11,7 @@ Note: The master branch is focused on Unreal Engine 5, if you need Unreal Engine
 
 ## How it works
 
-Contrary to the other Unreal Engine 4 Lua plugins, this one does not try to automatically expose the Unreal Engine api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
+Contrary to the other Unreal Engine Lua plugins, this one does not try to automatically expose the Unreal Engine api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
 An advanced api for using/abusing Unreal Engine Reflection is included too.
 
 Currently Windows 64bit, Mac, Linux x86_64 (both Runtime and Editor), Linux AArch64, Android (32 and 64 bit) and iOS are supported. Minimal supported Engine version is 4.20.
