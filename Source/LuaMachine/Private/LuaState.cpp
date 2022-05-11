@@ -588,7 +588,31 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 				}
 			}
 		}
+		break;
+	case ELuaValueType::MulticastDelegate:
+		// if no context is assigned to the function, own it !
+		if (!LuaValue.LuaState)
+		{
+			LuaValue.LuaState = this;
+		}
 
+		if (this != LuaValue.LuaState)
+		{
+			lua_pushnil(State);
+			break;
+		}
+		{
+			FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
+			LuaCallContext->Type = ELuaValueType::MulticastDelegate;
+			LuaCallContext->Function = reinterpret_cast<UFunction*>(LuaValue.Object);
+			LuaCallContext->MulticastScriptDelegate = LuaValue.MulticastScriptDelegate;
+			lua_newtable(State);
+			lua_pushcfunction(State, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawbroadcast : ULuaState::MetaTableFunction__rawbroadcast);
+			lua_setfield(State, -2, "__call");
+			lua_setmetatable(State, -2);
+			return;
+		}
+		break;
 	default:
 		lua_pushnil(State);
 	}
@@ -597,7 +621,9 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 {
 	if (!State)
+	{
 		State = this->L;
+	}
 
 	FLuaValue LuaValue;
 
@@ -1317,6 +1343,69 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	return 1;
 }
 
+int ULuaState::MetaTableFunction__rawbroadcast(lua_State * L)
+{
+	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
+	FLuaUserData* LuaCallContext = (FLuaUserData*)lua_touserdata(L, 1);
+
+	if (!LuaCallContext->MulticastScriptDelegate || !LuaCallContext->Function.IsValid())
+	{
+		return luaL_error(L, "invalid lua Multicast Delegate for UserData %p", LuaCallContext);
+	}
+
+	int NArgs = lua_gettop(L);
+	int StackPointer = 2;
+
+	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function.Get());
+
+	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
+	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
+
+	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	{
+		FProperty* Prop = *It;
+		if (!Prop->HasAnyPropertyFlags(CPF_ZeroConstructor))
+		{
+			Prop->InitializeValue_InContainer(Parameters);
+		}
+	}
+
+	// arguments
+	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	{
+		FProperty* Prop = *FArgs;
+		bool bPropertySet = false;
+		LuaState->ToProperty(Parameters, Prop, LuaState->ToLuaValue(StackPointer++, L), bPropertySet, 0);
+	}
+
+	LuaState->InceptionLevel++;
+	LuaCallContext->MulticastScriptDelegate->ProcessMulticastDelegate<UObject>(Parameters);
+	check(LuaState->InceptionLevel > 0);
+	LuaState->InceptionLevel--;
+
+	if (LuaState->InceptionLevel == 0)
+	{
+		FString Error;
+		while (LuaState->InceptionErrors.Dequeue(Error))
+		{
+			if (LuaState->bLogError)
+			{
+				LuaState->LogError(Error);
+			}
+			LuaState->ReceiveLuaError(Error);
+		}
+	}
+
+	// no return values in multicast delegates
+	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	{
+		It->DestroyValue_InContainer(Parameters);
+	}
+
+	lua_pushnil(L);
+	return 1;
+}
+
 int ULuaState::TableFunction_print(lua_State * L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
@@ -2029,9 +2118,11 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
 #endif
 	{
-		// Unfortunately we have no way to iterate the content of a FMulticastScriptDelegate
-		const FMulticastScriptDelegate* MulticastScriptDelegate = MulticastProperty->GetMulticastDelegate((UObject*)Buffer);
-		return CreateLuaTable();
+		FLuaValue MulticastValue;
+		MulticastValue.Type = ELuaValueType::MulticastDelegate;
+		MulticastValue.Object = MulticastProperty->SignatureFunction;
+		MulticastValue.MulticastScriptDelegate = reinterpret_cast<FMulticastScriptDelegate*>(MulticastProperty->ContainerPtrToValuePtr<uint8>(Buffer));
+		return MulticastValue;
 	}
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25

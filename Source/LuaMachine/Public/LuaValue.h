@@ -30,6 +30,7 @@ enum class ELuaValueType : uint8
 	UFunction,
 	UObject,
 	Thread,
+	MulticastDelegate,
 };
 
 class ULuaState;
@@ -193,4 +194,6 @@ struct LUAMACHINE_API FLuaValue
 	bool IsNil() const;
 
 	void Unref();
+
+	FMulticastScriptDelegate* MulticastScriptDelegate = nullptr;
 };

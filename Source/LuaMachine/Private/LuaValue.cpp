@@ -125,6 +125,7 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 	Number = SourceValue.Number;
 	String = SourceValue.String;
 	FunctionName = SourceValue.FunctionName;
+	MulticastScriptDelegate = SourceValue.MulticastScriptDelegate;
 
 	// make a new reference to the table, to avoid it being destroyed
 	if (LuaRef != LUA_NOREF)
@@ -145,6 +146,7 @@ FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 	Number = SourceValue.Number;
 	String = SourceValue.String;
 	FunctionName = SourceValue.FunctionName;
+	MulticastScriptDelegate = SourceValue.MulticastScriptDelegate;
 
 	// make a new reference to the table, to avoid it being destroyed
 	if (LuaRef != LUA_NOREF)

@@ -29,10 +29,14 @@ struct FLuaUserData
 	TWeakObjectPtr<UObject> Context;
 	TWeakObjectPtr<UFunction> Function;
 
+	// meaningful only for multicast delegates broadcasting
+	FMulticastScriptDelegate* MulticastScriptDelegate;
+
 	FLuaUserData(UObject* InObject)
 	{
 		Type = ELuaValueType::UObject;
 		Context = InObject;
+		MulticastScriptDelegate = nullptr;
 	}
 
 	FLuaUserData(UObject* InObject, UFunction* InFunction)
@@ -40,6 +44,7 @@ struct FLuaUserData
 		Type = ELuaValueType::UFunction;
 		Context = InObject;
 		Function = InFunction;
+		MulticastScriptDelegate = nullptr;
 	}
 };
 
@@ -350,6 +355,7 @@ public:
 
 	static int MetaTableFunction__call(lua_State* L);
 	static int MetaTableFunction__rawcall(lua_State* L);
+	static int MetaTableFunction__rawbroadcast(lua_State* L);
 
 	static int MetaTableFunctionUserData__eq(lua_State* L);
 	static int MetaTableFunctionUserData__gc(lua_State* L);
