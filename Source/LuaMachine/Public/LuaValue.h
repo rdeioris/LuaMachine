@@ -86,6 +86,12 @@ struct LUAMACHINE_API FLuaValue
 	{
 	}
 
+	FLuaValue(double Value) : FLuaValue()
+	{
+		Type = ELuaValueType::Number;
+		Number = Value;
+	}
+
 	FLuaValue(float Value) : FLuaValue()
 	{
 		Type = ELuaValueType::Number;
@@ -135,7 +141,7 @@ struct LUAMACHINE_API FLuaValue
 	FString ToString() const;
 	FName ToName() const;
 	int32 ToInteger() const;
-	float ToFloat() const;
+	double ToFloat() const;
 	bool ToBool() const;
 
 	TArray<uint8> ToBytes() const;
@@ -150,7 +156,7 @@ struct LUAMACHINE_API FLuaValue
 	int32 Integer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
-	float Number;
+	double Number;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
 	FString String;

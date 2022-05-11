@@ -51,20 +51,20 @@ int32 FLuaValue::ToInteger() const
 	return 0;
 }
 
-float FLuaValue::ToFloat() const
+double FLuaValue::ToFloat() const
 {
 	switch (Type)
 	{
 	case ELuaValueType::Bool:
-		return Bool ? 1.0f : 0.0f;
+		return Bool ? 1.0 : 0.0;
 	case ELuaValueType::Integer:
 		return Integer;
 	case ELuaValueType::Number:
 		return Number;
 	case ELuaValueType::String:
-		return FCString::Atof(*String);
+		return FCString::Atod(*String);
 	}
-	return 0.0f;
+	return 0.0;
 }
 
 bool FLuaValue::ToBool() const

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "LuaState.h"
 #include "LuaGlobalNameComponent.generated.h"
 
 
