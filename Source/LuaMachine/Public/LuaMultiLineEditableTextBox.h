@@ -113,6 +113,8 @@ public:
 	virtual const FText GetPaletteCategory() override;
 #endif
 
+	virtual void ReleaseSlateResources(bool bReleaseChildren) override;
+
 protected:
 	virtual TSharedRef<SWidget> RebuildWidget() override;
 	
