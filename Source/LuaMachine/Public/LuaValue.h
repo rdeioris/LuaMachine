@@ -49,6 +49,7 @@ struct LUAMACHINE_API FLuaValue
 		Bool = false;
 		Integer = 0;
 		Number = 0;
+		MulticastScriptDelegate = nullptr;
 	}
 
 	FLuaValue(const FLuaValue& SourceValue);
