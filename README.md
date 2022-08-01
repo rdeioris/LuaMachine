@@ -221,8 +221,8 @@ FLuaValue UAdvancedLuaState::GetPlayerPawnLocation()
 	FVector Location = UGameplayStatics::GetPlayerPawn(GetWorld(), 0)->GetActorLocation();
 	FLuaValue Table = CreateLuaTable();
 	Table.SetField("x", FLuaValue(Location.X));
-	Table.SetField("y", FLuaValue(Location.X));
-	Table.SetField("z", FLuaValue(Location.X));
+	Table.SetField("y", FLuaValue(Location.Y));
+	Table.SetField("z", FLuaValue(Location.Z));
 
 	return Table;
 }
