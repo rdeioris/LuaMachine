@@ -479,6 +479,20 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
+FString ULuaBlueprintFunctionLibrary::LuaReadCodeAsset(UObject* WorldContextObject, TSubclassOf<ULuaState> State, ULuaCode* CodeAsset)
+{
+	FString ReturnValue;
+
+	if (!CodeAsset)
+		return ReturnValue;
+
+	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
+	if (!L)
+		return ReturnValue;
+
+	return L->ReadCodeAsset(CodeAsset);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObject, TSubclassOf<ULuaState> State, const TArray<uint8>& ByteCode, const FString& CodePath)
 {
 	FLuaValue ReturnValue;

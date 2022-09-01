@@ -310,6 +310,13 @@ FLuaValue ULuaState::GetLuaBlueprintPackageTable(const FString& PackageName)
 	return LuaBlueprintPackages[PackageName]->SelfTable;
 }
 
+FString ULuaState::ReadCodeAsset(ULuaCode* CodeAsset)
+{
+
+	return CodeAsset->Code.ToString();
+
+}
+
 bool ULuaState::RunCodeAsset(ULuaCode* CodeAsset, int NRet)
 {
 

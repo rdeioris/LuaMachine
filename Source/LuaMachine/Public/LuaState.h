@@ -335,6 +335,7 @@ public:
 	bool RunCode(const TArray<uint8>& Code, const FString& CodePath, int NRet = 0);
 	bool RunCode(const FString& Code, const FString& CodePath, int NRet = 0);
 
+	FString ReadCodeAsset(ULuaCode* CodeAsset);
 	bool RunCodeAsset(ULuaCode* CodeAsset, int NRet = 0);
 
 	FLuaValue CreateLuaTable();
