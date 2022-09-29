@@ -79,6 +79,13 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 		{
 			PersistentLuaStates.Add(LuaStateClass, LuaStates[LuaStateClass]);
 		}
+		else
+		{
+			if(auto* LuaConsole = LuaStates[LuaStateClass]->GetLuaConsole())
+			{
+				IModularFeatures::Get().UnregisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), LuaConsole);
+			}
+		}
 	}
 
 	LuaStates = PersistentLuaStates;

@@ -454,6 +454,8 @@ public:
 		return InStruct;
 	}
 
+	FORCEINLINE FLuaCommandExecutor* GetLuaConsole() { return &LuaConsole; }
+
 protected:
 	lua_State* L;
 	bool bDisabled;
