@@ -273,8 +273,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static UTexture2D* LuaValueToTransientTexture(const int32 Width, const int32 Height, const FLuaValue& Value, const EPixelFormat PixelFormat = EPixelFormat::PF_B8G8R8A8, bool bDetectFormat = false);
 
-	UFUNCTION(BlueprintCallable, Category = "Lua")
-	static USoundWave* LuaValueToTransientSoundWave(const FLuaValue& Value, bool bLoop=false);
 
 	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
 	static void LuaValueYield(FLuaValue Value, TArray<FLuaValue> Args);

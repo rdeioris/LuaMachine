@@ -3,6 +3,7 @@
 #include "LuaMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
+#include "EditorStyleSet.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
 #include "SlateCore/Public/Styling/SlateStyleRegistry.h"
 #include "LuaCodeCustomization.h"
