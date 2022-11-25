@@ -1891,7 +1891,7 @@ bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(const FString& Filename, FStri
 
 	for (auto Asset : AssetData)
 	{
-		if (Asset.ObjectPath.ToString().StartsWith(Mountpoint))
+		if (Asset.GetObjectPathString().StartsWith(Mountpoint))
 		{
 			Assets.Add(FLuaValue(Asset.GetAsset()));
 		}
