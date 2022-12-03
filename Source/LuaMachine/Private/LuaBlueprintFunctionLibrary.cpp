@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2022 - Roberto De Ioris
 
 #include "LuaBlueprintFunctionLibrary.h"
 #include "LuaComponent.h"
@@ -13,7 +13,7 @@
 #include "IImageWrapperModule.h"
 #include "IPlatformFilePak.h"
 #include "HAL/PlatformFilemanager.h"
-#if ENGINE_MAJOR_VERSION > 4 && ENGINE_MINOR_VERSION > 0
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
 #include "AssetRegistry/IAssetRegistry.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #else
@@ -1891,7 +1891,11 @@ bool ULuaBlueprintFunctionLibrary::LuaLoadPakFile(const FString& Filename, FStri
 
 	for (auto Asset : AssetData)
 	{
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
+		if (Asset.GetObjectPathString().StartsWith(Mountpoint))
+#else
 		if (Asset.ObjectPath.ToString().StartsWith(Mountpoint))
+#endif
 		{
 			Assets.Add(FLuaValue(Asset.GetAsset()));
 		}

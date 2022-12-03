@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2022 - Roberto De Ioris
 
 #include "LuaState.h"
 #include "LuaComponent.h"
@@ -6,7 +6,11 @@
 #include "LuaMachine.h"
 #include "LuaBlueprintPackage.h"
 #include "LuaBlueprintFunctionLibrary.h"
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
+#include "AssetRegistry/AssetRegistryModule.h"
+#else
 #include "AssetRegistryModule.h"
+#endif
 #include "GameFramework/Actor.h"
 #include "Runtime/Core/Public/Misc/FileHelper.h"
 #include "Runtime/Core/Public/Misc/Paths.h"
@@ -1437,8 +1441,13 @@ int ULuaState::TableFunction_package_loader_codeasset(lua_State * L)
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 2));
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>(TEXT("AssetRegistry"));
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
+	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(Key);
+	if (AssetData.IsValid() && AssetData.AssetClassPath.ToString() == "LuaCode")
+#else
 	FAssetData AssetData = AssetRegistryModule.Get().GetAssetByObjectPath(*Key);
 	if (AssetData.IsValid() && AssetData.AssetClass == "LuaCode")
+#endif
 	{
 		ULuaCode* LuaCode = Cast<ULuaCode>(AssetData.GetAsset());
 		if (LuaCode)
