@@ -89,6 +89,18 @@ struct FLuaLibsLoader
 	UPROPERTY(EditAnywhere, Category = "Lua", meta = (DisplayName = "Load debug"))
 	bool bLoadDebug;
 
+	FLuaLibsLoader()
+		: bLoadBase(true)
+		, bLoadCoroutine(true)
+		, bLoadTable(true)
+		, bLoadIO(true)
+		, bLoadOS(true)
+		, bLoadString(true)
+		, bLoadMath(true)
+		, bLoadUTF8(true)
+		, bLoadDebug(false)
+	{}
+
 };
 
 USTRUCT(BlueprintType)
@@ -110,6 +122,12 @@ struct FLuaDebug
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Lua")
 	FString What;
+
+	FLuaDebug()
+		: CurrentLine(0)
+	{
+
+	}
 };
 
 USTRUCT(BlueprintType)

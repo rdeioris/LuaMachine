@@ -4,6 +4,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "Engine/DataAsset.h"
 #if ENGINE_MAJOR_VERSION > 4
 #include "UObject/ObjectSaveContext.h"

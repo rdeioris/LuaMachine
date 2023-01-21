@@ -28,5 +28,12 @@ public:
 	bool AllowMultiLine() const override;
 	FInputChord GetHotKey() const override;
 
+#if ENGINE_MAJOR_VERSION > 4 && ENGINE_MINOR_VERSION > 0
+	FInputChord GetIterateExecutorHotKey() const
+	{
+		return {};
+	}
+#endif
+
 	ULuaState* LuaState;
 };

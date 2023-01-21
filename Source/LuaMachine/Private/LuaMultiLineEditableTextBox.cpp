@@ -27,7 +27,11 @@ ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 	bHandleArrows = true;
 
 	CodeStyle = FTextBlockStyle()
+#if ENGINE_MAJOR_VERSION > 4 && ENGINE_MINOR_VERSION > 0
+		.SetFont(WidgetStyle.TextStyle.Font)
+#else
 		.SetFont(WidgetStyle.Font)
+#endif
 		.SetColorAndOpacity(FLinearColor::White)
 		.SetShadowOffset(FVector2D::ZeroVector)
 		.SetSelectedBackgroundColor(FSlateColor(FLinearColor::Blue))
