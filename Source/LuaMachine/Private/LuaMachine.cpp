@@ -81,7 +81,7 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 		}
 		else
 		{
-			if(auto* LuaConsole = LuaStates[LuaStateClass]->GetLuaConsole())
+			if(FLuaCommandExecutor* LuaConsole = LuaStates[LuaStateClass]->GetLuaConsole())
 			{
 				IModularFeatures::Get().UnregisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), LuaConsole);
 			}
@@ -109,7 +109,6 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 			return nullptr;
 		ULuaState* NewLuaState = NewObject<ULuaState>((UObject*)GetTransientPackage(), LuaStateClass);
 		LuaStates.Add(LuaStateClass, NewLuaState);
-		NewLuaState->AddToRoot();
 		OnNewLuaState.Broadcast(NewLuaState);
 		OnRegisteredLuaStatesChanged.Broadcast();
 	}
