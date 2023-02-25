@@ -2273,6 +2273,17 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 
 	LUAVALUE_PROP_SET(ClassProperty, Value.Object);
 	LUAVALUE_PROP_SET(ObjectProperty, Value.Object);
+	
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+	FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
+
+	if (EnumProperty)
+	{
+		uint8* EnumValue = EnumProperty->ContainerPtrToValuePtr<uint8>(Buffer, Index);
+		*EnumValue = Value.ToInteger();
+		return;
+	}
+#endif
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	FObjectPropertyBase* ObjectPropertyBase = CastField<FObjectPropertyBase>(Property);
