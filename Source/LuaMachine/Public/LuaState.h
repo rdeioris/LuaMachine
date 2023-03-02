@@ -439,6 +439,7 @@ public:
 	void GCLuaDelegatesCheck();
 
 	void RegisterLuaDelegate(UObject* InObject, ULuaDelegate* InLuaDelegate);
+	void UnregisterLuaDelegatesOfObject(UObject* InObject);
 
 	TArray<FString> GetPropertiesNames(UObject* InObject);
 	TArray<FString> GetFunctionsNames(UObject* InObject);
