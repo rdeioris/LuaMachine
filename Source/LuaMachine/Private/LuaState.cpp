@@ -2313,6 +2313,14 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
 #endif
 	{
+		if (Value.IsNil())
+		{
+			UObject* Object = static_cast<UObject*>(Buffer);
+			UnregisterLuaDelegatesOfObject(Object);
+			MulticastProperty->ClearDelegate(Object);
+			return;
+		}
+
 		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
 		LuaDelegate->SetupLuaDelegate(MulticastProperty->SignatureFunction, this, Value);
 		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
@@ -2330,6 +2338,14 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
 #endif
 	{
+		if (Value.IsNil())
+		{
+			UObject* Object = static_cast<UObject*>(Buffer);
+			UnregisterLuaDelegatesOfObject(Object);
+			DelegateProperty->SetPropertyValue_InContainer(Buffer, FScriptDelegate(), Index);
+			return;
+		}
+
 		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
 		LuaDelegate->SetupLuaDelegate(DelegateProperty->SignatureFunction, this, Value);
 		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
@@ -2664,6 +2680,11 @@ void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDele
 		NewLuaDelegateGroup.LuaDelegates.Add(InLuaDelegate);
 		LuaDelegatesMap.Add(InObject, NewLuaDelegateGroup);
 	}
+}
+
+void ULuaState::UnregisterLuaDelegatesOfObject(UObject* InObject)
+{
+	LuaDelegatesMap.Remove(InObject);
 }
 
 TArray<FString> ULuaState::GetPropertiesNames(UObject * InObject)
