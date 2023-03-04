@@ -30,6 +30,7 @@ ULuaState::ULuaState()
 	bEnableLineHook = false;
 	bEnableCallHook = false;
 	bEnableReturnHook = false;
+	bEnableCountHook = false;
 	bRawLuaFunctionCall = false;
 
 	FCoreUObjectDelegates::GetPostGarbageCollect().AddUObject(this, &ULuaState::GCLuaDelegatesCheck);
@@ -248,10 +249,14 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		DebugMask |= LUA_MASKRET;
 	}
+	if (bEnableCountHook)
+	{
+		DebugMask |= LUA_MASKCOUNT;
+	}
 
 	if (DebugMask != 0)
 	{
-		lua_sethook(L, Debug_Hook, DebugMask, 0);
+		lua_sethook(L, Debug_Hook, DebugMask, HookInstructionCount);
 	}
 
 	if (LuaCodeAsset)
@@ -877,6 +882,9 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 		break;
 	case LUA_HOOKRET:
 		LuaState->ReceiveLuaReturnHook(LuaDebug);
+		break;
+	case LUA_HOOKCOUNT:
+		LuaState->ReceiveLuaCountHook(LuaDebug);
 		break;
 	default:
 		break;
@@ -1597,6 +1605,11 @@ void ULuaState::ReceiveLuaReturnHook_Implementation(const FLuaDebug & LuaDebug)
 }
 
 void ULuaState::ReceiveLuaLineHook_Implementation(const FLuaDebug & LuaDebug)
+{
+
+}
+
+void ULuaState::ReceiveLuaCountHook(const FLuaDebug & LuaDebug)
 {
 
 }
