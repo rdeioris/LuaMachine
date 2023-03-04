@@ -296,8 +296,11 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	ReceiveLuaStateInitialized();
 
 #if WITH_EDITOR
-	LuaConsole.LuaState = this;
-	IModularFeatures::Get().RegisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), &LuaConsole);
+	if (!(GetFlags() & RF_ClassDefaultObject))
+	{
+		LuaConsole.LuaState = this;
+		IModularFeatures::Get().RegisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), &LuaConsole);
+	}
 #endif
 
 
@@ -533,7 +536,8 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 				SetupAndAssignUserDataMetatable(LuaUserDataObject, LuaUserDataObject->Metatable, State);
 			}
 		}
-		else {
+		else
+		{
 			if (UserDataMetaTable.Type == ELuaValueType::Table)
 			{
 				FromLuaValue(UserDataMetaTable, nullptr, State);
@@ -2273,7 +2277,7 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 
 	LUAVALUE_PROP_SET(ClassProperty, Value.Object);
 	LUAVALUE_PROP_SET(ObjectProperty, Value.Object);
-	
+
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
 	FEnumProperty* EnumProperty = CastField<FEnumProperty>(Property);
 
@@ -2714,4 +2718,32 @@ TArray<FString> ULuaState::GetFunctionsNames(UObject * InObject)
 	}
 
 	return Names;
+}
+
+void ULuaState::AddLuaValueToLuaState(const FString & Name, FLuaValue LuaValue)
+{
+	SetFieldFromTree(Name, LuaValue, true);
+}
+
+FLuaValue ULuaState::RunString(const FString & CodeString, FString CodePath)
+{
+	FLuaValue ReturnValue;
+	if (CodePath.IsEmpty())
+	{
+		CodePath = CodeString;
+	}
+
+	if (!RunCode(CodeString, CodePath, 1))
+	{
+		if (bLogError)
+			LogError(LastError);
+		ReceiveLuaError(LastError);
+	}
+	else
+	{
+		ReturnValue = ToLuaValue(-1);
+	}
+
+	Pop();
+	return ReturnValue;
 }

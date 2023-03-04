@@ -423,25 +423,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 
 	ULuaState* L = FLuaMachineModule::Get().GetLuaState(State, WorldContextObject->GetWorld());
 	if (!L)
+	{
 		return ReturnValue;
-
-	if (CodePath.IsEmpty())
-	{
-		CodePath = CodeString;
 	}
 
-	if (!L->RunCode(CodeString, CodePath, 1))
-	{
-		if (L->bLogError)
-			L->LogError(L->LastError);
-		L->ReceiveLuaError(L->LastError);
-	}
-	else
-	{
-		ReturnValue = L->ToLuaValue(-1);
-	}
-	L->Pop();
-	return ReturnValue;
+	return L->RunString(CodeString, CodePath);
 }
 
 ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Value)
@@ -484,7 +470,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunCodeAsset(UObject* WorldContextObj
 	return ReturnValue;
 }
 
-FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject * WorldContextObject, TSubclassOf<ULuaState> State, const TArray<uint8>& ByteCode, const FString& CodePath)
+FLuaValue ULuaBlueprintFunctionLibrary::LuaRunByteCode(UObject* WorldContextObject, TSubclassOf<ULuaState> State, const TArray<uint8>& ByteCode, const FString& CodePath)
 {
 	FLuaValue ReturnValue;
 
@@ -1949,4 +1935,27 @@ void ULuaBlueprintFunctionLibrary::RegisterLuaConsoleCommand(const FString& Comm
 void ULuaBlueprintFunctionLibrary::UnregisterLuaConsoleCommand(const FString& CommandName)
 {
 	FLuaMachineModule::Get().UnregisterLuaConsoleCommand(CommandName);
+}
+
+ULuaState* ULuaBlueprintFunctionLibrary::CreateDynamicLuaState(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaStateClass)
+{
+	if (!LuaStateClass)
+	{
+		return nullptr;
+	}
+
+	if (LuaStateClass == ULuaState::StaticClass())
+	{
+		UE_LOG(LogLuaMachine, Error, TEXT("attempt to use LuaState Abstract class, please create a child of LuaState"));
+		return nullptr;
+	}
+
+
+	ULuaState* NewLuaState = NewObject<ULuaState>((UObject*)GetTransientPackage(), LuaStateClass);
+	if (!NewLuaState)
+	{
+		return nullptr;
+	}
+
+	return NewLuaState->GetLuaState(WorldContextObject->GetWorld());
 }

@@ -87,7 +87,9 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		LuaValues.Empty();
 
 		if (!SelectedLuaState)
+		{
 			return;
+		}
 
 		SelectedLuaState->PushGlobalTable();
 		SelectedLuaState->PushNil(); // first key

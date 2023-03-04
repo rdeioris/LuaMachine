@@ -474,6 +474,12 @@ public:
 
 	FORCEINLINE FLuaCommandExecutor* GetLuaConsole() { return &LuaConsole; }
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void AddLuaValueToLuaState(const FString& Name, FLuaValue LuaValue);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue RunString(const FString& CodeString, FString CodePath);
+
 protected:
 	lua_State* L;
 	bool bDisabled;

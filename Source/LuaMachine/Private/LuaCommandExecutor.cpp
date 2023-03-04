@@ -46,7 +46,7 @@ bool FLuaCommandExecutor::Exec(const TCHAR* Input)
 {
 	IConsoleManager::Get().AddConsoleHistoryEntry(*(GetName().ToString()), Input);
 
-	ULuaBlueprintFunctionLibrary::LuaRunString(LuaState->GetWorld(), LuaState->GetClass(), Input);
+	LuaState->RunString(Input, "");
 
 	return true;
 }
