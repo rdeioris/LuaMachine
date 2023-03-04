@@ -8,7 +8,7 @@
 #include "LuaMultiLineEditableTextBox.generated.h"
 
 USTRUCT(BlueprintType)
-struct FLuaCustomHighlighter
+struct LUAMACHINE_API FLuaCustomHighlighter
 {
 	GENERATED_BODY()
 
