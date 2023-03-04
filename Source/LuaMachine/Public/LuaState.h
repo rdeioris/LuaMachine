@@ -208,6 +208,11 @@ public:
 	UFUNCTION(BlueprintNativeEvent, Category = "Lua", meta = (DisplayName = "Lua Return Hook"))
 	void ReceiveLuaReturnHook(const FLuaDebug& LuaDebug);
 
+	// Not BlueprintNativeEvent, as throwing a luaL_error from an RTTI call results in leaving the VM in an unexpected
+	// state and will result in exceptions
+	UFUNCTION(Category = "Lua", meta = (DisplayName = "Lua Count Hook"))
+	virtual void ReceiveLuaCountHook(const FLuaDebug& LuaDebug);
+
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue NewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> LuaUserDataObjectClass, bool bTrackObject=true);
 
@@ -265,6 +270,14 @@ public:
 	/* Enable debug of each Lua return. The LuaReturnHook event will be triggered */
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bEnableReturnHook;
+
+	/* Enable debug for reaching a number of Lua instruction. The LuaCountHook event will be triggered */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bEnableCountHook;
+
+	/* Number of instructions to wait for when the Count Hook is enabled */
+	UPROPERTY(EditAnywhere, Category = "Lua", Meta = (EditCondition = "bEnableCountHook"))
+	int32 HookInstructionCount = 25000;
 
 	UPROPERTY()
 	TMap<FString, ULuaBlueprintPackage*> LuaBlueprintPackages;
@@ -439,6 +452,7 @@ public:
 	void GCLuaDelegatesCheck();
 
 	void RegisterLuaDelegate(UObject* InObject, ULuaDelegate* InLuaDelegate);
+	void UnregisterLuaDelegatesOfObject(UObject* InObject);
 
 	TArray<FString> GetPropertiesNames(UObject* InObject);
 	TArray<FString> GetFunctionsNames(UObject* InObject);

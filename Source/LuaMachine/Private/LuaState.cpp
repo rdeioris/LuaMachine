@@ -30,6 +30,7 @@ ULuaState::ULuaState()
 	bEnableLineHook = false;
 	bEnableCallHook = false;
 	bEnableReturnHook = false;
+	bEnableCountHook = false;
 	bRawLuaFunctionCall = false;
 
 	FCoreUObjectDelegates::GetPostGarbageCollect().AddUObject(this, &ULuaState::GCLuaDelegatesCheck);
@@ -248,10 +249,14 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		DebugMask |= LUA_MASKRET;
 	}
+	if (bEnableCountHook)
+	{
+		DebugMask |= LUA_MASKCOUNT;
+	}
 
 	if (DebugMask != 0)
 	{
-		lua_sethook(L, Debug_Hook, DebugMask, 0);
+		lua_sethook(L, Debug_Hook, DebugMask, HookInstructionCount);
 	}
 
 	if (LuaCodeAsset)
@@ -881,6 +886,9 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 		break;
 	case LUA_HOOKRET:
 		LuaState->ReceiveLuaReturnHook(LuaDebug);
+		break;
+	case LUA_HOOKCOUNT:
+		LuaState->ReceiveLuaCountHook(LuaDebug);
 		break;
 	default:
 		break;
@@ -1605,6 +1613,11 @@ void ULuaState::ReceiveLuaLineHook_Implementation(const FLuaDebug & LuaDebug)
 
 }
 
+void ULuaState::ReceiveLuaCountHook(const FLuaDebug & LuaDebug)
+{
+
+}
+
 void ULuaState::ReceiveLuaLevelRemovedFromWorld_Implementation(ULevel * Level, UWorld * World)
 {
 
@@ -2317,6 +2330,14 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (UMulticastDelegateProperty* MulticastProperty = Cast<UMulticastDelegateProperty>(Property))
 #endif
 	{
+		if (Value.IsNil())
+		{
+			UObject* Object = static_cast<UObject*>(Buffer);
+			UnregisterLuaDelegatesOfObject(Object);
+			MulticastProperty->ClearDelegate(Object);
+			return;
+		}
+
 		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
 		LuaDelegate->SetupLuaDelegate(MulticastProperty->SignatureFunction, this, Value);
 		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
@@ -2334,6 +2355,14 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (UDelegateProperty* DelegateProperty = Cast<UDelegateProperty>(Property))
 #endif
 	{
+		if (Value.IsNil())
+		{
+			UObject* Object = static_cast<UObject*>(Buffer);
+			UnregisterLuaDelegatesOfObject(Object);
+			DelegateProperty->SetPropertyValue_InContainer(Buffer, FScriptDelegate(), Index);
+			return;
+		}
+
 		ULuaDelegate* LuaDelegate = NewObject<ULuaDelegate>();
 		LuaDelegate->SetupLuaDelegate(DelegateProperty->SignatureFunction, this, Value);
 		RegisterLuaDelegate((UObject*)Buffer, LuaDelegate);
@@ -2668,6 +2697,11 @@ void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDele
 		NewLuaDelegateGroup.LuaDelegates.Add(InLuaDelegate);
 		LuaDelegatesMap.Add(InObject, NewLuaDelegateGroup);
 	}
+}
+
+void ULuaState::UnregisterLuaDelegatesOfObject(UObject* InObject)
+{
+	LuaDelegatesMap.Remove(InObject);
 }
 
 TArray<FString> ULuaState::GetPropertiesNames(UObject * InObject)
