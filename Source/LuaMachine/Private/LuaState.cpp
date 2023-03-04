@@ -57,14 +57,6 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		luaL_openlibs(L);
 	}
 
-	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
-	*LuaExtraSpacePtr = this;
-	// get the global table
-	lua_pushglobaltable(L);
-	// override print
-	PushCFunction(ULuaState::TableFunction_print);
-	SetField(-2, "print");
-
 	// load "package" for allowing minimal setup
 	luaL_requiref(L, "package", luaopen_package, 1);
 	lua_pop(L, 1);
@@ -125,6 +117,14 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 			lua_pop(L, 1);
 		}
 	}
+
+	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
+	*LuaExtraSpacePtr = this;
+	// get the global table
+	lua_pushglobaltable(L);
+	// override print
+	PushCFunction(ULuaState::TableFunction_print);
+	SetField(-2, "print");
 
 	GetField(-1, "package");
 	if (!OverridePackagePath.IsEmpty())
