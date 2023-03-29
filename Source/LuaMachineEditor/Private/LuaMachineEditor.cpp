@@ -18,11 +18,20 @@
 #include "LuaMachine/Public/LuaBlueprintFunctionLibrary.h"
 #include "Widgets/Layout/SScrollBox.h"
 #include "LuaUserDataObject.h"
+#include "LuaCodeFactory.h"
 
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
+FLuaMachineEditorModule::FLuaMachineEditorModule()
+	: LuaMachineAssetCategoryBit( EAssetTypeCategories::Misc )
+{
+
+}
+
 void FLuaMachineEditorModule::StartupModule()
 {
+	FCoreDelegates::OnPostEngineInit.AddRaw( this, &FLuaMachineEditorModule::OnPostEngineInit );
+
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
 	StyleSet = MakeShareable(new FSlateStyleSet("LuaMachineEditor"));
@@ -62,9 +71,25 @@ void FLuaMachineEditorModule::StartupModule()
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory());
 }
 
+void FLuaMachineEditorModule::OnPostEngineInit()
+{
+	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
+
+	LuaMachineAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory( FName( TEXT( "LuaMachine" ) ), LOCTEXT( "AssetCategory", "Lua Machine" ) );
+
+	//Add LuaCode to Filters.
+	RegisterAssetTypeAction( AssetTools, MakeShareable( new FLuaCodeAssetTypeActions( LuaMachineAssetCategoryBit ) ) );
+}
+
 TSharedPtr<FSlateStyleSet> FLuaMachineEditorModule::GetStyleSet()
 {
 	return StyleSet;
+}
+
+void FLuaMachineEditorModule::RegisterAssetTypeAction( IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action )
+{
+	AssetTools.RegisterAssetTypeActions( Action );
+	CreatedAssetTypeActions.Add( Action );
 }
 
 struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
@@ -487,8 +512,18 @@ TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSp
 
 void FLuaMachineEditorModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+	FCoreDelegates::OnPostEngineInit.RemoveAll( this );
+
+	// Unregister all the asset types that we registered
+	if ( FModuleManager::Get().IsModuleLoaded( "AssetTools" ) )
+	{
+		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
+		for ( int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index )
+		{
+			AssetTools.UnregisterAssetTypeActions( CreatedAssetTypeActions[Index].ToSharedRef() );
+		}
+	}
+	CreatedAssetTypeActions.Empty();
 }
 
 FLuaMachineEditorModule& FLuaMachineEditorModule::Get()
