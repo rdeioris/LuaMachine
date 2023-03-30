@@ -5,6 +5,7 @@
 #include "LuaCode.h"
 #include "EditorFramework/AssetImportData.h"
 #include "Misc/FileHelper.h"
+#include "LuaMachineEditor.h"
 
 ULuaCodeFactory::ULuaCodeFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
 
@@ -35,6 +36,11 @@ UObject* ULuaCodeFactory::FactoryCreateBinary(UClass* InClass, UObject* InParent
 		NewAsset->MarkPackageDirty();
 	}
 	return NewAsset;
+}
+
+uint32 ULuaCodeFactory::GetMenuCategories() const
+{
+	return FLuaMachineEditorModule::Get().GetAssetCategory();
 }
 
 bool ULuaCodeFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
@@ -100,4 +106,29 @@ EReimportResult::Type ULuaCodeFactory::Reimport(UObject* Obj)
 	}
 
 	return EReimportResult::Failed;
+}
+
+FLuaCodeAssetTypeActions::FLuaCodeAssetTypeActions( EAssetTypeCategories::Type InAssetCategory )
+{
+
+}
+
+FText FLuaCodeAssetTypeActions::GetName() const
+{
+	return NSLOCTEXT( "LuaMachine", "LuaCodeAssetActions", "Lua Code" );
+}
+
+FColor FLuaCodeAssetTypeActions::GetTypeColor() const
+{
+	return FColor::Red;
+}
+
+UClass* FLuaCodeAssetTypeActions::GetSupportedClass() const
+{
+	return ULuaCode::StaticClass();
+}
+
+uint32 FLuaCodeAssetTypeActions::GetCategories()
+{
+	return FLuaMachineEditorModule::Get().GetAssetCategory();
 }

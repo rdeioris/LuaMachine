@@ -8,6 +8,7 @@
 #include "Developer/AssetTools/Public/AssetTypeCategories.h"
 #include "Runtime/Engine/Classes/Engine/Level.h"
 #include "EditorReimportHandler.h"
+#include "AssetTypeActions_Base.h"
 #include "LuaCodeFactory.generated.h"
 
 /**
@@ -26,10 +27,7 @@ class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory, public FReimportHa
 		return FText::FromString("Lua Code");
 	}
 
-	virtual uint32 GetMenuCategories() const override
-	{
-		return EAssetTypeCategories::Misc;
-	}
+	virtual uint32 GetMenuCategories() const override;
 
 	virtual UObject* ImportObject(UClass* InClass, UObject* InOuter, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, bool& OutCanceled) override
 	{
@@ -58,4 +56,23 @@ public:
 	virtual bool CanReimport(UObject* Obj, TArray<FString>& OutFilenames) override;
 	virtual void SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths) override;
 	virtual EReimportResult::Type Reimport(UObject* Obj) override;
+};
+
+
+/**
+ * Add AssetType Actions, so it can show up in Filters, etc.
+ */
+class FLuaCodeAssetTypeActions : public FAssetTypeActions_Base
+{
+public:
+	FLuaCodeAssetTypeActions( EAssetTypeCategories::Type InAssetCategory );
+	// IAssetTypeActions interface
+	virtual FText GetName() const override;
+	virtual FColor GetTypeColor() const override;
+	virtual UClass* GetSupportedClass() const override;
+	//virtual bool HasActions(const TArray<UObject*>& InObjects) const override { return true; }
+	//virtual void GetActions(const TArray<UObject*>& InObjects, FMenuBuilder& MenuBuilder) override;
+	//virtual void OpenAssetEditor(const TArray<UObject*>& InObjects, TSharedPtr<class IToolkitHost> EditWithinLevelEditor = TSharedPtr<IToolkitHost>()) override;
+	virtual uint32 GetCategories() override;
+	// End of IAssetTypeActions interface
 };
