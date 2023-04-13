@@ -132,3 +132,21 @@ uint32 FLuaCodeAssetTypeActions::GetCategories()
 {
 	return FLuaMachineEditorModule::Get().GetAssetCategory();
 }
+
+bool FLuaCodeAssetTypeActions::IsImportedAsset() const
+{
+	return true;
+}
+
+void FLuaCodeAssetTypeActions::GetResolvedSourceFilePaths( const TArray<UObject*>& TypeAssets, TArray<FString>& OutSourceFilePaths ) const
+{
+	for ( auto& Asset : TypeAssets )
+	{
+		const auto LuaCode = CastChecked<ULuaCode>( Asset );
+		if ( LuaCode->AssetImportData )
+		{
+			LuaCode->AssetImportData->ExtractFilenames( OutSourceFilePaths );
+		}
+	}
+}
+

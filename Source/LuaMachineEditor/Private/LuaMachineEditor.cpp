@@ -356,7 +356,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		case ELuaValueType::Thread:
 			if (SelectedLuaState == Item->LuaTableValue.LuaState)
 			{
-				Value = "status: " + FindObject<UEnum>(ANY_PACKAGE, TEXT("ELuaThreadStatus"), true)->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
+				Value = "status: " + FindObject<UEnum>(nullptr, TEXT("/Script/LuaMachine.ELuaThreadStatus"), true)->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
 			}
 			break;
 		default:
