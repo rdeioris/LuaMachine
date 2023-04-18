@@ -177,7 +177,7 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 {
 	FLuaValue ReturnValue;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -225,7 +225,7 @@ FLuaValue ULuaComponent::LuaCallTableKey(FLuaValue InTable, FString Key, TArray<
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -243,7 +243,7 @@ FLuaValue ULuaComponent::LuaCallTableIndex(FLuaValue InTable, int32 Index, TArra
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -258,7 +258,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 {
 	TArray<FLuaValue> ReturnValue;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -321,7 +321,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallTableKeyMulti(FLuaValue InTable, FString
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -339,7 +339,7 @@ TArray<FLuaValue> ULuaComponent::LuaCallTableIndexMulti(FLuaValue InTable, int32
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 

@@ -432,7 +432,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaRunString(UObject* WorldContextObject
 
 ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Value)
 {
-	if (Value.Type != ELuaValueType::Thread || !Value.LuaState)
+	if (Value.Type != ELuaValueType::Thread || !Value.LuaState.IsValid())
 		return ELuaThreadStatus::Invalid;
 
 	return Value.LuaState->GetLuaThreadStatus(Value);
@@ -440,7 +440,7 @@ ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Valu
 
 int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
 {
-	if (Value.Type != ELuaValueType::Thread || !Value.LuaState)
+	if (Value.Type != ELuaValueType::Thread || !Value.LuaState.IsValid())
 		return MIN_int32;
 
 	return Value.LuaState->GetLuaThreadStackTop(Value);
@@ -745,7 +745,7 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 	if (InTable.Type != ELuaValueType::Table || !InObject)
 		return;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return;
 
@@ -768,7 +768,7 @@ void ULuaBlueprintFunctionLibrary::LuaTableFillObject(FLuaValue InTable, UObject
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetField(FLuaValue Table, const FString& Key)
 {
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return FLuaValue();
 
@@ -781,7 +781,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaComponentGetField(FLuaValue LuaCompon
 	if (LuaComponent.Type != ELuaValueType::UObject)
 		return ReturnValue;
 
-	ULuaState* L = LuaComponent.LuaState;
+	ULuaState* L = LuaComponent.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -808,7 +808,7 @@ bool ULuaBlueprintFunctionLibrary::LuaValueIsOwned(const FLuaValue& Value)
 
 TSubclassOf<ULuaState> ULuaBlueprintFunctionLibrary::LuaValueGetOwner(const FLuaValue& Value)
 {
-	if (!Value.LuaState)
+	if (!Value.LuaState.IsValid())
 	{
 		return nullptr;
 	}
@@ -860,7 +860,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableGetByIndex(FLuaValue Table, int3
 	if (Table.Type != ELuaValueType::Table)
 		return FLuaValue();
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return FLuaValue();
 
@@ -881,7 +881,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetByIndex(FLuaValue Table, int3
 	if (Table.Type != ELuaValueType::Table)
 		return FLuaValue();
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return FLuaValue();
 
@@ -894,7 +894,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetField(FLuaValue Table, const 
 	if (Table.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1132,7 +1132,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaValueCall(FLuaValue Value, TArray<FLu
 {
 	FLuaValue ReturnValue;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1167,7 +1167,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCall(FLuaValue InTable, const
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1184,7 +1184,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableKeyCallWithSelf(FLuaValue InTabl
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1203,7 +1203,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableIndexCall(FLuaValue InTable, int
 	if (InTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1353,7 +1353,7 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueCallMulti(FLuaValue Valu
 {
 	TArray<FLuaValue> ReturnValue;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1394,7 +1394,7 @@ void ULuaBlueprintFunctionLibrary::LuaValueYield(FLuaValue Value, TArray<FLuaVal
 	if (Value.Type != ELuaValueType::Thread)
 		return;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return;
 
@@ -1421,7 +1421,7 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueResumeMulti(FLuaValue Va
 	if (Value.Type != ELuaValueType::Thread)
 		return ReturnValue;
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1487,7 +1487,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, 
 	if (InTable.Type != ELuaValueType::Table || InMetaTable.Type != ELuaValueType::Table)
 		return ReturnValue;
 
-	ULuaState* L = InTable.LuaState;
+	ULuaState* L = InTable.LuaState.Get();
 	if (!L)
 		return ReturnValue;
 
@@ -1497,7 +1497,7 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, 
 int32 ULuaBlueprintFunctionLibrary::LuaValueLength(FLuaValue Value)
 {
 
-	ULuaState* L = Value.LuaState;
+	ULuaState* L = Value.LuaState.Get();
 	if (!L)
 		return 0;
 
@@ -1516,7 +1516,7 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableGetKeys(FLuaValue Table)
 	if (Table.Type != ELuaValueType::Table)
 		return Keys;
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return Keys;
 
@@ -1540,7 +1540,7 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaTableGetValues(FLuaValue Tabl
 	if (Table.Type != ELuaValueType::Table)
 		return Keys;
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return Keys;
 
@@ -1585,7 +1585,7 @@ bool ULuaBlueprintFunctionLibrary::LuaTableImplements(FLuaValue Table, ULuaTable
 	if (Table.Type != ELuaValueType::Table)
 		return false;
 
-	ULuaState* L = Table.LuaState;
+	ULuaState* L = Table.LuaState.Get();
 	if (!L)
 		return false;
 
