@@ -171,8 +171,7 @@ struct LUAMACHINE_API FLuaValue
 
 	int LuaRef;
 
-	UPROPERTY()
-	ULuaState* LuaState;
+	TWeakObjectPtr<ULuaState> LuaState;
 
 	FLuaValue GetField(const FString& Key);
 	FLuaValue SetField(const FString& Key, FLuaValue Value);

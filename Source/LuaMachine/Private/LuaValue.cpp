@@ -85,6 +85,12 @@ bool FLuaValue::ToBool() const
 
 void FLuaValue::Unref()
 {
+	if (!LuaState.IsValid())
+	{
+		LuaRef = LUA_NOREF;
+		return;
+	}
+
 	if (Type == ELuaValueType::Table || Type == ELuaValueType::Function || Type == ELuaValueType::Thread)
 	{
 		if (LuaRef != LUA_NOREF)
@@ -163,7 +169,7 @@ FLuaValue FLuaValue::SetField(const FString& Key, FLuaValue Value)
 	if (Type != ELuaValueType::Table)
 		return *this;
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return *this;
 
 	LuaState->FromLuaValue(*this);
@@ -178,7 +184,7 @@ FLuaValue FLuaValue::SetField(const FString& Key, lua_CFunction CFunction)
 	if (Type != ELuaValueType::Table)
 		return *this;
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return *this;
 
 	LuaState->FromLuaValue(*this);
@@ -193,7 +199,7 @@ FLuaValue FLuaValue::SetMetaTable(FLuaValue MetaTable)
 	if (Type != ELuaValueType::Table || MetaTable.Type != ELuaValueType::Table)
 		return *this;
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return *this;
 
 	LuaState->FromLuaValue(*this);
@@ -210,7 +216,7 @@ FLuaValue FLuaValue::GetField(const FString& Key)
 	if (Type != ELuaValueType::Table)
 		return FLuaValue();
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return FLuaValue();
 
 	LuaState->FromLuaValue(*this);
@@ -225,7 +231,7 @@ FLuaValue FLuaValue::GetFieldByIndex(int32 Index)
 	if (Type != ELuaValueType::Table)
 		return FLuaValue();
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return FLuaValue();
 
 	LuaState->FromLuaValue(*this);
@@ -240,7 +246,7 @@ FLuaValue FLuaValue::SetFieldByIndex(int32 Index, FLuaValue Value)
 	if (Type != ELuaValueType::Table)
 		return *this;
 
-	if (!LuaState)
+	if (!LuaState.IsValid())
 		return *this;
 
 	LuaState->FromLuaValue(*this);
@@ -327,7 +333,7 @@ TSharedPtr<FJsonValue> FLuaValue::ToJsonValue()
 	case ELuaValueType::Table:
 	{
 
-		ULuaState* L = LuaState;
+		ULuaState* L = LuaState.Get();
 		if (!L)
 			return MakeShared<FJsonValueNull>();
 

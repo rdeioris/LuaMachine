@@ -560,7 +560,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 	break;
 	case ELuaValueType::UFunction:
 		// if no context is assigned to the function, own it !
-		if (!LuaValue.LuaState)
+		if (!LuaValue.LuaState.IsValid())
 		{
 			LuaValue.LuaState = this;
 		}
@@ -604,7 +604,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		break;
 	case ELuaValueType::MulticastDelegate:
 		// if no context is assigned to the function, own it !
-		if (!LuaValue.LuaState)
+		if (!LuaValue.LuaState.IsValid())
 		{
 			LuaValue.LuaState = this;
 		}
