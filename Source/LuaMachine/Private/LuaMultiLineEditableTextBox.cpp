@@ -7,6 +7,10 @@
 
 #define LOCTEXT_NAMESPACE "UMG"
 
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 2
+static FEditableTextBoxStyle EditableTextBoxStyle;
+#endif
+
 FLuaCustomHighlighter::FLuaCustomHighlighter()
 {
 	Color = FLinearColor::White;
@@ -14,6 +18,9 @@ FLuaCustomHighlighter::FLuaCustomHighlighter()
 
 ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 {
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 2
+	EditableTextBoxStyle.SetTextStyle(CodeStyle);
+#endif
 
 	SEditableTextBox::FArguments Defaults;
 	WidgetStyle = *Defaults._Style;
@@ -213,7 +220,11 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 
 	EditableTextBoxPtr = SNew(SMultiLineEditableTextBox)
 		.Marshaller(FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create(Style))
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 2
+		.Style(&EditableTextBoxStyle)
+#else
 		.TextStyle(&CodeStyle)
+#endif
 		.OnKeyCharHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyChar)
 		.OnKeyDownHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyDown)
 		.IsReadOnly(bIsReadonly)

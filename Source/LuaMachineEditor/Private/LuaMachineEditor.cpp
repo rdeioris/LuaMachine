@@ -23,14 +23,14 @@
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
 FLuaMachineEditorModule::FLuaMachineEditorModule()
-	: LuaMachineAssetCategoryBit( EAssetTypeCategories::Misc )
+	: LuaMachineAssetCategoryBit(EAssetTypeCategories::Misc)
 {
 
 }
 
 void FLuaMachineEditorModule::StartupModule()
 {
-	FCoreDelegates::OnPostEngineInit.AddRaw( this, &FLuaMachineEditorModule::OnPostEngineInit );
+	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FLuaMachineEditorModule::OnPostEngineInit);
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
@@ -67,18 +67,24 @@ void FLuaMachineEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LuaMachineDebugger", FOnSpawnTab::CreateStatic(&FLuaMachineEditorModule::CreateLuaMachineDebugger))
 		.SetDisplayName(LOCTEXT("LuaMachine Debugger", "LuaMachine Debugger"))
 		.SetTooltipText(LOCTEXT("Open the LuaMachine Debugger", "Open the LuaMachine Debugger"))
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "DebugTools.TabIcon"))
+		.SetIcon(FSlateIcon(
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 2
+			FAppStyle::GetAppStyleSetName()
+#else
+			FEditorStyle::GetStyleSetName()
+#endif
+			, "DebugTools.TabIcon"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory());
 }
 
 void FLuaMachineEditorModule::OnPostEngineInit()
 {
-	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
+	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
-	LuaMachineAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory( FName( TEXT( "LuaMachine" ) ), LOCTEXT( "AssetCategory", "Lua Machine" ) );
+	LuaMachineAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("LuaMachine")), LOCTEXT("AssetCategory", "Lua Machine"));
 
 	//Add LuaCode to Filters.
-	RegisterAssetTypeAction( AssetTools, MakeShareable( new FLuaCodeAssetTypeActions( LuaMachineAssetCategoryBit ) ) );
+	RegisterAssetTypeAction(AssetTools, MakeShareable(new FLuaCodeAssetTypeActions(LuaMachineAssetCategoryBit)));
 }
 
 TSharedPtr<FSlateStyleSet> FLuaMachineEditorModule::GetStyleSet()
@@ -86,10 +92,10 @@ TSharedPtr<FSlateStyleSet> FLuaMachineEditorModule::GetStyleSet()
 	return StyleSet;
 }
 
-void FLuaMachineEditorModule::RegisterAssetTypeAction( IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action )
+void FLuaMachineEditorModule::RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action)
 {
-	AssetTools.RegisterAssetTypeActions( Action );
-	CreatedAssetTypeActions.Add( Action );
+	AssetTools.RegisterAssetTypeActions(Action);
+	CreatedAssetTypeActions.Add(Action);
 }
 
 struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
@@ -512,15 +518,15 @@ TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSp
 
 void FLuaMachineEditorModule::ShutdownModule()
 {
-	FCoreDelegates::OnPostEngineInit.RemoveAll( this );
+	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 
 	// Unregister all the asset types that we registered
-	if ( FModuleManager::Get().IsModuleLoaded( "AssetTools" ) )
+	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
-		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
-		for ( int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index )
+		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+		for (int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index)
 		{
-			AssetTools.UnregisterAssetTypeActions( CreatedAssetTypeActions[Index].ToSharedRef() );
+			AssetTools.UnregisterAssetTypeActions(CreatedAssetTypeActions[Index].ToSharedRef());
 		}
 	}
 	CreatedAssetTypeActions.Empty();
