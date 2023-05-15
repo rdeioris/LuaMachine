@@ -121,4 +121,8 @@ protected:
 	TSharedPtr<SMultiLineEditableTextBox> EditableTextBoxPtr;
 
 	FTextLocation CursorLocation;
+
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 1
+	FEditableTextBoxStyle EditableTextBoxStyle;
+#endif
 };
