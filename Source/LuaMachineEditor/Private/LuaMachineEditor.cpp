@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"
@@ -68,7 +68,7 @@ void FLuaMachineEditorModule::StartupModule()
 		.SetDisplayName(LOCTEXT("LuaMachine Debugger", "LuaMachine Debugger"))
 		.SetTooltipText(LOCTEXT("Open the LuaMachine Debugger", "Open the LuaMachine Debugger"))
 		.SetIcon(FSlateIcon(
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 2
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 1
 			FAppStyle::GetAppStyleSetName()
 #else
 			FEditorStyle::GetStyleSetName()
