@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bImplicitSelf;
 
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	TArray<FString> GlobalNames;
+
 	UFUNCTION(BlueprintCallable, Category="Lua", meta = (AutoCreateRefTerm = "Args"))
 	FLuaValue LuaCallFunction(const FString& Name, TArray<FLuaValue> Args, bool bGlobal);
 
@@ -93,4 +96,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	ULuaState* LuaComponentGetState();
+
+	virtual void OnRegister() override;
+
 };

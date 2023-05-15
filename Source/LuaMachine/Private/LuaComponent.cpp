@@ -1,7 +1,8 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaComponent.h"
 #include "LuaMachine.h"
+#include "LuaBlueprintFunctionLibrary.h"
 #include "GameFramework/Actor.h"
 
 
@@ -17,6 +18,19 @@ ULuaComponent::ULuaComponent()
 	bLazy = false;
 	bLogError = false;
 	bImplicitSelf = false;
+}
+
+void ULuaComponent::OnRegister()
+{
+	Super::OnRegister();
+
+	if (GetWorld()->IsGameWorld())
+	{
+		for (const FString& GlobalName : GlobalNames)
+		{
+			ULuaBlueprintFunctionLibrary::LuaSetGlobal(GetWorld(), LuaState, GlobalName, FLuaValue(this));
+		}
+	}
 }
 
 // Called when the game starts
