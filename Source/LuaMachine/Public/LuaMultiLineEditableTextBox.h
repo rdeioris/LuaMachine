@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Components/TextWidgetTypes.h"
 #include "Components/MultiLineEditableTextBox.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "LuaMultiLineEditableTextBox.generated.h"
 
 USTRUCT(BlueprintType)
