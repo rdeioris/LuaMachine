@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "HAL/IConsoleManager.h"
 #include "Framework/Commands/InputChord.h"
+#include "Runtime/Launch/Resources/Version.h"
 
 class ULuaState;
 
