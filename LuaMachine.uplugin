@@ -24,7 +24,8 @@
         "Linux",
         "LinuxArm64",
         "Android",
-        "IOS"
+        "IOS",
+        "Hololens"
       ]
     },
     {

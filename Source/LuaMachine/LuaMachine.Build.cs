@@ -71,30 +71,35 @@ public class LuaMachine : ModuleRules
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_win64.lib"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.Mac)
+        else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_mac.a"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.Linux)
+        else if (Target.Platform == UnrealTargetPlatform.Linux)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_linux64.a"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.LinuxArm64)
+        else if (Target.Platform == UnrealTargetPlatform.LinuxArm64)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_linux_aarch64.a"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.Android)
+        else if (Target.Platform == UnrealTargetPlatform.Android)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARMv7", "liblua53_android.a"));
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_android64.a"));
         }
 
-        if (Target.Platform == UnrealTargetPlatform.IOS)
+        else if (Target.Platform == UnrealTargetPlatform.IOS)
         {
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_ios.a"));
+        }
+
+        else if (Target.Platform == UnrealTargetPlatform.HoloLens)
+        {
+            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_win64.lib"));
         }
 
     }
