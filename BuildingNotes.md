@@ -1,7 +1,7 @@
 # Building Lua static library for Mac
 
 ```sh
-# edit src/Makefile and set MYCFLAGS to -mmacosx-version-min=10.12
+# edit src/Makefile and set MYCFLAGS to -mmacosx-version-min=10.12 -arch arm64 -arch x86_64
 make macosx
 ```
 
