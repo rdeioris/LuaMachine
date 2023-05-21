@@ -15,10 +15,10 @@ make linux
 # Building Lua static library for Win64
 
 ```sh
-# open visual studio shell for x64
+# open visual studio shell for x64 and move to the src/ directory (change cl.exe and lib.exe with their arm64 version for hololens)
 cl /MD /O2 /c /DLUA_BUILD_AS_DLL /DLUA_COMPAT_5_2 *.c
-rm lua.obj
-rm luac.obj
+del lua.obj
+del luac.obj
 lib /OUT:liblua53_win64.lib *.obj
 ```
 
