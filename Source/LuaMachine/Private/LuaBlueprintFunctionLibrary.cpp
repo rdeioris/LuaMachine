@@ -22,6 +22,7 @@
 #endif
 #include "Misc/FileHelper.h"
 #include "Serialization/ArrayReader.h"
+#include "TextureResource.h"
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
