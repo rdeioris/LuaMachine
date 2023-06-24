@@ -601,6 +601,8 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 				}
 			}
 		}
+		// no function found
+		lua_pushnil(State);
 		break;
 	case ELuaValueType::MulticastDelegate:
 		// if no context is assigned to the function, own it !
@@ -773,7 +775,7 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 	if (LuaUserDataObject)
 	{
 		FLuaValue MetaIndexReturnValue = LuaUserDataObject->ReceiveLuaMetaIndex(Key);
-		LuaState->FromLuaValue(MetaIndexReturnValue, Context, L);
+		LuaState->FromLuaValue(MetaIndexReturnValue, MetaIndexReturnValue.Object ? MetaIndexReturnValue.Object : Context, L);
 		return 1;
 	}
 

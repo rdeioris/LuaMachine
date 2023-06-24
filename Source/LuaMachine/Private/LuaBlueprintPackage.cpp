@@ -14,6 +14,11 @@ TSubclassOf<ULuaState> ULuaBlueprintPackage::GetLuaState() const
 	return nullptr;
 }
 
+ULuaState* ULuaBlueprintPackage::GetLuaStateInstance() const
+{
+	return Cast<ULuaState>(GetOuter());
+}
+
 UWorld* ULuaBlueprintPackage::GetWorld() const
 {
 	ULuaState* LuaState = Cast<ULuaState>(GetOuter());

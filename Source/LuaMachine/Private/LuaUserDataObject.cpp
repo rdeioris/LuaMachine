@@ -142,7 +142,9 @@ FLuaValue ULuaUserDataObject::UFunctionToLuaValue(const FString& FunctionName)
 	FName FunctionFName = FName(*FunctionName);
 	UFunction* Function = FindFunction(FunctionFName);
 	if (!Function)
+	{
 		return FLuaValue();
+	}
 
 	return FLuaValue::Function(FunctionFName);
 }
