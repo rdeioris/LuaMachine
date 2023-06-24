@@ -276,7 +276,9 @@ UWebSocketsLuaStateBase::UWebSocketsLuaStateBase()
 FLuaValue UWebSocketsLuaStateBase::GetWebSocketConnectionSingleton()
 {
 	if (!WebSocketConnectionSingleton)
+	{
 		WebSocketConnectionSingleton = NewObject<ULuaWebsocketConnection>(this);
+	}
 	return FLuaValue(WebSocketConnectionSingleton);
 }
 ```
