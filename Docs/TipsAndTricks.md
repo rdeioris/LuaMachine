@@ -112,7 +112,7 @@ print(kismet_math.Add_DoubleDouble(17, 0.3))
 print(kismet_math.Add_VectorFloat({1,2,3}, 0.3).X)
 ```
 
-'bpfl' (shortcut for 'Blueprint Function Library') will be the package to get a userdata from a BlueprintFunctionLibrary ('KismetMathLibrary' om the example, but can be anything)
+'bpfl' (shortcut for 'Blueprint Function Library') will be the package to get a userdata from a BlueprintFunctionLibrary ('KismetMathLibrary' on the example, but can be anything)
 
 ```cpp
 UCLASS()
