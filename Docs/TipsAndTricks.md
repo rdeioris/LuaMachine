@@ -97,3 +97,51 @@ FLuaValue ULuaVector::BuildVector(FVector Vector)
 	return NewTable;
 }
 ```
+
+## Mapping BlueprintFunctionLibrary to UserData
+
+The Goal:
+
+```lua
+kismet_math = bpfl.require('KismetMathLibrary')
+
+print(kismet_math.Abs(-17.3))
+
+print(kismet_math.Add_DoubleDouble(17, 0.3))
+
+print(kismet_math.Add_VectorFloat({1,2,3}, 0.3).X)
+```
+
+'bpfl' (shortcut for 'Blueprint Function Library') will be the package to get a userdata from a BlueprintFunctionLibrary ('KismetMathLibrary' om the example, but can be anything)
+
+```cpp
+UCLASS()
+class UBPFLLuaBlueprintPackage : public ULuaBlueprintPackage
+{
+	GENERATED_BODY()
+public:
+	UBPFLLuaBlueprintPackage();
+
+	UFUNCTION()
+	FLuaValue RequireBlueprintFunctionLibrary(FLuaValue LibraryName);
+};
+```
+
+```cpp
+UBPFLLuaBlueprintPackage::UBPFLLuaBlueprintPackage()
+{
+	Table.Add("require", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UBPFLLuaBlueprintPackage, RequireBlueprintFunctionLibrary)));
+}
+
+FLuaValue UBPFLLuaBlueprintPackage::RequireBlueprintFunctionLibrary(FLuaValue LibraryName)
+{
+	UClass* FoundClass = Cast<UClass>(StaticFindObject(UClass::StaticClass(), ANY_PACKAGE, *LibraryName.ToString()));
+	if (FoundClass)
+	{
+		ULuaUserDataBPFL* UserDataBPFL = NewObject<ULuaUserDataBPFL>(GetLuaStateInstance());
+		UserDataBPFL->InitializeWithClass(FoundClass);
+		return FLuaValue(UserDataBPFL);
+	}
+	return FLuaValue();
+}
+```
