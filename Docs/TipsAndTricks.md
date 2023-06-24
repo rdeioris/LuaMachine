@@ -145,3 +145,44 @@ FLuaValue UBPFLLuaBlueprintPackage::RequireBlueprintFunctionLibrary(FLuaValue Li
 	return FLuaValue();
 }
 ```
+
+The RequireBlueprintFunctionLibrary lua exposed UFunction will search for the specified library name using the reflection system, and will create a ULuaUserDataBPFL (check below) that will keep a reference to the blueprint library
+
+```cpp
+UCLASS()
+class ULuaUserDataBPFL : public ULuaUserDataObject
+{
+	GENERATED_BODY()
+	
+public:
+	void InitializeWithClass(UClass* InClass);
+
+	virtual FLuaValue ReceiveLuaMetaIndex_Implementation(FLuaValue Key) override;
+
+protected:
+	UPROPERTY()
+	UClass* BPFLClass;
+};
+```
+
+```cpp
+void ULuaUserDataBPFL::InitializeWithClass(UClass* InClass)
+{
+	BPFLClass = InClass;
+}
+
+FLuaValue ULuaUserDataBPFL::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
+{
+	UFunction* Function = BPFLClass->FindFunctionByName(*Key.ToString());
+	if (Function)
+	{
+		return FLuaValue::FunctionOfObject(BPFLClass->GetDefaultObject(), Function->GetFName());
+	}
+
+	return FLuaValue();
+}
+```
+
+The key here is the ReceiveLuaMetaIndex_Implementation override, that will return the UFunction ptr of the supplied function name (if it exists).
+
+You can now map the UBPFLLuaBlueprintPackage to the bpfl package in your LuaState configuration and (this is required) you need to enable the bRawLuaFunctionCall too: this will allow the state to automatically convert UFunction arguments to lua values.
