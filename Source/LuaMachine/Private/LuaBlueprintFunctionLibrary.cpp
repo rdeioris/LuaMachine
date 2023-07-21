@@ -12,7 +12,11 @@
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "IPlatformFilePak.h"
+#if ENGINE_MAJOR_VERSION >= 5
+#include "HAL/PlatformFileManager.h" 
+#else
 #include "HAL/PlatformFilemanager.h"
+#endif
 #if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
 #include "AssetRegistry/IAssetRegistry.h"
 #include "AssetRegistry/AssetRegistryModule.h"
