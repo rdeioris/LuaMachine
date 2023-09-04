@@ -151,7 +151,7 @@ LuaState's can load and execute scripts automatically if you specify the fields 
   
 ### LuaState Events
 
-The "LuaError" event i exposed by ULuaState.
+The "LuaError" event is exposed by ULuaState.
 
 If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
