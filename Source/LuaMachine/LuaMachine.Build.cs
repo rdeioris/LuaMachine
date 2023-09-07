@@ -97,10 +97,5 @@ public class LuaMachine : ModuleRules
             PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_ios.a"));
         }
 
-        else if (Target.Platform == UnrealTargetPlatform.HoloLens)
-        {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_win64.lib"));
-        }
-
     }
 }

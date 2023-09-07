@@ -3,9 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "Modules/ModuleManager.h"
 #include "LuaState.h"
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
+#include "Styling/SlateStyle.h"
+#include "Styling/SlateStyleRegistry.h"
+#else
 #include "SlateCore/Public/Styling/SlateStyle.h"
+#endif
 #include "Runtime/Slate/Public/Widgets/Docking/SDockTab.h"
 #include "IAssetTools.h"
 #include "IAssetTypeActions.h"

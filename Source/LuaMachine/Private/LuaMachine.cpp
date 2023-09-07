@@ -6,7 +6,11 @@
 #include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
+#include "Styling/SlateStyleRegistry.h"
+#else
 #include "SlateCore/Public/Styling/SlateStyleRegistry.h"
+#endif
 #endif
 
 #define LOCTEXT_NAMESPACE "FLuaMachineModule"
