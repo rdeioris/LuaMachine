@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 // Reimport system by yama2akira (Akira Yamamoto)
 
 #include "LuaCodeFactory.h"
