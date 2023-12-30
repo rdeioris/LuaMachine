@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
 #include "ThirdParty/lua/lua.hpp"
 #include "Serialization/JsonSerializer.h"
 #include "LuaValue.generated.h"

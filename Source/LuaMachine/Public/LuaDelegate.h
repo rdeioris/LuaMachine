@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "LuaValue.h"
-#include "UObject/NoExportTypes.h"
 #include "LuaDelegate.generated.h"
 
 /**
