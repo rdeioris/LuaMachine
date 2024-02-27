@@ -25,12 +25,12 @@ function ws:on_message(message)
   --ws:close(17, 'End of the World')
 end
 
--- this is called on connesion close
+-- this is called on connection close
 function ws:on_closed(code, reason, user)
   print('websocket connection closed: ' .. reason)
 end
 
--- the first function/callback is called on successfull connection
+-- the first function/callback is called on successful connection
 -- the second one on failure
 ws:connect('wss://echo.websocket.org', function(self)
   print('connected')
@@ -46,7 +46,7 @@ function send_event(message)
 end
 ```
 
-'Note' that is not responsability of the Lua VM to manage the lifetime of the associated ULuaUserDataObject: if the Unreal Garbage Collector frees it, the FLuaValue will become nil.
+'Note' that is not responsibility of the Lua VM to manage the lifetime of the associated ULuaUserDataObject: if the Unreal Garbage Collector frees it, the FLuaValue will become nil.
 
 ## The ULuaWebSocketConnection UCLASS
 

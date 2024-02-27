@@ -2,7 +2,7 @@
 
 LuaMachine includes out of the box UFUNCTION's for interfacing with HTTP services.
 
-In this tututorial we will see how to retrieve JSON data as well as raw images/textures from an HTTP service.
+In this tutorial we will see how to retrieve JSON data as well as raw images/textures from an HTTP service.
 
 The objective is to build a User Widget listing all of the Rick And Morty characters available at https://rickandmortyapi.com/
 
@@ -25,7 +25,7 @@ And add a new Custom Event (note: not a plain function!) named HttpGet:
 
 ![RickAndMortyHttpGet](RickAndMortyAPI_Data/RickAndMorty003.PNG?raw=true "RickAndMortyHttpGet")
 
-As you can see the event will trigger the HTTP request, and two additional events are generated (one for successfull connection, the other for failures) mapped to lua callbacks.
+As you can see the event will trigger the HTTP request, and two additional events are generated (one for successful connection, the other for failures) mapped to lua callbacks.
 
 Now expose the event as a lua function:
 
@@ -45,7 +45,7 @@ http_get('https://rickandmortyapi.com/api/character',
 )
 ```
 
-The successfull callback will get status, headers, content and a context object (nil for now), while the error one will only get the context.
+The successful callback will get status, headers, content and a context object (nil for now), while the error one will only get the context.
 
 Now in your level blueprint add a node for calling the Lua Code Asset, play the level and check Unreal logs (they should show both http status and http response):
 

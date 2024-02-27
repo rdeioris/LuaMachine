@@ -202,7 +202,7 @@ UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"))
 static FLuaValue LuaRunFile(UObject* WorldContextObject, TSubclassOf<ULuaState> State, FString Filename, bool bIgnoreNonExistent);
 ```
 
-Run the specified file (rleative to the Content/ directory) in the specified State.
+Run the specified file (relative to the Content/ directory) in the specified State.
 
 ## FLuaValue LuaRunCodeAsset(UObject* WorldContextObject, TSubclassOf\<ULuaState\> State, ULuaCode* CodeAsset)
 
