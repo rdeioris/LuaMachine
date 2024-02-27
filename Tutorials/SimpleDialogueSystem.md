@@ -6,7 +6,7 @@ In this tutorial we will see how to use the LuaMachine plugin to create a dialog
 
 The Lua scripts will be part of the final build (they will be cooked in the pak file as bytecode) so you will not be able to change them after the game is packaged (check the 'Variations' section at the end of the tutorial for alternative approaches like using normal scripts in the filesystem).
 
-The tutorial has beed tested on Unreal Engine 4.21 and LuaMachine 20181230 starting from the 'Third Person' Blueprint Template.
+The tutorial has been tested on Unreal Engine 4.21 and LuaMachine 20181230 starting from the 'Third Person' Blueprint Template.
 
 Blueprints will be used for the whole tutorial, at the end of the page you will find a C++ implementation too.
 
@@ -235,7 +235,7 @@ end
 
 ## Triggering the 'Speak' event
 
-When a TalkinCharacter is highlighted/targeted we want to trigger its 'Speak' event by clicking the left mouse button. To accomplish
+When a TalkingCharacter is highlighted/targeted we want to trigger its 'Speak' event by clicking the left mouse button. To accomplish
 this we can manage the mouse click in the ThirdPersonCharacter Blueprint (would be the most logical choice), but to avoid clobbering the template blueprint we will use the Level Blueprint instead (suboptimal but it should work flawlessly):
 
 ![LevelBlueprint](SimpleDialogueSystem_Data/LevelBlueprint.PNG?raw=true "LevelBlueprint")
@@ -256,7 +256,7 @@ Let's start with the DialogueQuestion Widget:
 
 We have a widget with a button and a text (note: no canvas panel is required, you can remove it).
 
-The QuestionTable variable is a LuaValue marked as 'Expose on Spawn'. To generate a questione widget we need to pass it a lua table (well an array) composed of 2 items: the first one is the content of the button text, the second is a lua function triggered when the user click on the question/choice/answer (spoiler: the 'Question' name is probably not a good choice as no questions will be generated in the examples, only answers and choices :( )
+The QuestionTable variable is a LuaValue marked as 'Expose on Spawn'. To generate a question widget we need to pass it a lua table (well an array) composed of 2 items: the first one is the content of the button text, the second is a lua function triggered when the user click on the question/choice/answer (spoiler: the 'Question' name is probably not a good choice as no questions will be generated in the examples, only answers and choices :( )
 
 Now the DialogueScreen Widget:
 
@@ -421,7 +421,7 @@ local merchant = {}
 
 merchant.shop_sign = string.format('Shop managed by %s', _VERSION)
 
-merchant.items = {'Shotgun', 'Granade', 'Guns', 'LaserGun', 'Bazooka'}
+merchant.items = {'Shotgun', 'Grenade', 'Guns', 'LaserGun', 'Bazooka'}
 
 function merchant:begin_play()
   self.flash(merchant.shop_sign)
@@ -490,7 +490,7 @@ local merchant = {}
 
 merchant.shop_sign = string.format('Shop managed by %s', _VERSION)
 
-merchant.items = {'Shotgun', 'Granade', 'Guns', 'LaserGun', 'Bazooka'}
+merchant.items = {'Shotgun', 'Grenade', 'Guns', 'LaserGun', 'Bazooka'}
 
 -- increases whenever the merchant sells something
 merchant.gold = 0
@@ -563,7 +563,7 @@ One of the advantages of using LuaCode assets, is that they will be built as nor
 
 ## Variations
 
-The tutorial aims at showing a simple approach, but you can obviously using various techinques. The following variations could be of interest:
+The tutorial aims at showing a simple approach, but you can obviously using various techniques. The following variations could be of interest:
 
 ### From LuaCode Asset to filesystem-based scripts
 
