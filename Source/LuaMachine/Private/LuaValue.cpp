@@ -11,7 +11,7 @@ FString FLuaValue::ToString() const
 	case ELuaValueType::Bool:
 		return Bool ? FString(TEXT("true")) : FString(TEXT("false"));
 	case ELuaValueType::Integer:
-		return FString::FromInt(Integer);
+		return FString::Printf(TEXT("%lld"), Integer);
 	case ELuaValueType::Number:
 		return FString::SanitizeFloat(Number);
 	case ELuaValueType::String:
