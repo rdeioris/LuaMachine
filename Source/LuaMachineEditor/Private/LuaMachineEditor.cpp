@@ -54,7 +54,9 @@ void FLuaMachineEditorModule::StartupModule()
 	StyleSet->Set("SyntaxHighlight.LuaMachine.StdLib", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::Yellow));
 	StyleSet->Set("SyntaxHighlight.LuaMachine.Basic", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::FromSRGBColor(FColor::Magenta)));
 
+#if ENGINE_MINOR_VERSION >= 3
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+#endif
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
 
