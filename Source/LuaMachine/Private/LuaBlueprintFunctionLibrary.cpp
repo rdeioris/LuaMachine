@@ -48,6 +48,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger(const int32 Value)
 	return FLuaValue(Value);
 }
 
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger64(const int64 Value)
+{
+	return FLuaValue(Value);
+}
+
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateBool(const bool bInBool)
 {
 	return FLuaValue(bInBool);
@@ -195,6 +200,11 @@ int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(const FLuaValue& Value)
 	return Value.ToInteger();
 }
 
+int64 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt64(const FLuaValue& Value)
+{
+	return Value.ToInteger();
+}
+
 float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(const FLuaValue& Value)
 {
 	return Value.ToFloat();
@@ -206,6 +216,11 @@ bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(const FLuaValue& Value)
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(const int32 Value)
+{
+	return FLuaValue(Value);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_Int64ToLuaValue(const int64 Value)
 {
 	return FLuaValue(Value);
 }
@@ -446,7 +461,9 @@ ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Valu
 int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Thread || !Value.LuaState.IsValid())
+	{
 		return MIN_int32;
+	}
 
 	return Value.LuaState->GetLuaThreadStackTop(Value);
 }

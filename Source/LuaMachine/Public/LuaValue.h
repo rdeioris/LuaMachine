@@ -79,34 +79,42 @@ struct LUAMACHINE_API FLuaValue
 			TChar &= 0xFF;
 			// hack for allowing binary data
 			if (TChar == 0)
+			{
 				TChar = 0xffff;
+			}
 			String += (TCHAR)TChar;
 		}
 	}
 
-	FLuaValue(TArray<uint8> InBytes) : FLuaValue((const char*)InBytes.GetData(), InBytes.Num())
+	FLuaValue(const TArray<uint8>& InBytes) : FLuaValue(reinterpret_cast<const char*>(InBytes.GetData()), InBytes.Num())
 	{
 	}
 
-	FLuaValue(double Value) : FLuaValue()
-	{
-		Type = ELuaValueType::Number;
-		Number = Value;
-	}
-
-	FLuaValue(float Value) : FLuaValue()
+	FLuaValue(const double Value) : FLuaValue()
 	{
 		Type = ELuaValueType::Number;
 		Number = Value;
 	}
 
-	FLuaValue(int32 Value) : FLuaValue()
+	FLuaValue(const float Value) : FLuaValue()
+	{
+		Type = ELuaValueType::Number;
+		Number = Value;
+	}
+
+	FLuaValue(const int64 Value) : FLuaValue()
 	{
 		Type = ELuaValueType::Integer;
 		Integer = Value;
 	}
 
-	FLuaValue(bool bInBool) : FLuaValue()
+	FLuaValue(const int32 Value) : FLuaValue()
+	{
+		Type = ELuaValueType::Integer;
+		Integer = Value;
+	}
+
+	FLuaValue(const bool bInBool) : FLuaValue()
 	{
 		Type = ELuaValueType::Bool;
 		Bool = bInBool;
@@ -142,7 +150,7 @@ struct LUAMACHINE_API FLuaValue
 
 	FString ToString() const;
 	FName ToName() const;
-	int32 ToInteger() const;
+	int64 ToInteger() const;
 	double ToFloat() const;
 	bool ToBool() const;
 
@@ -155,7 +163,7 @@ struct LUAMACHINE_API FLuaValue
 	bool Bool;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
-	int32 Integer;
+	int64 Integer;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
 	double Number;

@@ -654,11 +654,11 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 	}
 	else if (lua_isinteger(State, Index))
 	{
-		LuaValue = FLuaValue(static_cast<int32>(lua_tointeger(State, Index)));
+		LuaValue = FLuaValue(lua_tointeger(State, Index));
 	}
 	else if (lua_type(State, Index) == LUA_TNUMBER)
 	{
-		LuaValue = FLuaValue(static_cast<double>(lua_tonumber(State, Index)));
+		LuaValue = FLuaValue(lua_tonumber(State, Index));
 	}
 	else if (lua_istable(State, Index))
 	{
@@ -2095,6 +2095,8 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	LUAVALUE_PROP_CAST(BoolProperty, bool);
 	LUAVALUE_PROP_CAST(DoubleProperty, double);
 	LUAVALUE_PROP_CAST(FloatProperty, float);
+	LUAVALUE_PROP_CAST(Int64Property, int64);
+	LUAVALUE_PROP_CAST(UInt64Property, int64);
 	LUAVALUE_PROP_CAST(IntProperty, int32);
 	LUAVALUE_PROP_CAST(UInt32Property, int32);
 	LUAVALUE_PROP_CAST(Int16Property, int32);
@@ -2281,6 +2283,8 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	LUAVALUE_PROP_SET(FloatProperty, Value.ToFloat());
 	LUAVALUE_PROP_SET(IntProperty, Value.ToInteger());
 	LUAVALUE_PROP_SET(UInt32Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(Int64Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(UInt64Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(Int16Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(Int8Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(ByteProperty, Value.ToInteger());

@@ -108,11 +108,11 @@ struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
 class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 {
 	SLATE_BEGIN_ARGS(SLuaMachineDebugger)
-	{}
+		{}
 
 	SLATE_END_ARGS()
 
-		void RebuildLuaValues()
+	void RebuildLuaValues()
 	{
 		LuaValues.Empty();
 
@@ -406,18 +406,18 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		return SNew(STableRow<TSharedRef<FTableViewLuaValue>>, OwnerTable)
 			[
 				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
-			]
-		+ SHorizontalBox::Slot().FillWidth(0.2)
-			[
-				SNew(STextBlock).Text(GetLuaTypeText(Item))
-			]
-		+ SHorizontalBox::Slot()
-			[
-				SNew(STextBlock).Text(GetLuaValueText(Item)).ColorAndOpacity(GetLuaTypeColor(Item)).ToolTipText(GetLuaValueText(Item))
-			]
+					+ SHorizontalBox::Slot()
+					[
+						SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
+					]
+					+ SHorizontalBox::Slot().FillWidth(0.2)
+					[
+						SNew(STextBlock).Text(GetLuaTypeText(Item))
+					]
+					+ SHorizontalBox::Slot()
+					[
+						SNew(STextBlock).Text(GetLuaValueText(Item)).ColorAndOpacity(GetLuaTypeColor(Item)).ToolTipText(GetLuaValueText(Item))
+					]
 			];
 	}
 
@@ -431,53 +431,53 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
-				[
-					SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
-				]
-			+ SHorizontalBox::Slot().FillWidth(0.6)
-				[
-					SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
-				]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
+						[
+							SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
+						]
+						+ SHorizontalBox::Slot().FillWidth(0.6)
+						[
+							SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
+						]
 				]
 
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Refresh")).OnClicked(this, &SLuaMachineDebugger::RefreshDebugger)
 				]
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Call Unreal GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
 				]
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Call Lua GC")).OnClicked(this, &SLuaMachineDebugger::CallLuaGC)
 				]
-			+ SVerticalBox::Slot().FillHeight(1)
+				+ SVerticalBox::Slot().FillHeight(1)
 				[
 					SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-					+ SScrollBox::Slot()
-				[
-					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
+						+ SScrollBox::Slot()
+						[
+							SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
+						]
 				]
-				]
-			+ SVerticalBox::Slot().FillHeight(0.1)
+				+ SVerticalBox::Slot().FillHeight(0.1)
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::White).Padding(4)
-					[
-						SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-						+ SScrollBox::Slot()
-				[
-					SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+						[
+							SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+								+ SScrollBox::Slot()
+								[
+									SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+								]
+						]
 				]
-					]
-				]
-			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
+				+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
-					[
-						SAssignNew(DebugText, STextBlock).Text(FText::FromString(DebugTextContext))
-					]
+						[
+							SAssignNew(DebugText, STextBlock).Text(FText::FromString(DebugTextContext))
+						]
 				]
 		];
 		FLuaMachineModule::Get().OnRegisteredLuaStatesChanged.AddSP(this, &SLuaMachineDebugger::OnRegisteredLuaStatesChanged);
@@ -485,7 +485,12 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 	void AddReferencedObjects(FReferenceCollector& Collector) override
 	{
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+		TObjectPtr<ULuaState> LuaStatePtr = TObjectPtr<ULuaState>(SelectedLuaState);
+		Collector.AddReferencedObject(LuaStatePtr);
+#else
 		Collector.AddReferencedObject(SelectedLuaState);
+#endif
 	}
 
 #if ENGINE_MAJOR_VERSION > 4
