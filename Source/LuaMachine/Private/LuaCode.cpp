@@ -94,6 +94,16 @@ void ULuaCode::PostInitProperties()
 	Super::PostInitProperties();
 }
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+void ULuaCode::GetAssetRegistryTags(FAssetRegistryTagsContext Context) const
+{
+	if (AssetImportData)
+	{
+		Context.AddTag(FAssetRegistryTag(SourceFileTagName(), AssetImportData->GetSourceData().ToJson(), FAssetRegistryTag::TT_Hidden));
+	}
+	Super::GetAssetRegistryTags(Context);
+}
+#else
 void ULuaCode::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 {
 	if (AssetImportData)
@@ -102,4 +112,6 @@ void ULuaCode::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 	}
 	Super::GetAssetRegistryTags(OutTags);
 }
+#endif
+
 #endif

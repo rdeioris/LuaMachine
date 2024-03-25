@@ -67,7 +67,15 @@ void FLuaMachineModule::ShutdownModule()
 
 void FLuaMachineModule::AddReferencedObjects(FReferenceCollector& Collector)
 {
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	for (const TPair<TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+	{
+		TObjectPtr<ULuaState> LuaStatePtr = TObjectPtr<ULuaState>(Pair.Value);
+		Collector.AddReferencedObject(LuaStatePtr);
+	}
+#else
 	Collector.AddReferencedObjects(LuaStates);
+#endif
 }
 
 void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
