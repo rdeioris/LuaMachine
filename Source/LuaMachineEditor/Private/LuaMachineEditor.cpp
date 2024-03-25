@@ -485,12 +485,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 
 	void AddReferencedObjects(FReferenceCollector& Collector) override
 	{
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
-		TObjectPtr<ULuaState> LuaStatePtr = TObjectPtr<ULuaState>(SelectedLuaState);
-		Collector.AddReferencedObject(LuaStatePtr);
-#else
 		Collector.AddReferencedObject(SelectedLuaState);
-#endif
 	}
 
 #if ENGINE_MAJOR_VERSION > 4
@@ -503,7 +498,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 protected:
 	TArray<TSharedRef<FTableViewLuaValue>> LuaValues;
 	TSharedPtr<STreeView<TSharedRef<FTableViewLuaValue>>> LuaTreeView;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TObjectPtr<ULuaState> SelectedLuaState;
+#else
 	ULuaState* SelectedLuaState;
+#endif
 	TArray<TSharedPtr<FString>> DetectedLuaStates;
 	TSharedPtr<STextComboBox> LuaStatesComboBox;
 	TSharedPtr<STextBlock> DebugText;

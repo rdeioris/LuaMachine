@@ -51,6 +51,10 @@ public:
 	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar);
 
 private:
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TMap<TSubclassOf<ULuaState>, TObjectPtr<ULuaState>> LuaStates;
+#else
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
+#endif
 	TSet<FString> LuaConsoleCommands;
 };

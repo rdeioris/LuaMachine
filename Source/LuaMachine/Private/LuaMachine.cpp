@@ -67,15 +67,7 @@ void FLuaMachineModule::ShutdownModule()
 
 void FLuaMachineModule::AddReferencedObjects(FReferenceCollector& Collector)
 {
-#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
-	for (const TPair<TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
-	{
-		TObjectPtr<ULuaState> LuaStatePtr = TObjectPtr<ULuaState>(Pair.Value);
-		Collector.AddReferencedObject(LuaStatePtr);
-	}
-#else
 	Collector.AddReferencedObjects(LuaStates);
-#endif
 }
 
 void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
@@ -83,7 +75,11 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	TArray<TSubclassOf<ULuaState>> LuaStatesKeys;
 	LuaStates.GetKeys(LuaStatesKeys);
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TMap<TSubclassOf<ULuaState>, TObjectPtr<ULuaState>> PersistentLuaStates;
+#else
 	TMap<TSubclassOf<ULuaState>, ULuaState*> PersistentLuaStates;
+#endif
 
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
@@ -135,7 +131,11 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 TArray<ULuaState*> FLuaMachineModule::GetRegisteredLuaStates()
 {
 	TArray<ULuaState*> RegisteredStates;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	for (TPair< TSubclassOf<ULuaState>, TObjectPtr<ULuaState>>& Pair : LuaStates)
+#else
 	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+#endif
 	{
 		RegisteredStates.Add(Pair.Value);
 	}
@@ -146,7 +146,11 @@ TArray<ULuaState*> FLuaMachineModule::GetRegisteredLuaStates()
 void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
 {
 	TSubclassOf<ULuaState> FoundLuaStateClass = nullptr;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	for (TPair< TSubclassOf<ULuaState>, TObjectPtr<ULuaState>>& Pair : LuaStates)
+#else
 	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+#endif
 	{
 		if (Pair.Value == LuaState)
 		{

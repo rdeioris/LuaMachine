@@ -1554,7 +1554,9 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
 	if (LuaState->L != L)
+	{
 		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", lua_tostring(L, 1));
+	}
 
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
 
@@ -1566,7 +1568,6 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 		{
 			return 1;
 		}
-		return luaL_error(L, "%s", lua_tostring(L, -1));
 
 		// now search in additional paths
 		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
