@@ -2118,7 +2118,12 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	if (EnumProperty)
 	{
 		const uint8* EnumValue = EnumProperty->ContainerPtrToValuePtr<const uint8>(Buffer, Index);
-		return FLuaValue((int32)*EnumValue);
+		FString EnumString = EnumProperty->GetEnum()->GetDisplayNameTextByValue((int64)*EnumValue).ToString();
+		if (EnumString.IsEmpty())
+		{
+			return FLuaValue((int32)*EnumValue);
+		}
+		return EnumString;
 	}
 #endif
 
@@ -2304,6 +2309,14 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	if (EnumProperty)
 	{
 		uint8* EnumValue = EnumProperty->ContainerPtrToValuePtr<uint8>(Buffer, Index);
+		if (Value.Type == ELuaValueType::String)
+		{
+			*EnumValue = EnumProperty->GetEnum()->GetValueByNameString(Value.ToString());
+			if (*EnumValue != INDEX_NONE)
+			{
+				return;
+			}
+		}
 		*EnumValue = Value.ToInteger();
 		return;
 	}
