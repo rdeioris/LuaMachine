@@ -2788,3 +2788,8 @@ FLuaValue ULuaState::RunString(const FString & CodeString, FString CodePath)
 	Pop();
 	return ReturnValue;
 }
+
+void ULuaState::Error(const FString& ErrorString)
+{
+	luaL_error(L, TCHAR_TO_UTF8(*ErrorString));
+}

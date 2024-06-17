@@ -494,6 +494,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue RunString(const FString& CodeString, FString CodePath);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void Error(const FString& ErrorString);
+
 protected:
 	lua_State* L;
 	bool bDisabled;
