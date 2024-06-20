@@ -246,6 +246,102 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure,  Category = "Lua")
 	FLuaValue GetLuaBlueprintPackageTable(const FString& PackageName);
 
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaCreateTable();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaCreateThread(FLuaValue Value /* Function */);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaCreateObjectInState(UObject* InObject);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaGetGlobal(const FString& Name);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaSetGlobal(const FString& Name, FLuaValue Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaSetUserDataMetaTable(FLuaValue MetaTable);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue AssignLuaValueToLuaState(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	FLuaValue GetLuaComponentByStateAsLuaValue(AActor* Actor);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	FLuaValue GetLuaComponentByStateAndNameAsLuaValue(AActor* Actor, const FString& Name);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
+	FLuaValue LuaGlobalCall(const FString& Name, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
+	TArray<FLuaValue> LuaGlobalCallMulti(const FString& Name, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
+	FLuaValue LuaGlobalCallValue(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, meta = (AutoCreateRefTerm = "Args"), Category = "Lua")
+	TArray<FLuaValue> LuaGlobalCallValueMulti(FLuaValue Value, TArray<FLuaValue> Args);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaTablePack(TArray<FLuaValue> Values);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaTableMergePack(TArray<FLuaValue> Values1, TArray<FLuaValue> Values2);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaTableFromMap(TMap<FString, FLuaValue> Map);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	bool LuaValueFromJson(const FString& Json, FLuaValue& Value);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	int64 LuaValueToPointer(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	FString LuaValueToHexPointer(FLuaValue Value);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	int32 LuaGetTop();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaRunFile(const FString& Filename, const bool bIgnoreNonExistent);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaRunNonContentFile(const FString& Filename, const bool bIgnoreNonExistent);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaRunCodeAsset(ULuaCode* CodeAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaRunByteCode(const TArray<uint8>& ByteCode, const FString& CodePath);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaRunString(const FString& CodeString, FString CodePath = "");
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaNewLuaUserDataObject(TSubclassOf<ULuaUserDataObject> UserDataObjectClass, bool bTrackObject = true);
+
+	UFUNCTION(BlueprintPure, Category = "Lua")
+	int32 LuaGetUsedMemory();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaGCCollect();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaGCStop();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void LuaGCRestart();
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaTableAssetToLuaTable(ULuaTableAsset* TableAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	FLuaValue LuaCreateLazyTable();
+
 	void FromLuaValue(FLuaValue& LuaValue, UObject* CallContext = nullptr, lua_State* State = nullptr);
 	FLuaValue ToLuaValue(int Index, lua_State* State = nullptr);
 
