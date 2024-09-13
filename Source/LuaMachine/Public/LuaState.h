@@ -4,7 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/Blueprint.h"
+#if LUAMACHINE_LUA53
 #include "ThirdParty/lua/lua.hpp"
+#elif LUAMACHINE_LUAU
+#include "ThirdParty/luau/Compiler/include/luacode.h"
+#include "ThirdParty/luau/VM/include/lualib.h"
+#endif
 #include "LuaValue.h"
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
