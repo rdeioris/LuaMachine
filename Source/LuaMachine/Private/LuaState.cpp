@@ -396,6 +396,12 @@ bool ULuaState::RunCode(const TArray<uint8>& Code, const FString& CodePath, int 
 #elif LUAMACHINE_LUAU
 	size_t ByteCodeSize = 0;
 	char* ByteCode = luau_compile(reinterpret_cast<const char*>(Code.GetData()), Code.Num(), nullptr, &ByteCodeSize);
+	if (ByteCode && ByteCode[0] == 0)
+	{
+		LastError = FString::Printf(TEXT("Lua loading error: %s"), ANSI_TO_TCHAR(ByteCode + 1));
+		::free(ByteCode);
+		return false;
+	}
 	int Result = luau_load(L, TCHAR_TO_ANSI(*CodePath), ByteCode, ByteCodeSize, 0);
 	::free(ByteCode);
 	if (Result)
@@ -452,7 +458,15 @@ TArray<uint8> ULuaState::ToByteCode(const FString& Code, const FString& CodePath
 #elif LUAMACHINE_LUAU
 	size_t ByteCodeSize = 0;
 	char* ByteCode = luau_compile(TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), nullptr, &ByteCodeSize);
-	Output.Append(reinterpret_cast<const uint8*>(ByteCode), ByteCodeSize);
+	if (ByteCode)
+	{
+		if (ByteCode[0] == 0)
+		{
+			ErrorString = ANSI_TO_TCHAR(ByteCode + 1);
+			return Output;
+		}
+		Output.Append(reinterpret_cast<const uint8*>(ByteCode), ByteCodeSize);
+	}
 #endif
 	return Output;
 }
@@ -2945,7 +2959,7 @@ lua_Integer luaL_len(lua_State * L, int i)
 	return res;
 }
 
-int luaL_ref(lua_State* L, int t)
+int luaL_ref(lua_State * L, int t)
 {
 	int Ref = lua_ref(L, -1);
 	lua_pop(L, 1);
