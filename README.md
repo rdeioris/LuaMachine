@@ -9,6 +9,8 @@ If you want modders to customize your game/project, or you need to allow game de
 
 Note: The master branch is focused on Unreal Engine 5, if you need Unreal Engine 4 support use the ue4 branch.
 
+Experimental LuaU (https://luau.org/) support is available (for Windows) in the "luau" branch.
+
 ## How it works
 
 Contrary to the other Unreal Engine Lua plugins, this one does not try to automatically expose the Unreal Engine api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
