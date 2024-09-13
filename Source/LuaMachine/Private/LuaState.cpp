@@ -2944,4 +2944,11 @@ lua_Integer luaL_len(lua_State * L, int i)
 	}
 	return res;
 }
+
+int luaL_ref(lua_State* L, int t)
+{
+	int Ref = lua_ref(L, -1);
+	lua_pop(L, 1);
+	return Ref;
+}
 #endif
