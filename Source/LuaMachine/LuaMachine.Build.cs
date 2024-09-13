@@ -4,7 +4,7 @@ using UnrealBuildTool;
 
 public class LuaMachine : ModuleRules
 {
-    public enum LuaVMType
+    protected enum LuaVMType
     {
         Lua53,
         Lua54,
@@ -13,7 +13,7 @@ public class LuaMachine : ModuleRules
         Unknown
     }
 
-    protected LuaVMType VMType = LuaVMType.Lua53;
+    protected LuaVMType VMType = LuaVMType.LuaU;
 
     public LuaMachine(ReadOnlyTargetRules Target) : base(Target)
     {
@@ -111,6 +111,25 @@ public class LuaMachine : ModuleRules
             {
                 PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_ios.a"));
             }
+        }
+        else
+        {
+            PublicDefinitions.Add("LUAMACHINE_LUA53=0");
+        }
+
+        if (VMType == LuaVMType.LuaU)
+        {
+            PublicDefinitions.Add("LUAMACHINE_LUAU=1");
+            if (Target.Platform == UnrealTargetPlatform.Win64)
+            {
+                PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "Luau.Ast_win64.lib"));
+                PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "Luau.Compiler_win64.lib"));
+                PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "Luau.VM_win64.lib"));
+            }
+        }
+        else
+        {
+            PublicDefinitions.Add("LUAMACHINE_LUAU=0");
         }
 
     }

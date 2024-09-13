@@ -57,6 +57,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 		luaL_openlibs(L);
 	}
 
+#if LUAMACHINE_LUA53
 	// load "package" for allowing minimal setup
 	luaL_requiref(L, "package", luaopen_package, 1);
 	lua_pop(L, 1);
@@ -117,15 +118,18 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 			lua_pop(L, 1);
 		}
 	}
+#endif
 
 	ULuaState** LuaExtraSpacePtr = (ULuaState**)lua_getextraspace(L);
 	*LuaExtraSpacePtr = this;
+
 	// get the global table
 	lua_pushglobaltable(L);
 	// override print
 	PushCFunction(ULuaState::TableFunction_print);
 	SetField(-2, "print");
 
+#if !LUAMACHINE_LUAU
 	GetField(-1, "package");
 	if (!OverridePackagePath.IsEmpty())
 	{
@@ -193,7 +197,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 
 	// pop package.searchers (and package)
 	Pop(2);
-
+#endif
 
 	for (TPair<FString, FLuaValue>& Pair : Table)
 	{
@@ -235,6 +239,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	// we load code
 	ReceiveLuaStatePreInitialized();
 
+#if LUAMACHINE_LUA53
 	int DebugMask = 0;
 	// install hooks
 	if (bEnableLineHook)
@@ -258,6 +263,7 @@ ULuaState* ULuaState::GetLuaState(UWorld* InWorld)
 	{
 		lua_sethook(L, Debug_Hook, DebugMask, HookInstructionCount);
 	}
+#endif
 
 	if (LuaCodeAsset)
 	{
@@ -385,7 +391,15 @@ bool ULuaState::RunCode(const TArray<uint8>& Code, const FString& CodePath, int 
 {
 	FString FullCodePath = FString("@") + CodePath;
 
+#if LUAMACHINE_LUA53
 	if (luaL_loadbuffer(L, (const char*)Code.GetData(), Code.Num(), TCHAR_TO_ANSI(*FullCodePath)))
+#elif LUAMACHINE_LUAU
+	size_t ByteCodeSize = 0;
+	char* ByteCode = luau_compile(reinterpret_cast<const char*>(Code.GetData()), Code.Num(), nullptr, &ByteCodeSize);
+	int Result = luau_load(L, TCHAR_TO_ANSI(*CodePath), ByteCode, ByteCodeSize, 0);
+	::free(ByteCode);
+	if (Result)
+#endif
 	{
 		LastError = FString::Printf(TEXT("Lua loading error: %s"), ANSI_TO_TCHAR(lua_tostring(L, -1)));
 		return false;
@@ -416,6 +430,7 @@ TArray<uint8> ULuaState::ToByteCode(const FString& Code, const FString& CodePath
 	FString FullCodePath = FString("@") + CodePath;
 	TArray<uint8> Output;
 
+#if LUAMACHINE_LUA53
 	lua_State* L = luaL_newstate();
 	if (luaL_loadbuffer(L, TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), TCHAR_TO_ANSI(*FullCodePath)))
 	{
@@ -434,6 +449,11 @@ TArray<uint8> ULuaState::ToByteCode(const FString& Code, const FString& CodePath
 	}
 
 	lua_close(L);
+#elif LUAMACHINE_LUAU
+	size_t ByteCodeSize = 0;
+	char* ByteCode = luau_compile(TCHAR_TO_UTF8(CodeRaw), FCStringAnsi::Strlen(TCHAR_TO_UTF8(CodeRaw)), nullptr, &ByteCodeSize);
+	Output.Append(reinterpret_cast<const uint8*>(ByteCode), ByteCodeSize);
+#endif
 	return Output;
 }
 
@@ -728,7 +748,7 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for UserData %p", UserData);
+		LUAMACHINE_RETURN_ERROR(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
@@ -789,7 +809,7 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for UserData %p", UserData);
+		LUAMACHINE_RETURN_ERROR(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	TMap<FString, FLuaValue>* TablePtr = nullptr;
@@ -833,6 +853,7 @@ int ULuaState::MetaTableFunctionUserData__newindex(lua_State* L)
 
 FLuaDebug ULuaState::LuaGetInfo(int32 Level)
 {
+#if LUAMACHINE_LUA53
 	lua_Debug ar;
 	if (lua_getstack(L, Level, &ar) != 1)
 		return FLuaDebug();
@@ -845,10 +866,14 @@ FLuaDebug ULuaState::LuaGetInfo(int32 Level)
 	LuaDebug.What = ANSI_TO_TCHAR(ar.what);
 
 	return LuaDebug;
+#elif LUAMACHINE_LUAU
+	return FLuaDebug();
+#endif
 }
 
 TMap<FString, FLuaValue> ULuaState::LuaGetLocals(int32 Level)
 {
+#if LUAMACHINE_LUA53
 	TMap<FString, FLuaValue> ReturnValue;
 
 	lua_Debug ar;
@@ -865,8 +890,12 @@ TMap<FString, FLuaValue> ULuaState::LuaGetLocals(int32 Level)
 		name = lua_getlocal(L, &ar, ++Index);
 	}
 	return ReturnValue;
+#elif LUAMACHINE_LUAU
+	return {};
+#endif
 }
 
+#if LUAMACHINE_LUA53
 void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
@@ -896,6 +925,7 @@ void ULuaState::Debug_Hook(lua_State* L, lua_Debug* ar)
 		break;
 	}
 }
+#endif
 
 int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 {
@@ -904,13 +934,13 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for UserData %p", UserData);
+		LUAMACHINE_RETURN_ERROR(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	FLuaUserData* UserData2 = (FLuaUserData*)lua_touserdata(L, 2);
 	if (!UserData2->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for UserData %p", UserData2);
+		LUAMACHINE_RETURN_ERROR(L, "invalid UObject for UserData %p", UserData2);
 	}
 
 	if (UserData->Type == UserData2->Type && UserData->Context.Get() == UserData2->Context.Get())
@@ -919,11 +949,11 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 		{
 			if (!UserData->Function.IsValid())
 			{
-				return luaL_error(L, "invalid UFunction for UserData %p", UserData);
+				LUAMACHINE_RETURN_ERROR(L, "invalid UFunction for UserData %p", UserData);
 			}
 			if (!UserData2->Function.IsValid())
 			{
-				return luaL_error(L, "invalid UFunction for UserData %p", UserData2);
+				LUAMACHINE_RETURN_ERROR(L, "invalid UFunction for UserData %p", UserData2);
 			}
 			if (UserData->Function.Get() == UserData2->Function.Get())
 			{
@@ -949,7 +979,7 @@ int ULuaState::MetaTableFunctionUserData__gc(lua_State* L)
 	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
 	if (!UserData->Context.IsValid())
 	{
-		return luaL_error(L, "invalid UObject for UserData %p", UserData);
+		LUAMACHINE_RETURN_ERROR(L, "invalid UObject for UserData %p", UserData);
 	}
 
 	ULuaUserDataObject* LuaUserDataObject = Cast<ULuaUserDataObject>(UserData->Context.Get());
@@ -970,7 +1000,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	if (!LuaCallContext->Context.IsValid() || !LuaCallContext->Function.IsValid())
 	{
-		return luaL_error(L, "invalid lua UFunction for UserData %p", LuaCallContext);
+		LUAMACHINE_RETURN_ERROR(L, "invalid lua UFunction for UserData %p", LuaCallContext);
 	}
 
 	int NArgs = lua_gettop(L);
@@ -1210,7 +1240,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 
 	if (!LuaCallContext->Context.IsValid() || !LuaCallContext->Function.IsValid())
 	{
-		return luaL_error(L, "invalid lua UFunction for UserData %p", LuaCallContext);
+		LUAMACHINE_RETURN_ERROR(L, "invalid lua UFunction for UserData %p", LuaCallContext);
 	}
 
 	int NArgs = lua_gettop(L);
@@ -1368,7 +1398,7 @@ int ULuaState::MetaTableFunction__rawbroadcast(lua_State * L)
 
 	if (!LuaCallContext->MulticastScriptDelegate || !LuaCallContext->Function.IsValid())
 	{
-		return luaL_error(L, "invalid lua Multicast Delegate for UserData %p", LuaCallContext);
+		LUAMACHINE_RETURN_ERROR(L, "invalid lua Multicast Delegate for UserData %p", LuaCallContext);
 	}
 
 	int NArgs = lua_gettop(L);
@@ -1438,7 +1468,9 @@ int ULuaState::TableFunction_print(lua_State * L)
 		lua_call(L, 1, 1);
 		const char* s = lua_tostring(L, -1);
 		if (!s)
-			return luaL_error(L, "'tostring must return a string to 'print'");
+		{
+			LUAMACHINE_RETURN_ERROR(L, "'tostring must return a string to 'print'");
+		}
 		FString Value = ANSI_TO_TCHAR(s);
 		lua_pop(L, 1);
 		Messages.Add(Value);
@@ -1468,13 +1500,13 @@ int ULuaState::TableFunction_package_loader_codeasset(lua_State * L)
 		{
 			if (!LuaState->RunCodeAsset(LuaCode, 1))
 			{
-				return luaL_error(L, "%s", lua_tostring(L, -1));
+				LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 			}
 			return 1;
 		}
 	}
 
-	return luaL_error(L, "unable to load asset '%s'", TCHAR_TO_UTF8(*Key));
+	LUAMACHINE_RETURN_ERROR(L, "unable to load asset '%s'", TCHAR_TO_UTF8(*Key));
 }
 
 int ULuaState::TableFunction_package_loader_asset(lua_State * L)
@@ -1488,7 +1520,7 @@ int ULuaState::TableFunction_package_loader_asset(lua_State * L)
 	{
 		return 1;
 	}
-	return luaL_error(L, "%s", lua_tostring(L, -1));
+	LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 }
 
 int ULuaState::TableFunction_package_loader(lua_State * L)
@@ -1555,7 +1587,7 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 
 	if (LuaState->L != L)
 	{
-		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", lua_tostring(L, 1));
+		LUAMACHINE_RETURN_ERROR(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", lua_tostring(L, 1));
 	}
 
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
@@ -1576,21 +1608,21 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 			{
 				return 1;
 			}
-			return luaL_error(L, "%s", lua_tostring(L, -1));
+			LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 
 		}
-		return luaL_error(L, "unable to find package %s", TCHAR_TO_ANSI(*Key));
+		LUAMACHINE_RETURN_ERROR(L, "unable to find package %s", TCHAR_TO_ANSI(*Key));
 	}
 
 	ULuaCode* LuaCode = *LuaCodePtr;
 	if (!LuaCode)
 	{
-		return luaL_error(L, "LuaCodeAsset not set for package %s", TCHAR_TO_ANSI(*Key));
+		LUAMACHINE_RETURN_ERROR(L, "LuaCodeAsset not set for package %s", TCHAR_TO_ANSI(*Key));
 	}
 
 	if (!LuaState->RunCodeAsset(LuaCode, 1))
 	{
-		return luaL_error(L, "%s", lua_tostring(L, -1));
+		LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 	}
 
 	return 1;
@@ -2706,7 +2738,7 @@ void ULuaState::RegisterLuaDelegate(UObject * InObject, ULuaDelegate * InLuaDele
 	}
 }
 
-void ULuaState::UnregisterLuaDelegatesOfObject(UObject* InObject)
+void ULuaState::UnregisterLuaDelegatesOfObject(UObject * InObject)
 {
 	LuaDelegatesMap.Remove(InObject);
 }
@@ -2789,7 +2821,127 @@ FLuaValue ULuaState::RunString(const FString & CodeString, FString CodePath)
 	return ReturnValue;
 }
 
-void ULuaState::Error(const FString& ErrorString)
+void ULuaState::Error(const FString & ErrorString)
 {
 	luaL_error(L, TCHAR_TO_UTF8(*ErrorString));
 }
+
+#if LUAMACHINE_LUAU
+// from https://github.com/lunarmodules/lua-compat-5.3/blob/master/c-api/compat-5.3.c
+int lua_isinteger(lua_State * L, int index)
+{
+	if (lua_type(L, index) == LUA_TNUMBER)
+	{
+		lua_Number n = lua_tonumber(L, index);
+		lua_Integer i = lua_tointeger(L, index);
+		if (i == n)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void lua_seti(lua_State * L, int index, lua_Integer i)
+{
+	luaL_checkstack(L, 1, "not enough stack slots available");
+	index = lua_absindex(L, index);
+	lua_pushinteger(L, i);
+	lua_insert(L, -2);
+	lua_settable(L, index);
+}
+
+void* lua_getextraspace(lua_State * L)
+{
+	int is_main = 0;
+	void* ptr = NULL;
+	luaL_checkstack(L, 4, "not enough stack slots available");
+	lua_pushliteral(L, "__compat53_extraspace");
+	lua_pushvalue(L, -1);
+	lua_rawget(L, LUA_REGISTRYINDEX);
+	if (!lua_istable(L, -1))
+	{
+		lua_pop(L, 1);
+		lua_createtable(L, 0, 2);
+		lua_createtable(L, 0, 1);
+		lua_pushliteral(L, "k");
+		lua_setfield(L, -2, "__mode");
+		lua_setmetatable(L, -2);
+		lua_pushvalue(L, -2);
+		lua_pushvalue(L, -2);
+		lua_rawset(L, LUA_REGISTRYINDEX);
+	}
+	lua_replace(L, -2);
+	is_main = lua_pushthread(L);
+	lua_rawget(L, -2);
+	ptr = lua_touserdata(L, -1);
+	if (!ptr)
+	{
+		lua_pop(L, 1);
+		ptr = lua_newuserdata(L, LUA_EXTRASPACE);
+		if (is_main)
+		{
+			memset(ptr, '\0', LUA_EXTRASPACE);
+			lua_pushthread(L);
+			lua_pushvalue(L, -2);
+			lua_rawset(L, -4);
+			lua_pushboolean(L, 1);
+			lua_pushvalue(L, -2);
+			lua_rawset(L, -4);
+		}
+		else
+		{
+			void* mptr = NULL;
+			lua_pushboolean(L, 1);
+			lua_rawget(L, -3);
+			mptr = lua_touserdata(L, -1);
+			if (mptr)
+				memcpy(ptr, mptr, LUA_EXTRASPACE);
+			else
+				memset(ptr, '\0', LUA_EXTRASPACE);
+			lua_pop(L, 1);
+			lua_pushthread(L);
+			lua_pushvalue(L, -2);
+			lua_rawset(L, -4);
+		}
+	}
+	lua_pop(L, 2);
+	return ptr;
+}
+
+void lua_len(lua_State * L, int i)
+{
+	switch (lua_type(L, i))
+	{
+	case LUA_TSTRING:
+		lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+		break;
+	case LUA_TTABLE:
+		if (!luaL_callmeta(L, i, "__len"))
+			lua_pushnumber(L, (lua_Number)lua_objlen(L, i));
+		break;
+	case LUA_TUSERDATA:
+		if (luaL_callmeta(L, i, "__len"))
+			break;
+		/* FALLTHROUGH */
+	default:
+		luaL_error(L, "attempt to get length of a %s value",
+			lua_typename(L, lua_type(L, i)));
+	}
+}
+
+lua_Integer luaL_len(lua_State * L, int i)
+{
+	lua_Integer res = 0;
+	int isnum = 0;
+	luaL_checkstack(L, 1, "not enough stack slots");
+	lua_len(L, i);
+	res = lua_tointegerx(L, -1, &isnum);
+	lua_pop(L, 1);
+	if (!isnum)
+	{
+		luaL_error(L, "object length is not an integer");
+	}
+	return res;
+}
+#endif

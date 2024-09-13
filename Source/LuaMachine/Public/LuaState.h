@@ -1,15 +1,10 @@
-// Copyright 2018-2023 - Roberto De Ioris
+// Copyright 2018-2024 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/Blueprint.h"
-#if LUAMACHINE_LUA53
-#include "ThirdParty/lua/lua.hpp"
-#elif LUAMACHINE_LUAU
-#include "ThirdParty/luau/Compiler/include/luacode.h"
-#include "ThirdParty/luau/VM/include/lualib.h"
-#endif
+#include "LuaVMIncludes.h"
 #include "LuaValue.h"
 #include "LuaCode.h"
 #include "Runtime/Core/Public/Containers/Queue.h"
@@ -398,7 +393,9 @@ public:
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
 
+#if LUAMACHINE_LUA53
 	static void Debug_Hook(lua_State* L, lua_Debug* ar);
+#endif
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static TArray<uint8> ToByteCode(const FString& Code, const FString& CodePath, FString& ErrorString);

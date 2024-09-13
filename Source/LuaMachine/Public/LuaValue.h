@@ -1,10 +1,10 @@
-// Copyright 2018-2023 - Roberto De Ioris
+// Copyright 2018-2024 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "ThirdParty/lua/lua.hpp"
+#include "LuaVMIncludes.h"
 #include "Serialization/JsonSerializer.h"
 #include "LuaValue.generated.h"
 
