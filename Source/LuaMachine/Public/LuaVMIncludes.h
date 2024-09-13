@@ -11,7 +11,7 @@
 
 #define lua_pushglobaltable(L) lua_pushvalue(L,LUA_GLOBALSINDEX)
 
-#define luaL_ref lua_ref
+#define luaL_ref(L, PlaceHolder) lua_ref(L, -1)
 #define luaL_unref(L, PlaceHolder, Ref) lua_unref(L, Ref) 
 
 #undef lua_pushcfunction
