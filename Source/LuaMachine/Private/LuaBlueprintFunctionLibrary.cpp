@@ -1535,9 +1535,9 @@ FRotator ULuaBlueprintFunctionLibrary::LuaTableToRotator(FLuaValue Value)
 			return N;
 		};
 
-	FLuaValue Pitch = GetRotatorField(Value, "pitch", "Pitch", 1);
-	FLuaValue Yaw = GetRotatorField(Value, "yaw", "Yaw", 2);
-	FLuaValue Roll = GetRotatorField(Value, "roll", "Roll", 3);
+	FLuaValue Roll = GetRotatorField(Value, "roll", "Roll", 1);
+	FLuaValue Pitch = GetRotatorField(Value, "pitch", "Pitch", 2);
+	FLuaValue Yaw = GetRotatorField(Value, "yaw", "Yaw", 3);
 
 	return FRotator(Pitch.ToFloat(), Yaw.ToFloat(), Roll.ToFloat());
 }
