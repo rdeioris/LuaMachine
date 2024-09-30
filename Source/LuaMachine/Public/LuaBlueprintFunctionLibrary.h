@@ -346,6 +346,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static FVector LuaTableToVector(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FRotator LuaTableToRotator(FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static FLuaValue LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable);
 
@@ -381,6 +384,9 @@ public:
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Vector (LuaValue)", BlueprintAutocast), Category = "Lua")
 	static FVector Conv_LuaValueToFVector(const FLuaValue& Value);
+
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Rotator (LuaValue)", BlueprintAutocast), Category = "Lua")
+	static FRotator Conv_LuaValueToFRotator(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Bool (LuaValue)", BlueprintAutocast), Category="Lua")
 	static bool Conv_LuaValueToBool(const FLuaValue& Value);

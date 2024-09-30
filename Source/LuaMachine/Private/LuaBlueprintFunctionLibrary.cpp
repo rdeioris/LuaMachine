@@ -146,6 +146,11 @@ FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(const FLuaValue& Va
 	return LuaTableToVector(Value);
 }
 
+FRotator ULuaBlueprintFunctionLibrary::Conv_LuaValueToFRotator(const FLuaValue& Value)
+{
+	return LuaTableToRotator(Value);
+}
+
 FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(const FLuaValue& Value)
 {
 	return FName(*Value.ToString());
@@ -1478,7 +1483,9 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueResumeMulti(FLuaValue Va
 FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Table)
+	{
 		return FVector(NAN);
+	}
 
 	auto GetVectorField = [](FLuaValue& Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
 	{
@@ -1490,7 +1497,9 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 			{
 				N = Table.GetFieldByIndex(Index);
 				if (N.IsNil())
+				{
 					N = FLuaValue(NAN);
+				}
 			}
 		}
 		return N;
@@ -1501,6 +1510,36 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 	FLuaValue Z = GetVectorField(Value, "z", "Z", 3);
 
 	return FVector(X.ToFloat(), Y.ToFloat(), Z.ToFloat());
+}
+
+FRotator ULuaBlueprintFunctionLibrary::LuaTableToRotator(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Table)
+	{
+		return FRotator(NAN);
+	}
+
+	auto GetRotatorField = [](FLuaValue& Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
+		{
+			FLuaValue N = Table.GetField(Field_n);
+			if (N.IsNil())
+			{
+				N = Table.GetField(Field_N);
+				if (N.IsNil())
+				{
+					N = Table.GetFieldByIndex(Index);
+					if (N.IsNil())
+						N = FLuaValue(NAN);
+				}
+			}
+			return N;
+		};
+
+	FLuaValue Pitch = GetRotatorField(Value, "pitch", "Pitch", 1);
+	FLuaValue Yaw = GetRotatorField(Value, "yaw", "Yaw", 2);
+	FLuaValue Roll = GetRotatorField(Value, "roll", "Roll", 3);
+
+	return FRotator(Pitch.ToFloat(), Yaw.ToFloat(), Roll.ToFloat());
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable)
