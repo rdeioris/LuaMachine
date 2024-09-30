@@ -1529,7 +1529,9 @@ FRotator ULuaBlueprintFunctionLibrary::LuaTableToRotator(FLuaValue Value)
 				{
 					N = Table.GetFieldByIndex(Index);
 					if (N.IsNil())
+					{
 						N = FLuaValue(NAN);
+					}
 				}
 			}
 			return N;
@@ -1771,7 +1773,14 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(const FLuaValue& Value, 
 	{
 		UBlueprint* Blueprint = Cast<UBlueprint>(LoadedObject);
 		if (Blueprint)
+		{
 			return Cast<UClass>(Blueprint->GeneratedClass);
+		}
+		UBlueprintGeneratedClass* BlueprintGeneratedClass = Cast<UBlueprintGeneratedClass>(LoadedObject);
+		if (BlueprintGeneratedClass)
+		{
+			return BlueprintGeneratedClass;
+		}
 	}
 
 	return Cast<UClass>(LoadedObject);
