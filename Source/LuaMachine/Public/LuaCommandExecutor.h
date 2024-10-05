@@ -36,5 +36,9 @@ public:
 	}
 #endif
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 5
+	void GetSuggestedCompletions(const TCHAR* Input, TArray<FConsoleSuggestion>& Out) override {}
+#endif
+
 	ULuaState* LuaState;
 };
