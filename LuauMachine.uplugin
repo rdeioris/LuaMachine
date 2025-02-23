@@ -1,0 +1,40 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "20241122",
+  "FriendlyName": "LuaMachine",
+  "Description": "Expose a Lua api for your project",
+  "Category": "Scripting",
+  "CreatedBy": "Fusion Point Studios",
+  "CreatedByURL": "https://github.com/FPS-Jason",
+  "DocsURL": "https://github.com/FPS-Jason/LuauMachine",
+  "SupportURL": "https://github.com/FPS-Jason/LuaMachine",
+  "CanContainContent": true,
+  "IsBetaVersion": false,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "LuauMachine",
+      "Type": "Runtime",
+      "LoadingPhase": "PreDefault",
+      "WhitelistPlatforms": [
+        "Mac",
+        "Win64",
+        "Linux",
+        "LinuxArm64",
+        "Android",
+        "IOS",
+      ]
+    },
+    {
+      "Name": "LuauMachineEditor",
+      "Type": "Editor",
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [
+        "Linux",
+        "Mac",
+        "Win64"
+      ]
+    }
+  ]
+}

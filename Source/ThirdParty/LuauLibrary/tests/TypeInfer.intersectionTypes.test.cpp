@@ -1,0 +1,1342 @@
+// This file is part of the Luau programming language and is licensed under MIT License; see LICENSE.txt for details
+#include "Luau/TypeInfer.h"
+#include "Luau/Type.h"
+
+#include "Fixture.h"
+
+#include "ScopedFlags.h"
+#include "doctest.h"
+
+using namespace Luau;
+
+LUAU_FASTFLAG(LuauSolverV2);
+
+TEST_SUITE_BEGIN("IntersectionTypes");
+
+TEST_CASE_FIXTURE(Fixture, "select_correct_union_fn")
+{
+    CheckResult result = check(R"(
+        type A = (number) -> (string)
+        type B = (string) -> (number)
+
+        local function foo(f: A & B)
+            return f(10), f("a")
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    CHECK_EQ("(((number) -> string) & ((string) -> number)) -> (string, number)", toString(requireType("foo")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_combines")
+{
+    CheckResult result = check(R"(
+        type A={a:number}
+        type B={b:string}
+
+        local c:A & B = {a=10, b="s"}
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_combines_missing")
+{
+    CheckResult result = check(R"(
+        type A={a:number}
+        type B={b:string}
+
+        local c:A & B = {a=10}
+    )");
+
+    REQUIRE(result.errors.size() == 1);
+}
+
+TEST_CASE_FIXTURE(Fixture, "impossible_type")
+{
+    CheckResult result = check(R"(
+        local c:number&string = 10
+    )");
+
+    REQUIRE(result.errors.size() == 1);
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_extra_ok")
+{
+    CheckResult result = check(R"(
+        type A={a:number}
+        type B={b:string}
+
+        local function f(t: A & B): A
+            return t
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "fx_intersection_as_argument")
+{
+    CheckResult result = check(R"(
+        type A = (number) -> (string)
+        type B = (string) -> (number)
+        type C = (A) -> (number)
+
+        local function foo(f: A & B, g: C)
+            return g(f)
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "fx_union_as_argument_fails")
+{
+    CheckResult result = check(R"(
+        type A = (number) -> (string)
+        type B = (string) -> (number)
+        type C = (A) -> (number)
+
+        local function foo(f: A | B, g: C)
+            return g(f)
+        end
+    )");
+
+    REQUIRE(!result.errors.empty());
+}
+
+TEST_CASE_FIXTURE(Fixture, "argument_is_intersection")
+{
+    CheckResult result = check(R"(
+        type A = (number | boolean) -> number
+
+        local function foo(f: A)
+            f(5)
+            f(true)
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "should_still_pick_an_overload_whose_arguments_are_unions")
+{
+    CheckResult result = check(R"(
+        type A = (number) -> string
+        type B = (string) -> number
+
+        local function foo(f: A & B)
+            return f(1), f("five")
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    CHECK_EQ("(((number) -> string) & ((string) -> number)) -> (string, number)", toString(requireType("foo")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "propagates_name")
+{
+    const std::string code = R"(
+        type A={a:number}
+        type B={b:string}
+
+        local function f(t: A & B)
+            return t
+        end
+    )";
+
+    const std::string expected = R"(
+        type A={a:number}
+        type B={b:string}
+
+        local function f(t: A & B): A&B
+            return t
+        end
+    )";
+
+    CHECK_EQ(expected, decorateWithTypes(code));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_with_property_guaranteed_to_exist")
+{
+    CheckResult result = check(R"(
+        type A = {x: {y: number}}
+        type B = {x: {y: number}}
+
+        local function f(t: A & B)
+            return t.x
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    if (FFlag::LuauSolverV2)
+        CHECK("(A & B) -> { y: number }" == toString(requireType("f")));
+    else
+        CHECK("(A & B) -> {| y: number |} & {| y: number |}" == toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_works_at_arbitrary_depth")
+{
+    CheckResult result = check(R"(
+        type A = {x: {y: {z: {thing: string}}}}
+        type B = {x: {y: {z: {thing: string}}}}
+
+        local function f(t: A & B)
+            return t.x.y.z.thing
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    if (FFlag::LuauSolverV2)
+        CHECK_EQ("(A & B) -> string", toString(requireType("f")));
+    else
+        CHECK_EQ("(A & B) -> string & string", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_with_mixed_types")
+{
+    CheckResult result = check(R"(
+        type A = {x: number}
+        type B = {x: string}
+
+        local function f(t: A & B)
+            return t.x
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    if (FFlag::LuauSolverV2)
+        CHECK_EQ("(A & B) -> never", toString(requireType("f")));
+    else
+        CHECK_EQ("(A & B) -> number & string", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_with_one_part_missing_the_property")
+{
+    CheckResult result = check(R"(
+        type A = {x: number}
+        type B = {}
+
+        local function f(t: A & B)
+            return t.x
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+    CHECK_EQ("(A & B) -> number", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_with_one_property_of_type_any")
+{
+    CheckResult result = check(R"(
+        type A = {y: number}
+        type B = {x: any}
+
+        local function f(t: A & B)
+            return t.x
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+    CHECK_EQ("(A & B) -> any", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "index_on_an_intersection_type_with_all_parts_missing_the_property")
+{
+    CheckResult result = check(R"(
+        type A = {}
+        type B = {}
+
+        local function f(t: A & B)
+            local x = t.x
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+
+    UnknownProperty* up = get<UnknownProperty>(result.errors[0]);
+    REQUIRE_MESSAGE(up, result.errors[0].data);
+    CHECK_EQ(up->key, "x");
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_intersection_write")
+{
+    CheckResult result = check(R"(
+        type X = { x: number }
+        type XY = X & { y: number }
+
+        function f(t: XY)
+            t.x = 10
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    result = check(R"(
+        type X = {}
+        type XY = X & { x: number, y: number }
+
+        function f(t: XY)
+            t.x = 10
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    result = check(R"(
+        type X = { x: number }
+        type Y = { y: number }
+        type XY = X & Y
+
+        function f(t: XY)
+            t.x = 10
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    result = check(R"(
+        type A = { x: {y: number} }
+        type B = { x: {y: number} }
+
+        function f(t: A & B)
+            t.x = { y = 4 }
+            t.x.y = 40
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_intersection_write_sealed")
+{
+    CheckResult result = check(R"(
+        type X = { x: number }
+        type Y = { y: number }
+        type XY = X & Y
+
+        function f(t: XY)
+            t.z = 10
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    auto e = toString(result.errors[0]);
+    CHECK_EQ("Cannot add property 'z' to table 'X & Y'", e);
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_intersection_write_sealed_indirect")
+{
+    // CLI-116476 Subtyping between type alias and an equivalent but not named type isn't working.
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+
+    CheckResult result = check(R"(
+        type X = { x: (number) -> number }
+        type Y = { y: (string) -> string }
+
+        type XY = X & Y
+
+        function f(t: XY)
+            function t.z(a:number) return a * 10 end
+            function t:y(a:number) return a * 10 end
+            function t:w(a:number) return a * 10 end
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        CHECK_EQ(toString(result.errors[0]), "Cannot add property 'z' to table 'X & Y'");
+        CHECK_EQ(toString(result.errors[1]), "Cannot add property 'w' to table 'X & Y'");
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(4, result);
+        const std::string expected = R"(Type
+    '(string, number) -> string'
+could not be converted into
+    '(string) -> string'
+caused by:
+  Argument count mismatch. Function expects 2 arguments, but only 1 is specified)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+        CHECK_EQ(toString(result.errors[1]), "Cannot add property 'z' to table 'X & Y'");
+        CHECK_EQ(toString(result.errors[2]), "Type 'number' could not be converted into 'string'");
+        CHECK_EQ(toString(result.errors[3]), "Cannot add property 'w' to table 'X & Y'");
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "table_write_sealed_indirect")
+{
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+    // After normalization, previous 'table_intersection_write_sealed_indirect' is identical to this one
+    CheckResult result = check(R"(
+    type XY = { x: (number) -> number, y: (string) -> string }
+
+    local xy : XY = {
+        x = function(a: number) return -a end,
+        y = function(a: string) return a .. "b" end
+    }
+    function xy.z(a:number) return a * 10 end
+    function xy:y(a:number) return a * 10 end
+    function xy:w(a:number) return a * 10 end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(4, result);
+    const std::string expected = R"(Type
+    '(string, number) -> string'
+could not be converted into
+    '(string) -> string'
+caused by:
+  Argument count mismatch. Function expects 2 arguments, but only 1 is specified)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+
+    CHECK_EQ(toString(result.errors[1]), "Cannot add property 'z' to table 'XY'");
+    CHECK_EQ(toString(result.errors[2]), "Type 'number' could not be converted into 'string'");
+    CHECK_EQ(toString(result.errors[3]), "Cannot add property 'w' to table 'XY'");
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "table_intersection_setmetatable")
+{
+    CheckResult result = check(R"(
+        function f(t: {} & {})
+            setmetatable(t, {})
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "error_detailed_intersection_part")
+{
+    CheckResult result = check(R"(
+type X = { x: number }
+type Y = { y: number }
+type Z = { z: number }
+type XYZ = X & Y & Z
+local a: XYZ = 3
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected = R"(Type 'number' could not be converted into 'X & Y & Z'
+caused by:
+  Not all intersection parts are compatible.
+Type 'number' could not be converted into 'X')";
+    const std::string dcrExprected =
+        R"(Type 'number' could not be converted into 'X & Y & Z'; type number (number) is not a subtype of X & Y & Z[0] (X)
+	type number (number) is not a subtype of X & Y & Z[1] (Y)
+	type number (number) is not a subtype of X & Y & Z[2] (Z))";
+    if (FFlag::LuauSolverV2)
+        CHECK_EQ(dcrExprected, toString(result.errors[0]));
+    else
+        CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "error_detailed_intersection_all")
+{
+    CheckResult result = check(R"(
+type X = { x: number }
+type Y = { y: number }
+type Z = { z: number }
+type XYZ = X & Y & Z
+
+function f(a: XYZ): number
+    return a
+end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    if (FFlag::LuauSolverV2)
+    {
+        CHECK_EQ(
+            R"(Type pack 'X & Y & Z' could not be converted into 'number'; type X & Y & Z[0][0] (X) is not a subtype of number[0] (number)
+	type X & Y & Z[0][1] (Y) is not a subtype of number[0] (number)
+	type X & Y & Z[0][2] (Z) is not a subtype of number[0] (number))",
+            toString(result.errors[0])
+        );
+    }
+    else
+        CHECK_EQ(
+            toString(result.errors[0]), R"(Type 'X & Y & Z' could not be converted into 'number'; none of the intersection parts are compatible)"
+        );
+}
+
+TEST_CASE_FIXTURE(Fixture, "overload_is_not_a_function")
+{
+    check(R"(
+--!nonstrict
+function _(...):((typeof(not _))&(typeof(not _)))&((typeof(not _))&(typeof(not _)))
+_(...)(setfenv,_,not _,"")[_] = nil
+end
+do end
+_(...)(...,setfenv,_):_G()
+)");
+}
+
+TEST_CASE_FIXTURE(Fixture, "no_stack_overflow_from_flattenintersection")
+{
+    CheckResult result = check(R"(
+        local l0,l0
+        repeat
+        type t0 = ((any)|((any)&((any)|((any)&((any)|(any))))))&(t0)
+        function _(l0):(t0)&(t0)
+            while nil do
+            end
+        end
+        until _(_)(_)._
+    )");
+
+    LUAU_REQUIRE_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersect_bool_and_false")
+{
+    CheckResult result = check(R"(
+        function f(x: boolean & false)
+            local y : false = x -- OK
+            local z : true = x  -- Not OK
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    if (FFlag::LuauSolverV2)
+    {
+        CHECK_EQ(
+            R"(Type 'boolean & false' could not be converted into 'true'; type boolean & false[0] (boolean) is not a subtype of true (true)
+	type boolean & false[1] (false) is not a subtype of true (true))",
+            toString(result.errors[0])
+        );
+    }
+    else
+        CHECK_EQ(
+            toString(result.errors[0]), "Type 'boolean & false' could not be converted into 'true'; none of the intersection parts are compatible"
+        );
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersect_false_and_bool_and_false")
+{
+    CheckResult result = check(R"(
+        function f(x: false & (boolean & false))
+            local y : false = x -- OK
+            local z : true = x  -- Not OK
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    // TODO: odd stringification of `false & (boolean & false)`.)
+    if (FFlag::LuauSolverV2)
+        CHECK_EQ(
+            R"(Type 'boolean & false & false' could not be converted into 'true'; type boolean & false & false[0] (false) is not a subtype of true (true)
+	type boolean & false & false[1] (boolean) is not a subtype of true (true)
+	type boolean & false & false[2] (false) is not a subtype of true (true))",
+            toString(result.errors[0])
+        );
+    else
+        CHECK_EQ(
+            toString(result.errors[0]),
+            "Type 'boolean & false & false' could not be converted into 'true'; none of the intersection parts are compatible"
+        );
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersect_saturate_overloaded_functions")
+{
+    CheckResult result = check(R"(
+        function foo(x: ((number?) -> number?) & ((string?) -> string?))
+            local y : (nil) -> nil = x -- Not OK (fixed in DCR)
+            local z : (number) -> number = x -- Not OK
+        end
+    )");
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        const std::string expected1 = R"(Type
+    '((number?) -> number?) & ((string?) -> string?)'
+could not be converted into
+    '(nil) -> nil'; type ((number?) -> number?) & ((string?) -> string?)[0].returns()[0][0] (number) is not a subtype of (nil) -> nil.returns()[0] (nil)
+	type ((number?) -> number?) & ((string?) -> string?)[1].returns()[0][0] (string) is not a subtype of (nil) -> nil.returns()[0] (nil))";
+        const std::string expected2 = R"(Type
+    '((number?) -> number?) & ((string?) -> string?)'
+could not be converted into
+    '(number) -> number'; type ((number?) -> number?) & ((string?) -> string?)[0].returns()[0][1] (nil) is not a subtype of (number) -> number.returns()[0] (number)
+	type ((number?) -> number?) & ((string?) -> string?)[1].arguments()[0] (string?) is not a supertype of (number) -> number.arguments()[0] (number)
+	type ((number?) -> number?) & ((string?) -> string?)[1].returns()[0][0] (string) is not a subtype of (number) -> number.returns()[0] (number)
+	type ((number?) -> number?) & ((string?) -> string?)[1].returns()[0][1] (nil) is not a subtype of (number) -> number.returns()[0] (number))";
+        CHECK_EQ(expected1, toString(result.errors[0]));
+        CHECK_EQ(expected2, toString(result.errors[1]));
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((number?) -> number?) & ((string?) -> string?)'
+could not be converted into
+    '(number) -> number'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "union_saturate_overloaded_functions")
+{
+    // CLI-116474 Semantic subtyping of assignments needs to decide how to interpret intersections of functions
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+
+    CheckResult result = check(R"(
+        function f(x: ((number) -> number) & ((string) -> string))
+            local y : ((number | string) -> (number | string)) = x -- OK
+            local z : ((number | boolean) -> (number | boolean)) = x -- Not OK
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected = R"(Type
+    '((number) -> number) & ((string) -> string)'
+could not be converted into
+    '(boolean | number) -> boolean | number'; none of the intersection parts are compatible)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersection_of_tables")
+{
+    CheckResult result = check(R"(
+        function f(x: { p : number?, q : string? } & { p : number?, q : number?, r : number? })
+            local y : { p : number?, q : nil, r : number? } = x -- OK
+            local z : { p : nil } = x -- Not OK
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected =
+        (FFlag::LuauSolverV2)
+            ? R"(Type '{ p: number?, q: number?, r: number? } & { p: number?, q: string? }' could not be converted into '{ p: nil }'; type { p: number?, q: number?, r: number? } & { p: number?, q: string? }[0][read "p"][0] (number) is not exactly { p: nil }[read "p"] (nil)
+	type { p: number?, q: number?, r: number? } & { p: number?, q: string? }[1][read "p"][0] (number) is not exactly { p: nil }[read "p"] (nil))"
+            :
+            R"(Type
+    '{| p: number?, q: number?, r: number? |} & {| p: number?, q: string? |}'
+could not be converted into
+    '{| p: nil |}'; none of the intersection parts are compatible)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersection_of_tables_with_top_properties")
+{
+    CheckResult result = check(R"(
+        function f(x : { p : number?, q : any } & { p : unknown, q : string? })
+            local y : { p : number?, q : string? } = x -- OK
+            local z : { p : string?, q : number? } = x -- Not OK
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        CHECK_EQ(
+            R"(Type
+    '{ p: number?, q: any } & { p: unknown, q: string? }'
+could not be converted into
+    '{ p: string?, q: number? }'; type { p: number?, q: any } & { p: unknown, q: string? }[0][read "p"] (number?) is not exactly { p: string?, q: number? }[read "p"][0] (string)
+	type { p: number?, q: any } & { p: unknown, q: string? }[0][read "p"][0] (number) is not exactly { p: string?, q: number? }[read "p"] (string?)
+	type { p: number?, q: any } & { p: unknown, q: string? }[0][read "q"] (any) is not exactly { p: string?, q: number? }[read "q"] (number?)
+	type { p: number?, q: any } & { p: unknown, q: string? }[1][read "p"] (unknown) is not exactly { p: string?, q: number? }[read "p"] (string?)
+	type { p: number?, q: any } & { p: unknown, q: string? }[1][read "q"] (string?) is not exactly { p: string?, q: number? }[read "q"][0] (number)
+	type { p: number?, q: any } & { p: unknown, q: string? }[1][read "q"][0] (string) is not exactly { p: string?, q: number? }[read "q"] (number?))",
+            toString(result.errors[0])
+        );
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '{| p: number?, q: any |} & {| p: unknown, q: string? |}'
+could not be converted into
+    '{| p: string?, q: number? |}'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "intersection_of_tables_with_never_properties")
+{
+    CheckResult result = check(R"(
+        function f(x : { p : number?, q : never } & { p : never, q : string? })
+            local y : { p : never, q : never } = x -- OK
+            local z : never = x -- OK
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloaded_functions_returning_intersections")
+{
+    CheckResult result = check(R"(
+        function f(x : ((number?) -> ({ p : number } & { q : number })) & ((string?) -> ({ p : number } & { r : number })))
+            local y : (nil) -> { p : number, q : number, r : number} = x -- OK
+            local z : (number?) -> { p : number, q : number, r : number} = x -- Not OK
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        CHECK_EQ(
+            R"(Type
+    '((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })'
+could not be converted into
+    '(nil) -> { p: number, q: number, r: number }'; type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[0].returns()[0][0] ({ p: number }) is not a subtype of (nil) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[0].returns()[0][1] ({ q: number }) is not a subtype of (nil) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[1].returns()[0][0] ({ p: number }) is not a subtype of (nil) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[1].returns()[0][1] ({ r: number }) is not a subtype of (nil) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number }))",
+            toString(result.errors[0])
+        );
+        CHECK_EQ(
+            R"(Type
+    '((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })'
+could not be converted into
+    '(number?) -> { p: number, q: number, r: number }'; type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[0].returns()[0][0] ({ p: number }) is not a subtype of (number?) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[0].returns()[0][1] ({ q: number }) is not a subtype of (number?) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[1].arguments()[0] (string?) is not a supertype of (number?) -> { p: number, q: number, r: number }.arguments()[0][0] (number)
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[1].returns()[0][0] ({ p: number }) is not a subtype of (number?) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number })
+	type ((number?) -> { p: number } & { q: number }) & ((string?) -> { p: number } & { r: number })[1].returns()[0][1] ({ r: number }) is not a subtype of (number?) -> { p: number, q: number, r: number }.returns()[0] ({ p: number, q: number, r: number }))",
+            toString(result.errors[1])
+        );
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        CHECK_EQ(
+            R"(Type
+    '((number?) -> {| p: number |} & {| q: number |}) & ((string?) -> {| p: number |} & {| r: number |})'
+could not be converted into
+    '(number?) -> {| p: number, q: number, r: number |}'; none of the intersection parts are compatible)",
+            toString(result.errors[0])
+        );
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloaded_functions_mentioning_generic")
+{
+    CheckResult result = check(R"(
+        function f<a>()
+            function g(x : ((number?) -> (a | number)) & ((string?) -> (a | string)))
+                local y : (nil) -> a = x -- OK
+                local z : (number?) -> a = x -- Not OK
+            end
+        end
+    )");
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(0, result);
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((number?) -> a | number) & ((string?) -> a | string)'
+could not be converted into
+    '(number?) -> a'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloaded_functions_mentioning_generics")
+{
+    CheckResult result = check(R"(
+        function f<a,b,c>()
+            function g(x : ((a?) -> (a | b)) & ((c?) -> (b | c)))
+                local y : (nil) -> ((a & c) | b) = x -- OK
+                local z : (a?) -> ((a & c) | b) = x -- Not OK
+            end
+        end
+    )");
+
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((a?) -> a | b) & ((c?) -> b | c)'
+could not be converted into
+    '(a?) -> (a & c) | b'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloaded_functions_mentioning_generic_packs")
+{
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : ((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...)))
+                local y : ((nil, a...) -> (nil, b...)) = x -- OK
+                local z : ((nil, b...) -> (nil, a...)) = x -- Not OK
+            end
+        end
+    )");
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        CHECK_EQ(
+            R"(Type
+    '((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))'
+could not be converted into
+    '(nil, a...) -> (nil, b...)'; type ((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))[0].returns()[0][0] (number) is not a subtype of (nil, a...) -> (nil, b...).returns()[0] (nil)
+	type ((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))[1].returns()[0][0] (string) is not a subtype of (nil, a...) -> (nil, b...).returns()[0] (nil))",
+            toString(result.errors[0])
+        );
+        CHECK_EQ(
+            R"(Type
+    '((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))'
+could not be converted into
+    '(nil, b...) -> (nil, a...)'; type ((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))[0].returns()[0][0] (number) is not a subtype of (nil, b...) -> (nil, a...).returns()[0] (nil)
+	type ((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))[1].returns()[0][0] (string) is not a subtype of (nil, b...) -> (nil, a...).returns()[0] (nil))",
+            toString(result.errors[1])
+        );
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((number?, a...) -> (number?, b...)) & ((string?, a...) -> (string?, b...))'
+could not be converted into
+    '(nil, b...) -> (nil, a...)'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_unknown_result")
+{
+    // CLI-116474 Semantic subtyping of assignments needs to decide how to interpret intersections of functions
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : ((number) -> number) & ((nil) -> unknown))
+                local y : (number?) -> unknown = x -- OK
+                local z : (number?) -> number? = x -- Not OK
+            end
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected = R"(Type
+    '((nil) -> unknown) & ((number) -> number)'
+could not be converted into
+    '(number?) -> number?'; none of the intersection parts are compatible)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_unknown_arguments")
+{
+    // CLI-116474 Semantic subtyping of assignments needs to decide how to interpret intersections of functions
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : ((number) -> number?) & ((unknown) -> string?))
+                local y : (number) -> nil = x -- OK
+                local z : (number?) -> nil = x -- Not OK
+            end
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected = R"(Type
+    '((number) -> number?) & ((unknown) -> string?)'
+could not be converted into
+    '(number?) -> nil'; none of the intersection parts are compatible)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_never_result")
+{
+    CheckResult result = check(R"(
+    function f<a...,b...>()
+        function g(x : ((number) -> number) & ((nil) -> never))
+            local y : (number?) -> number = x -- OK
+            local z : (number?) -> never = x -- Not OK
+        end
+    end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        CHECK_EQ(
+            R"(Type
+    '((nil) -> never) & ((number) -> number)'
+could not be converted into
+    '(number?) -> number'; type ((nil) -> never) & ((number) -> number)[0].arguments()[0] (number) is not a supertype of (number?) -> number.arguments()[0][1] (nil)
+	type ((nil) -> never) & ((number) -> number)[1].arguments()[0] (nil) is not a supertype of (number?) -> number.arguments()[0][0] (number))",
+            toString(result.errors[0])
+        );
+        CHECK_EQ(
+            R"(Type
+    '((nil) -> never) & ((number) -> number)'
+could not be converted into
+    '(number?) -> never'; type ((nil) -> never) & ((number) -> number)[0].arguments()[0] (number) is not a supertype of (number?) -> never.arguments()[0][1] (nil)
+	type ((nil) -> never) & ((number) -> number)[0].returns()[0] (number) is not a subtype of (number?) -> never.returns()[0] (never)
+	type ((nil) -> never) & ((number) -> number)[1].arguments()[0] (nil) is not a supertype of (number?) -> never.arguments()[0][0] (number))",
+            toString(result.errors[1])
+        );
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((nil) -> never) & ((number) -> number)'
+could not be converted into
+    '(number?) -> never'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_never_arguments")
+{
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : ((number) -> number?) & ((never) -> string?))
+                local y : (never) -> nil = x -- OK
+                local z : (number?) -> nil = x -- Not OK
+            end
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_ERROR_COUNT(2, result);
+        const std::string expected1 = R"(Type
+    '((never) -> string?) & ((number) -> number?)'
+could not be converted into
+    '(never) -> nil'; type ((never) -> string?) & ((number) -> number?)[0].returns()[0][0] (number) is not a subtype of (never) -> nil.returns()[0] (nil)
+	type ((never) -> string?) & ((number) -> number?)[1].returns()[0][0] (string) is not a subtype of (never) -> nil.returns()[0] (nil))";
+        const std::string expected2 = R"(Type
+    '((never) -> string?) & ((number) -> number?)'
+could not be converted into
+    '(number?) -> nil'; type ((never) -> string?) & ((number) -> number?)[0].arguments()[0] (number) is not a supertype of (number?) -> nil.arguments()[0][1] (nil)
+	type ((never) -> string?) & ((number) -> number?)[0].returns()[0][0] (number) is not a subtype of (number?) -> nil.returns()[0] (nil)
+	type ((never) -> string?) & ((number) -> number?)[1].arguments()[0] (never) is not a supertype of (number?) -> nil.arguments()[0][0] (number)
+	type ((never) -> string?) & ((number) -> number?)[1].arguments()[0] (never) is not a supertype of (number?) -> nil.arguments()[0][1] (nil)
+	type ((never) -> string?) & ((number) -> number?)[1].returns()[0][0] (string) is not a subtype of (number?) -> nil.returns()[0] (nil))";
+        CHECK_EQ(expected1, toString(result.errors[0]));
+        CHECK_EQ(expected2, toString(result.errors[1]));
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '((never) -> string?) & ((number) -> number?)'
+could not be converted into
+    '(number?) -> nil'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_overlapping_results_and_variadics")
+{
+    // CLI-116474 Semantic subtyping of assignments needs to decide how to interpret intersections of functions
+    DOES_NOT_PASS_NEW_SOLVER_GUARD();
+
+    CheckResult result = check(R"(
+        function f(x : ((string?) -> (string | number)) & ((number?) -> ...number))
+            local y : ((nil) -> (number, number?)) = x -- OK
+            local z : ((string | number) -> (number, number?)) = x -- Not OK
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    const std::string expected = R"(Type
+    '((number?) -> (...number)) & ((string?) -> number | string)'
+could not be converted into
+    '(number | string) -> (number, number?)'; none of the intersection parts are compatible)";
+    CHECK_EQ(expected, toString(result.errors[0]));
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_weird_typepacks_1")
+{
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : (() -> a...) & (() -> b...))
+                local y : (() -> b...) & (() -> a...) = x -- OK
+                local z : () -> () = x -- Not OK
+            end
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        CHECK_EQ(
+            toString(result.errors[0]),
+            "Type '(() -> (a...)) & (() -> (b...))' could not be converted into '() -> ()'; none of the intersection parts are compatible"
+        );
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_weird_typepacks_2")
+{
+    CheckResult result = check(R"(
+        function f<a...,b...>()
+            function g(x : ((a...) -> ()) & ((b...) -> ()))
+                local y : ((b...) -> ()) & ((a...) -> ()) = x -- OK
+                local z : () -> () = x -- Not OK
+            end
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        CHECK_EQ(
+            toString(result.errors[0]),
+            "Type '((a...) -> ()) & ((b...) -> ())' could not be converted into '() -> ()'; none of the intersection parts are compatible"
+        );
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_weird_typepacks_3")
+{
+    CheckResult result = check(R"(
+        function f<a...>()
+            function g(x : (() -> a...) & (() -> (number?,a...)))
+                local y : (() -> (number?,a...)) & (() -> a...) = x -- OK
+                local z : () -> (number) = x -- Not OK
+            end
+        end
+    )");
+
+    if (FFlag::LuauSolverV2)
+    {
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        LUAU_REQUIRE_ERROR_COUNT(1, result);
+        const std::string expected = R"(Type
+    '(() -> (a...)) & (() -> (number?, a...))'
+could not be converted into
+    '() -> number'; none of the intersection parts are compatible)";
+        CHECK_EQ(expected, toString(result.errors[0]));
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "overloadeded_functions_with_weird_typepacks_4")
+{
+    CheckResult result = check(R"(
+        function f<a...>()
+            function g(x : ((a...) -> ()) & ((number,a...) -> number))
+                local y : ((number,a...) -> number) & ((a...) -> ()) = x -- OK
+                local z : (number?) -> () = x -- Not OK
+            end
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(1, result);
+    if (FFlag::LuauSolverV2)
+    {
+        CHECK_EQ(
+            R"(Type
+    '((a...) -> ()) & ((number, a...) -> number)'
+could not be converted into
+    '((a...) -> ()) & ((number, a...) -> number)'; at [0].returns(),  is not a subtype of number
+	type ((a...) -> ()) & ((number, a...) -> number)[1].arguments().tail() (a...) is not a supertype of ((a...) -> ()) & ((number, a...) -> number)[0].arguments().tail() (a...))",
+            toString(result.errors[0])
+        );
+    }
+    else
+    {
+        CHECK_EQ(
+            R"(Type
+    '((a...) -> ()) & ((number, a...) -> number)'
+could not be converted into
+    '(number?) -> ()'; none of the intersection parts are compatible)",
+            toString(result.errors[0])
+        );
+    }
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "intersect_metatables")
+{
+    // CLI-117121 - Intersection of types are not compatible with the equivalent alias
+    if (FFlag::LuauSolverV2)
+        return;
+
+    if (FFlag::LuauSolverV2)
+    {
+        CheckResult result = check(R"(
+            function f(a: string?, b: string?)
+                local x = setmetatable({}, { p = 5, q = a })
+                local y = setmetatable({}, { q = b, r = "hi" })
+                local z = setmetatable({}, { p = 5, q = nil, r = "hi" })
+
+                type X = typeof(x)
+                type Y = typeof(y)
+                type Z = typeof(z)
+
+                function g(xy: X&Y, yx: Y&X): (Z, Z)
+                    return xy, yx
+                end
+
+                g(z, z)
+            end
+        )");
+
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        CheckResult result = check(R"(
+            local a : string? = nil
+            local b : number? = nil
+
+            local x = setmetatable({}, { p = 5, q = a });
+            local y = setmetatable({}, { q = b, r = "hi" });
+            local z = setmetatable({}, { p = 5, q = nil, r = "hi" });
+
+            type X = typeof(x)
+            type Y = typeof(y)
+            type Z = typeof(z)
+
+            local xy : X&Y = z;
+            local yx : Y&X = z;
+            z = xy;
+            z = yx;
+        )");
+
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "intersect_metatable_subtypes")
+{
+    CheckResult result = check(R"(
+        local x = setmetatable({ a = 5 }, { p = 5 })
+        local y = setmetatable({ b = "hi" }, { p = 5, q = "hi" })
+        local z = setmetatable({ a = 5, b = "hi" }, { p = 5, q = "hi" })
+
+        type X = typeof(x)
+        type Y = typeof(y)
+        type Z = typeof(z)
+
+        function f(xy: X&Y, yx: Y&X): (Z, Z)
+            return xy, yx
+        end
+
+        f(z, z)
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "intersect_metatables_with_properties")
+{
+    CheckResult result = check(R"(
+        local x = setmetatable({ a = 5 }, { p = 5 })
+        local y = setmetatable({ b = "hi" }, { q = "hi" })
+        local z = setmetatable({ a = 5, b = "hi" }, { p = 5, q = "hi" })
+
+        type X = typeof(x)
+        type Y = typeof(y)
+        type Z = typeof(z)
+
+        function f(xy: X&Y): Z
+            return xy
+        end
+
+        f(z)
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "intersect_metatable_with_table")
+{
+    if (FFlag::LuauSolverV2)
+    {
+        CheckResult result = check(R"(
+            local x = setmetatable({ a = 5 }, { p = 5 })
+            local z = setmetatable({ a = 5, b = "hi" }, { p = 5 })
+
+            type X = typeof(x)
+            type Y = { b : string }
+            type Z = typeof(z)
+
+            function f(xy: X&Y, yx: Y&X): (Z, Z)
+                return xy, yx
+            end
+
+            f(z, z)
+        )");
+
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+    else
+    {
+        CheckResult result = check(R"(
+            local x = setmetatable({ a = 5 }, { p = 5 });
+            local z = setmetatable({ a = 5, b = "hi" }, { p = 5 });
+
+            type X = typeof(x)
+            type Y = { b : string }
+            type Z = typeof(z)
+
+            -- TODO: once we have shape types, we should be able to initialize these with z
+            local xy : X&Y;
+            local yx : Y&X;
+            z = xy;
+            z = yx;
+        )");
+
+        LUAU_REQUIRE_NO_ERRORS(result);
+    }
+}
+
+TEST_CASE_FIXTURE(Fixture, "CLI-44817")
+{
+    CheckResult result = check(R"(
+        type X = {x: number}
+        type Y = {y: number}
+        type Z = {z: number}
+
+        type XY = {x: number, y: number}
+        type XYZ = {x:number, y: number, z: number}
+
+        function f(xy: XY, xyz: XYZ): (X&Y, X&Y&Z)
+            return xy, xyz
+        end
+
+        local xNy, xNyNz = f({x = 0, y = 0}, {x = 0, y = 0, z = 0})
+
+        local t1: XY = xNy -- Type 'X & Y' could not be converted into 'XY'
+        local t2: XY = xNyNz -- Type 'X & Y & Z' could not be converted into 'XY'
+        local t3: XYZ = xNyNz -- Type 'X & Y & Z' could not be converted into 'XYZ'
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "less_greedy_unification_with_intersection_types")
+{
+    if (!FFlag::LuauSolverV2)
+        return;
+
+    CheckResult result = check(R"(
+        local function f(t): { x: number } & { x: string }
+            local x = t.x
+            return t
+        end
+    )");
+
+    LUAU_REQUIRE_ERROR_COUNT(3, result);
+
+    CHECK_EQ("(never) -> { x: number } & { x: string }", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(Fixture, "less_greedy_unification_with_intersection_types_2")
+{
+    if (!FFlag::LuauSolverV2)
+        return;
+
+    CheckResult result = check(R"(
+        local function f(t: { x: number } & { x: string })
+            return t.x
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+
+    CHECK_EQ("({ x: number } & { x: string }) -> never", toString(requireType("f")));
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "index_property_table_intersection_1")
+{
+    CheckResult result = check(R"(
+type Foo = {
+	Bar: string,
+} & { Baz: number }
+
+function f(x: Foo)
+    return x.Bar
+end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(BuiltinsFixture, "index_property_table_intersection_2")
+{
+    CheckResult result = check(R"(
+        type Foo = {
+            Bar: string,
+        } & { Baz: number }
+
+        function f(x: Foo)
+            return x["Bar"]
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "cli_80596_simplify_degenerate_intersections")
+{
+    ScopedFastFlag dcr{FFlag::LuauSolverV2, true};
+
+    CheckResult result = check(R"(
+        type A = {
+            x: number?,
+        }
+
+        type B = {
+            x: number?,
+        }
+
+        type C = A & B
+
+        function f(obj: C): number
+            return obj.x or 3
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_CASE_FIXTURE(Fixture, "cli_80596_simplify_more_realistic_intersections")
+{
+    ScopedFastFlag dcr{FFlag::LuauSolverV2, true};
+
+    CheckResult result = check(R"(
+        type A = {
+            x: number?,
+            y: string?,
+        }
+
+        type B = {
+            x: number?,
+            z: string?,
+        }
+
+        type C = A & B
+
+        function f(obj: C): number
+            return obj.x or 3
+        end
+    )");
+
+    LUAU_REQUIRE_NO_ERRORS(result);
+}
+
+TEST_SUITE_END();
