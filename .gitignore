@@ -78,3 +78,6 @@ DerivedDataCache/*
 
 # Visual Studio files
 .vscode/*
+
+# Don't include pre-built assets
+Source/ThirdParty/LuaLibrary/Binaries/**
