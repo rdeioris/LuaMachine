@@ -1,4 +1,5 @@
 // Copyright 2018-2023 - Roberto De Ioris
+// Portions Copyright 2025 - Fusion Point Studios, Inc.
 
 #include "LuauMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"

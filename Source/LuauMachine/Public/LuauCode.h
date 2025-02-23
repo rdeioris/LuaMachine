@@ -1,5 +1,6 @@
 // Copyright 2018-2023 - Roberto De Ioris
 // Reimport system by yama2akira (Akira Yamamoto)
+// Portions Copyright 2025 - Fusion Point Studios, Inc.
 
 #pragma once
 

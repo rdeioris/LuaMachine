@@ -1,4 +1,5 @@
 // Copyright 2018-2023 - Roberto De Ioris
+// Portions Copyright 2025 - Fusion Point Studios, Inc.
 
 #include "LuauSyntaxHighlighter.h"
 #include "Runtime/Slate/Public/Framework/Text/IRun.h"

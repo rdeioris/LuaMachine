@@ -1,3 +1,5 @@
+// Portions Copyright 2025 - Fusion Point Studios, Inc.
+
 using UnrealBuildTool;
 
 public class LuauLibrary : ModuleRules
