@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaMultiLineEditableTextBox.h"
 #include "Runtime/Slate/Public/Widgets/Input/SMultiLineEditableTextBox.h"
@@ -14,6 +14,9 @@ FLuaCustomHighlighter::FLuaCustomHighlighter()
 
 ULuaMultiLineEditableTextBox::ULuaMultiLineEditableTextBox()
 {
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 2
+	EditableTextBoxStyle.SetTextStyle(CodeStyle);
+#endif
 
 	SEditableTextBox::FArguments Defaults;
 	WidgetStyle = *Defaults._Style;
@@ -213,7 +216,11 @@ TSharedRef<SWidget> ULuaMultiLineEditableTextBox::RebuildWidget()
 
 	EditableTextBoxPtr = SNew(SMultiLineEditableTextBox)
 		.Marshaller(FLuaMachineSyntaxHighlighterTextLayoutMarshaller::Create(Style))
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 1
+		.Style(&EditableTextBoxStyle)
+#else
 		.TextStyle(&CodeStyle)
+#endif
 		.OnKeyCharHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyChar)
 		.OnKeyDownHandler_UObject(this, &ULuaMultiLineEditableTextBox::OnKeyDown)
 		.IsReadOnly(bIsReadonly)

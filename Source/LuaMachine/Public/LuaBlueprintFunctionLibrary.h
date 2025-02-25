@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #pragma once
 
@@ -47,6 +47,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static FLuaValue LuaCreateInteger(const int32 Value);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FLuaValue LuaCreateInteger64(const int64 Value);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Lua")
 	static FLuaValue LuaCreateBool(const bool bInBool);
@@ -343,6 +346,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	static FVector LuaTableToVector(FLuaValue Value);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	static FRotator LuaTableToRotator(FLuaValue Value);
+
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	static FLuaValue LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable);
 
@@ -370,17 +376,26 @@ public:
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Int (LuaValue)", BlueprintAutocast), Category="Lua")
 	static int32 Conv_LuaValueToInt(const FLuaValue& Value);
 
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Int64 (LuaValue)", BlueprintAutocast), Category = "Lua")
+	static int64 Conv_LuaValueToInt64(const FLuaValue& Value);
+
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Float (LuaValue)", BlueprintAutocast), Category="Lua")
 	static float Conv_LuaValueToFloat(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Vector (LuaValue)", BlueprintAutocast), Category = "Lua")
 	static FVector Conv_LuaValueToFVector(const FLuaValue& Value);
 
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Rotator (LuaValue)", BlueprintAutocast), Category = "Lua")
+	static FRotator Conv_LuaValueToFRotator(const FLuaValue& Value);
+
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To Bool (LuaValue)", BlueprintAutocast), Category="Lua")
 	static bool Conv_LuaValueToBool(const FLuaValue& Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Int)", BlueprintAutocast), Category="Lua")
 	static FLuaValue Conv_IntToLuaValue(const int32 Value);
+
+	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (Int64)", BlueprintAutocast), Category = "Lua")
+	static FLuaValue Conv_Int64ToLuaValue(const int64 Value);
 
 	UFUNCTION(BlueprintPure, meta = (DisplayName = "To LuaValue (String)", BlueprintAutocast), Category="Lua")
 	static FLuaValue Conv_StringToLuaValue(const FString& Value);

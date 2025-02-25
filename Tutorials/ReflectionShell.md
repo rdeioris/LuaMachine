@@ -5,7 +5,7 @@ completely hidden by default.
 
 If you know what you are doing, you can implement UObject's reflection easily in LuaMachine using C++.
 
-This tutorial will show you how (with a bunch of C++ lines) you can inspect/modify UObject's at runtime (and obviously make mess eveywhere).
+This tutorial will show you how (with a bunch of C++ lines) you can inspect/modify UObject's at runtime (and obviously make mess everywhere).
 
 Note: this has been tested with LuaMachine 20190122 and Unreal Engine 4.21 using the ThirdPersonCharacter template.
 

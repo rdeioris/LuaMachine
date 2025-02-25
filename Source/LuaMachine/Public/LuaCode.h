@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 // Reimport system by yama2akira (Akira Yamamoto)
 
 #pragma once
@@ -68,7 +68,12 @@ public:
 
 #if WITH_EDITORONLY_DATA
 	virtual void PostInitProperties() override;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	virtual void GetAssetRegistryTags(FAssetRegistryTagsContext Context) const override;
+#else
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
+#endif
+
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = Reimport)
 	class UAssetImportData* AssetImportData;

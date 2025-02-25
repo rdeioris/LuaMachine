@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaUserDataObject.h"
 
@@ -142,7 +142,9 @@ FLuaValue ULuaUserDataObject::UFunctionToLuaValue(const FString& FunctionName)
 	FName FunctionFName = FName(*FunctionName);
 	UFunction* Function = FindFunction(FunctionFName);
 	if (!Function)
+	{
 		return FLuaValue();
+	}
 
 	return FLuaValue::Function(FunctionFName);
 }

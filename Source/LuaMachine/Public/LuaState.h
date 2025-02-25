@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #pragma once
 
@@ -493,6 +493,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Lua")
 	FLuaValue RunString(const FString& CodeString, FString CodePath);
+
+	UFUNCTION(BlueprintCallable, Category = "Lua")
+	void Error(const FString& ErrorString);
 
 protected:
 	lua_State* L;

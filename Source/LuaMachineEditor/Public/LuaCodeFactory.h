@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 // Reimport system by yama2akira (Akira Yamamoto)
 
 #pragma once
@@ -31,25 +31,13 @@ class LUAMACHINEEDITOR_API ULuaCodeFactory : public UFactory, public FReimportHa
 
 	virtual UObject* ImportObject(UClass* InClass, UObject* InOuter, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, bool& OutCanceled) override
 	{
-		UObject* NewAsset = nullptr;
 		if (!Filename.IsEmpty())
 		{
 			CurrentFilename = Filename;
 			return FactoryCreateFile(InClass, InOuter, InName, Flags, Filename, Parms, nullptr, OutCanceled);
 		}
-		else
-		{
-			return FactoryCreateNew(InClass, InOuter, InName, Flags, nullptr, GWarn, NAME_None);
-		}
 
-		if (NewAsset)
-		{
-			NewAsset->MarkPackageDirty();
-			ULevel::LevelDirtiedEvent.Broadcast();
-			NewAsset->PostEditChange();
-		}
-
-		return NewAsset;
+		return FactoryCreateNew(InClass, InOuter, InName, Flags, nullptr, GWarn, NAME_None);
 	}
 
 public:

@@ -1,6 +1,6 @@
 # The LuaMachine Reflection API
 
-While 'safety' of scripting api exposure is one of the main objective of LuaMachine, sometimes accessing the reflection api of Unreal Engine is pretty useful (and often a quickway for exposing scripting when you are not worried about giving too much power to users)
+While 'safety' of scripting api exposure is one of the main objective of LuaMachine, sometimes accessing the reflection api of Unreal Engine is pretty useful (and often a quick way for exposing scripting when you are not worried about giving too much power to users)
 
 Albeit the api is usable from blueprints, it is strongly suggested to go to C++ when defining more advanced states.
 
@@ -265,4 +265,4 @@ Notes:
 * You do not need to attach LuaComponents to actors (everything is automatic)
 * You can attach multiple LuaGlobalNameComponents on the same actor (allowing it to be available on multiple states or with multiple names)
 * The LuaGlobalNameComponent is super easy, just give it a look to adapt it to more complex scenario
-* The LuaReflectionState class is not part of the official sources to encourage users/developers to implement their own solutions (like hiding dangeours methods or exposing subsets of them)
+* The LuaReflectionState class is not part of the official sources to encourage users/developers to implement their own solutions (like hiding dangerous methods or exposing subsets of them)

@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaMachine.h"
 #include "LuaBlueprintFunctionLibrary.h"
@@ -6,7 +6,11 @@
 #include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 3
+#include "Styling/SlateStyleRegistry.h"
+#else
 #include "SlateCore/Public/Styling/SlateStyleRegistry.h"
+#endif
 #endif
 
 #define LOCTEXT_NAMESPACE "FLuaMachineModule"
@@ -71,7 +75,11 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 	TArray<TSubclassOf<ULuaState>> LuaStatesKeys;
 	LuaStates.GetKeys(LuaStatesKeys);
 
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TMap<TSubclassOf<ULuaState>, TObjectPtr<ULuaState>> PersistentLuaStates;
+#else
 	TMap<TSubclassOf<ULuaState>, ULuaState*> PersistentLuaStates;
+#endif
 
 	for (TSubclassOf<ULuaState> LuaStateClass : LuaStatesKeys)
 	{
@@ -81,7 +89,7 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 		}
 		else
 		{
-			if(FLuaCommandExecutor* LuaConsole = LuaStates[LuaStateClass]->GetLuaConsole())
+			if (FLuaCommandExecutor* LuaConsole = LuaStates[LuaStateClass]->GetLuaConsole())
 			{
 				IModularFeatures::Get().UnregisterModularFeature(IConsoleCommandExecutor::ModularFeatureName(), LuaConsole);
 			}
@@ -95,7 +103,9 @@ void FLuaMachineModule::CleanupLuaStates(bool bIsSimulating)
 ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, UWorld* InWorld, bool bCheckOnly)
 {
 	if (!LuaStateClass)
+	{
 		return nullptr;
+	}
 
 	if (LuaStateClass == ULuaState::StaticClass())
 	{
@@ -106,19 +116,26 @@ ULuaState* FLuaMachineModule::GetLuaState(TSubclassOf<ULuaState> LuaStateClass, 
 	if (!LuaStates.Contains(LuaStateClass))
 	{
 		if (bCheckOnly)
+		{
 			return nullptr;
+		}
 		ULuaState* NewLuaState = NewObject<ULuaState>((UObject*)GetTransientPackage(), LuaStateClass);
 		LuaStates.Add(LuaStateClass, NewLuaState);
 		OnNewLuaState.Broadcast(NewLuaState);
 		OnRegisteredLuaStatesChanged.Broadcast();
 	}
+
 	return LuaStates[LuaStateClass]->GetLuaState(InWorld);
 }
 
 TArray<ULuaState*> FLuaMachineModule::GetRegisteredLuaStates()
 {
 	TArray<ULuaState*> RegisteredStates;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	for (TPair< TSubclassOf<ULuaState>, TObjectPtr<ULuaState>>& Pair : LuaStates)
+#else
 	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+#endif
 	{
 		RegisteredStates.Add(Pair.Value);
 	}
@@ -129,7 +146,11 @@ TArray<ULuaState*> FLuaMachineModule::GetRegisteredLuaStates()
 void FLuaMachineModule::UnregisterLuaState(ULuaState* LuaState)
 {
 	TSubclassOf<ULuaState> FoundLuaStateClass = nullptr;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	for (TPair< TSubclassOf<ULuaState>, TObjectPtr<ULuaState>>& Pair : LuaStates)
+#else
 	for (TPair< TSubclassOf<ULuaState>, ULuaState*>& Pair : LuaStates)
+#endif
 	{
 		if (Pair.Value == LuaState)
 		{
@@ -190,6 +211,56 @@ FLuaMachineModule& FLuaMachineModule::Get()
 		Singleton = &FModuleManager::LoadModuleChecked<FLuaMachineModule>("LuaMachine");
 	}
 	return *Singleton;
+}
+
+bool FLuaMachineModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
+{
+	if (FParse::Command(&Cmd, TEXT("luaspawn")))
+	{
+		if (!*Cmd)
+		{
+			UE_LOG(LogLuaMachine, Error, TEXT("please specify a valid LuaState path."));
+			return false;
+		}
+
+		UObject* RequestedObject = LoadObject<UObject>(nullptr, Cmd);
+		if (RequestedObject)
+		{
+			bool bLoaded = false;
+			UClass* ObjectAsClass = Cast<UClass>(RequestedObject);
+			if (ObjectAsClass && ObjectAsClass->IsChildOf<ULuaState>())
+			{
+				bLoaded = true;
+			}
+
+			if (!bLoaded)
+			{
+				UBlueprint* ObjectAsBlueprint = Cast<UBlueprint>(RequestedObject);
+				if (ObjectAsBlueprint)
+				{
+					ObjectAsClass = ObjectAsBlueprint->GeneratedClass;
+					if (ObjectAsClass && ObjectAsClass->IsChildOf<ULuaState>())
+					{
+						bLoaded = true;
+					}
+				}
+			}
+
+			if (bLoaded)
+			{
+				ULuaState* SpawnedState = FLuaMachineModule::Get().GetLuaState(ObjectAsClass, InWorld, false);
+				if (SpawnedState)
+				{
+					UE_LOG(LogLuaMachine, Log, TEXT("%s spawned."), *SpawnedState->GetName());
+				}
+				return true;
+			}
+
+			UE_LOG(LogLuaMachine, Error, TEXT("specified argument is not a valid LuaState path."));
+		}
+	}
+
+	return false;
 }
 
 #undef LOCTEXT_NAMESPACE

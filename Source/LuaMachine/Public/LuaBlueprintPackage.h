@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #pragma once
 
@@ -22,6 +22,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
 	TSubclassOf<ULuaState> GetLuaState() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Lua")
+	ULuaState* GetLuaStateInstance() const;
 	
 	virtual UWorld* GetWorld() const override;
 

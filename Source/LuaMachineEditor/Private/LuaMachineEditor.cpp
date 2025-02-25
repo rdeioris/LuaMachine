@@ -1,11 +1,10 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaMachineEditor.h"
 #include "Editor/UnrealEd/Public/Editor.h"
 #include "Editor/PropertyEditor/Public/PropertyEditorModule.h"
 #include "EditorStyleSet.h"
 #include "Runtime/Projects/Public/Interfaces/IPluginManager.h"
-#include "SlateCore/Public/Styling/SlateStyleRegistry.h"
 #include "LuaCodeCustomization.h"
 #include "LuaValueCustomization.h"
 #include "Editor/WorkspaceMenuStructure/Public/WorkspaceMenuStructure.h"
@@ -23,14 +22,14 @@
 #define LOCTEXT_NAMESPACE "FLuaMachineEditorModule"
 
 FLuaMachineEditorModule::FLuaMachineEditorModule()
-	: LuaMachineAssetCategoryBit( EAssetTypeCategories::Misc )
+	: LuaMachineAssetCategoryBit(EAssetTypeCategories::Misc)
 {
 
 }
 
 void FLuaMachineEditorModule::StartupModule()
 {
-	FCoreDelegates::OnPostEngineInit.AddRaw( this, &FLuaMachineEditorModule::OnPostEngineInit );
+	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FLuaMachineEditorModule::OnPostEngineInit);
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
@@ -55,7 +54,9 @@ void FLuaMachineEditorModule::StartupModule()
 	StyleSet->Set("SyntaxHighlight.LuaMachine.StdLib", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::Yellow));
 	StyleSet->Set("SyntaxHighlight.LuaMachine.Basic", FTextBlockStyle(CodeBaseStyle).SetColorAndOpacity(FLinearColor::FromSRGBColor(FColor::Magenta)));
 
+#if ENGINE_MINOR_VERSION >= 3
 	FSlateStyleRegistry::RegisterSlateStyle(*StyleSet.Get());
+#endif
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>(TEXT("PropertyEditor"));
 
@@ -67,18 +68,24 @@ void FLuaMachineEditorModule::StartupModule()
 	FGlobalTabmanager::Get()->RegisterNomadTabSpawner("LuaMachineDebugger", FOnSpawnTab::CreateStatic(&FLuaMachineEditorModule::CreateLuaMachineDebugger))
 		.SetDisplayName(LOCTEXT("LuaMachine Debugger", "LuaMachine Debugger"))
 		.SetTooltipText(LOCTEXT("Open the LuaMachine Debugger", "Open the LuaMachine Debugger"))
-		.SetIcon(FSlateIcon(FEditorStyle::GetStyleSetName(), "DebugTools.TabIcon"))
+		.SetIcon(FSlateIcon(
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 1
+			FAppStyle::GetAppStyleSetName()
+#else
+			FEditorStyle::GetStyleSetName()
+#endif
+			, "DebugTools.TabIcon"))
 		.SetGroup(WorkspaceMenu::GetMenuStructure().GetDeveloperToolsMiscCategory());
 }
 
 void FLuaMachineEditorModule::OnPostEngineInit()
 {
-	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
+	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
 
-	LuaMachineAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory( FName( TEXT( "LuaMachine" ) ), LOCTEXT( "AssetCategory", "Lua Machine" ) );
+	LuaMachineAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("LuaMachine")), LOCTEXT("AssetCategory", "Lua Machine"));
 
 	//Add LuaCode to Filters.
-	RegisterAssetTypeAction( AssetTools, MakeShareable( new FLuaCodeAssetTypeActions( LuaMachineAssetCategoryBit ) ) );
+	RegisterAssetTypeAction(AssetTools, MakeShareable(new FLuaCodeAssetTypeActions(LuaMachineAssetCategoryBit)));
 }
 
 TSharedPtr<FSlateStyleSet> FLuaMachineEditorModule::GetStyleSet()
@@ -86,10 +93,10 @@ TSharedPtr<FSlateStyleSet> FLuaMachineEditorModule::GetStyleSet()
 	return StyleSet;
 }
 
-void FLuaMachineEditorModule::RegisterAssetTypeAction( IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action )
+void FLuaMachineEditorModule::RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action)
 {
-	AssetTools.RegisterAssetTypeActions( Action );
-	CreatedAssetTypeActions.Add( Action );
+	AssetTools.RegisterAssetTypeActions(Action);
+	CreatedAssetTypeActions.Add(Action);
 }
 
 struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
@@ -103,11 +110,11 @@ struct FTableViewLuaValue : public TSharedFromThis<FTableViewLuaValue>
 class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 {
 	SLATE_BEGIN_ARGS(SLuaMachineDebugger)
-	{}
+		{}
 
 	SLATE_END_ARGS()
 
-		void RebuildLuaValues()
+	void RebuildLuaValues()
 	{
 		LuaValues.Empty();
 
@@ -401,18 +408,18 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		return SNew(STableRow<TSharedRef<FTableViewLuaValue>>, OwnerTable)
 			[
 				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
-			[
-				SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
-			]
-		+ SHorizontalBox::Slot().FillWidth(0.2)
-			[
-				SNew(STextBlock).Text(GetLuaTypeText(Item))
-			]
-		+ SHorizontalBox::Slot()
-			[
-				SNew(STextBlock).Text(GetLuaValueText(Item)).ColorAndOpacity(GetLuaTypeColor(Item)).ToolTipText(GetLuaValueText(Item))
-			]
+					+ SHorizontalBox::Slot()
+					[
+						SNew(STextBlock).Text(FText::FromString(Item->LuaTableKey))
+					]
+					+ SHorizontalBox::Slot().FillWidth(0.2)
+					[
+						SNew(STextBlock).Text(GetLuaTypeText(Item))
+					]
+					+ SHorizontalBox::Slot()
+					[
+						SNew(STextBlock).Text(GetLuaValueText(Item)).ColorAndOpacity(GetLuaTypeColor(Item)).ToolTipText(GetLuaValueText(Item))
+					]
 			];
 	}
 
@@ -426,53 +433,53 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
-				[
-					SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
-				]
-			+ SHorizontalBox::Slot().FillWidth(0.6)
-				[
-					SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
-				]
+						+ SHorizontalBox::Slot().AutoWidth().VAlign(EVerticalAlignment::VAlign_Center).HAlign(EHorizontalAlignment::HAlign_Left)
+						[
+							SNew(STextBlock).Text(FText::FromString("Select LuaState to Debug: "))
+						]
+						+ SHorizontalBox::Slot().FillWidth(0.6)
+						[
+							SAssignNew(LuaStatesComboBox, STextComboBox).OptionsSource(&DetectedLuaStates)
+						]
 				]
 
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Refresh")).OnClicked(this, &SLuaMachineDebugger::RefreshDebugger)
 				]
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Call Unreal GC")).OnClicked(this, &SLuaMachineDebugger::CallGC)
 				]
-			+ SVerticalBox::Slot().AutoHeight()
+				+ SVerticalBox::Slot().AutoHeight()
 				[
 					SNew(SButton).Text(FText::FromString("Call Lua GC")).OnClicked(this, &SLuaMachineDebugger::CallLuaGC)
 				]
-			+ SVerticalBox::Slot().FillHeight(1)
+				+ SVerticalBox::Slot().FillHeight(1)
 				[
 					SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-					+ SScrollBox::Slot()
-				[
-					SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
+						+ SScrollBox::Slot()
+						[
+							SAssignNew(LuaTreeView, STreeView<TSharedRef<FTableViewLuaValue>>).TreeItemsSource(&LuaValues).OnGetChildren(this, &SLuaMachineDebugger::OnGetChildren).OnGenerateRow(this, &SLuaMachineDebugger::OnGenerateDebuggerRow)
+						]
 				]
-				]
-			+ SVerticalBox::Slot().FillHeight(0.1)
+				+ SVerticalBox::Slot().FillHeight(0.1)
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::White).Padding(4)
-					[
-						SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
-						+ SScrollBox::Slot()
-				[
-					SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+						[
+							SNew(SScrollBox).AllowOverscroll(EAllowOverscroll::Yes)
+								+ SScrollBox::Slot()
+								[
+									SAssignNew(ReferencersText, STextBlock).Text(FText::FromString(ReferencersTextContext))
+								]
+						]
 				]
-					]
-				]
-			+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
+				+ SVerticalBox::Slot().VAlign(EVerticalAlignment::VAlign_Bottom).AutoHeight()
 				[
 					SNew(SBorder).BorderBackgroundColor(FColor::Red).Padding(4)
-					[
-						SAssignNew(DebugText, STextBlock).Text(FText::FromString(DebugTextContext))
-					]
+						[
+							SAssignNew(DebugText, STextBlock).Text(FText::FromString(DebugTextContext))
+						]
 				]
 		];
 		FLuaMachineModule::Get().OnRegisteredLuaStatesChanged.AddSP(this, &SLuaMachineDebugger::OnRegisteredLuaStatesChanged);
@@ -493,7 +500,11 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 protected:
 	TArray<TSharedRef<FTableViewLuaValue>> LuaValues;
 	TSharedPtr<STreeView<TSharedRef<FTableViewLuaValue>>> LuaTreeView;
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TObjectPtr<ULuaState> SelectedLuaState;
+#else
 	ULuaState* SelectedLuaState;
+#endif
 	TArray<TSharedPtr<FString>> DetectedLuaStates;
 	TSharedPtr<STextComboBox> LuaStatesComboBox;
 	TSharedPtr<STextBlock> DebugText;
@@ -512,15 +523,15 @@ TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSp
 
 void FLuaMachineEditorModule::ShutdownModule()
 {
-	FCoreDelegates::OnPostEngineInit.RemoveAll( this );
+	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
 
 	// Unregister all the asset types that we registered
-	if ( FModuleManager::Get().IsModuleLoaded( "AssetTools" ) )
+	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
 	{
-		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>( "AssetTools" ).Get();
-		for ( int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index )
+		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
+		for (int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index)
 		{
-			AssetTools.UnregisterAssetTypeActions( CreatedAssetTypeActions[Index].ToSharedRef() );
+			AssetTools.UnregisterAssetTypeActions(CreatedAssetTypeActions[Index].ToSharedRef());
 		}
 	}
 	CreatedAssetTypeActions.Empty();

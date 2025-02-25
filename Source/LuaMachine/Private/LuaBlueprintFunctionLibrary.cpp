@@ -1,4 +1,4 @@
-// Copyright 2018-2022 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaBlueprintFunctionLibrary.h"
 #include "LuaComponent.h"
@@ -12,7 +12,11 @@
 #include "IImageWrapper.h"
 #include "IImageWrapperModule.h"
 #include "IPlatformFilePak.h"
+#if ENGINE_MAJOR_VERSION >= 5
+#include "HAL/PlatformFileManager.h" 
+#else
 #include "HAL/PlatformFilemanager.h"
+#endif
 #if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION > 0
 #include "AssetRegistry/IAssetRegistry.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -22,6 +26,11 @@
 #endif
 #include "Misc/FileHelper.h"
 #include "Serialization/ArrayReader.h"
+#include "TextureResource.h"
+
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 5
+#include "Engine/BlueprintGeneratedClass.h"
+#endif
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNil()
 {
@@ -39,6 +48,11 @@ FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateNumber(const float Value)
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger(const int32 Value)
+{
+	return FLuaValue(Value);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::LuaCreateInteger64(const int64 Value)
 {
 	return FLuaValue(Value);
 }
@@ -136,6 +150,11 @@ FVector ULuaBlueprintFunctionLibrary::Conv_LuaValueToFVector(const FLuaValue& Va
 	return LuaTableToVector(Value);
 }
 
+FRotator ULuaBlueprintFunctionLibrary::Conv_LuaValueToFRotator(const FLuaValue& Value)
+{
+	return LuaTableToRotator(Value);
+}
+
 FName ULuaBlueprintFunctionLibrary::Conv_LuaValueToName(const FLuaValue& Value)
 {
 	return FName(*Value.ToString());
@@ -190,6 +209,11 @@ int32 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt(const FLuaValue& Value)
 	return Value.ToInteger();
 }
 
+int64 ULuaBlueprintFunctionLibrary::Conv_LuaValueToInt64(const FLuaValue& Value)
+{
+	return Value.ToInteger();
+}
+
 float ULuaBlueprintFunctionLibrary::Conv_LuaValueToFloat(const FLuaValue& Value)
 {
 	return Value.ToFloat();
@@ -201,6 +225,11 @@ bool ULuaBlueprintFunctionLibrary::Conv_LuaValueToBool(const FLuaValue& Value)
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::Conv_IntToLuaValue(const int32 Value)
+{
+	return FLuaValue(Value);
+}
+
+FLuaValue ULuaBlueprintFunctionLibrary::Conv_Int64ToLuaValue(const int64 Value)
 {
 	return FLuaValue(Value);
 }
@@ -441,7 +470,9 @@ ELuaThreadStatus ULuaBlueprintFunctionLibrary::LuaThreadGetStatus(FLuaValue Valu
 int32 ULuaBlueprintFunctionLibrary::LuaThreadGetStackTop(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Thread || !Value.LuaState.IsValid())
+	{
 		return MIN_int32;
+	}
 
 	return Value.LuaState->GetLuaThreadStackTop(Value);
 }
@@ -1456,7 +1487,9 @@ TArray<FLuaValue> ULuaBlueprintFunctionLibrary::LuaValueResumeMulti(FLuaValue Va
 FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 {
 	if (Value.Type != ELuaValueType::Table)
+	{
 		return FVector(NAN);
+	}
 
 	auto GetVectorField = [](FLuaValue& Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
 	{
@@ -1468,7 +1501,9 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 			{
 				N = Table.GetFieldByIndex(Index);
 				if (N.IsNil())
+				{
 					N = FLuaValue(NAN);
+				}
 			}
 		}
 		return N;
@@ -1479,6 +1514,38 @@ FVector ULuaBlueprintFunctionLibrary::LuaTableToVector(FLuaValue Value)
 	FLuaValue Z = GetVectorField(Value, "z", "Z", 3);
 
 	return FVector(X.ToFloat(), Y.ToFloat(), Z.ToFloat());
+}
+
+FRotator ULuaBlueprintFunctionLibrary::LuaTableToRotator(FLuaValue Value)
+{
+	if (Value.Type != ELuaValueType::Table)
+	{
+		return FRotator(NAN);
+	}
+
+	auto GetRotatorField = [](FLuaValue& Table, const char* Field_n, const char* Field_N, int32 Index) -> FLuaValue
+		{
+			FLuaValue N = Table.GetField(Field_n);
+			if (N.IsNil())
+			{
+				N = Table.GetField(Field_N);
+				if (N.IsNil())
+				{
+					N = Table.GetFieldByIndex(Index);
+					if (N.IsNil())
+					{
+						N = FLuaValue(NAN);
+					}
+				}
+			}
+			return N;
+		};
+
+	FLuaValue Roll = GetRotatorField(Value, "roll", "Roll", 1);
+	FLuaValue Pitch = GetRotatorField(Value, "pitch", "Pitch", 2);
+	FLuaValue Yaw = GetRotatorField(Value, "yaw", "Yaw", 3);
+
+	return FRotator(Pitch.ToFloat(), Yaw.ToFloat(), Roll.ToFloat());
 }
 
 FLuaValue ULuaBlueprintFunctionLibrary::LuaTableSetMetaTable(FLuaValue InTable, FLuaValue InMetaTable)
@@ -1710,7 +1777,14 @@ UClass* ULuaBlueprintFunctionLibrary::LuaValueLoadClass(const FLuaValue& Value, 
 	{
 		UBlueprint* Blueprint = Cast<UBlueprint>(LoadedObject);
 		if (Blueprint)
+		{
 			return Cast<UClass>(Blueprint->GeneratedClass);
+		}
+		UBlueprintGeneratedClass* BlueprintGeneratedClass = Cast<UBlueprintGeneratedClass>(LoadedObject);
+		if (BlueprintGeneratedClass)
+		{
+			return BlueprintGeneratedClass;
+		}
 	}
 
 	return Cast<UClass>(LoadedObject);

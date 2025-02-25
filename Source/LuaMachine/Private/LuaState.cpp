@@ -1,4 +1,4 @@
-// Copyright 2018-2022 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaState.h"
 #include "LuaComponent.h"
@@ -601,6 +601,8 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 				}
 			}
 		}
+		// no function found
+		lua_pushnil(State);
 		break;
 	case ELuaValueType::MulticastDelegate:
 		// if no context is assigned to the function, own it !
@@ -652,11 +654,11 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 	}
 	else if (lua_isinteger(State, Index))
 	{
-		LuaValue = FLuaValue(static_cast<int32>(lua_tointeger(State, Index)));
+		LuaValue = FLuaValue(lua_tointeger(State, Index));
 	}
 	else if (lua_type(State, Index) == LUA_TNUMBER)
 	{
-		LuaValue = FLuaValue(static_cast<double>(lua_tonumber(State, Index)));
+		LuaValue = FLuaValue(lua_tonumber(State, Index));
 	}
 	else if (lua_istable(State, Index))
 	{
@@ -773,7 +775,7 @@ int ULuaState::MetaTableFunctionUserData__index(lua_State* L)
 	if (LuaUserDataObject)
 	{
 		FLuaValue MetaIndexReturnValue = LuaUserDataObject->ReceiveLuaMetaIndex(Key);
-		LuaState->FromLuaValue(MetaIndexReturnValue, Context, L);
+		LuaState->FromLuaValue(MetaIndexReturnValue, MetaIndexReturnValue.Object ? MetaIndexReturnValue.Object : Context, L);
 		return 1;
 	}
 
@@ -1552,7 +1554,9 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
 
 	if (LuaState->L != L)
+	{
 		return luaL_error(L, "you cannot call package.preload from a thread/coroutine (error while loading %s)", lua_tostring(L, 1));
+	}
 
 	FString Key = ANSI_TO_TCHAR(lua_tostring(L, 1));
 
@@ -1564,7 +1568,6 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 		{
 			return 1;
 		}
-		return luaL_error(L, "%s", lua_tostring(L, -1));
 
 		// now search in additional paths
 		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
@@ -2093,6 +2096,8 @@ FLuaValue ULuaState::FromUProperty(void* Buffer, UProperty * Property, bool& bSu
 	LUAVALUE_PROP_CAST(BoolProperty, bool);
 	LUAVALUE_PROP_CAST(DoubleProperty, double);
 	LUAVALUE_PROP_CAST(FloatProperty, float);
+	LUAVALUE_PROP_CAST(Int64Property, int64);
+	LUAVALUE_PROP_CAST(UInt64Property, int64);
 	LUAVALUE_PROP_CAST(IntProperty, int32);
 	LUAVALUE_PROP_CAST(UInt32Property, int32);
 	LUAVALUE_PROP_CAST(Int16Property, int32);
@@ -2284,6 +2289,8 @@ void ULuaState::ToUProperty(void* Buffer, UProperty * Property, FLuaValue Value,
 	LUAVALUE_PROP_SET(FloatProperty, Value.ToFloat());
 	LUAVALUE_PROP_SET(IntProperty, Value.ToInteger());
 	LUAVALUE_PROP_SET(UInt32Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(Int64Property, Value.ToInteger());
+	LUAVALUE_PROP_SET(UInt64Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(Int16Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(Int8Property, Value.ToInteger());
 	LUAVALUE_PROP_SET(ByteProperty, Value.ToInteger());
@@ -2793,4 +2800,9 @@ FLuaValue ULuaState::RunString(const FString & CodeString, FString CodePath)
 
 	Pop();
 	return ReturnValue;
+}
+
+void ULuaState::Error(const FString& ErrorString)
+{
+	luaL_error(L, TCHAR_TO_UTF8(*ErrorString));
 }

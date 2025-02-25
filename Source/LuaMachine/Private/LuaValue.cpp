@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #include "LuaValue.h"
 #include "LuaState.h"
@@ -11,7 +11,7 @@ FString FLuaValue::ToString() const
 	case ELuaValueType::Bool:
 		return Bool ? FString(TEXT("true")) : FString(TEXT("false"));
 	case ELuaValueType::Integer:
-		return FString::FromInt(Integer);
+		return FString::Printf(TEXT("%lld"), Integer);
 	case ELuaValueType::Number:
 		return FString::SanitizeFloat(Number);
 	case ELuaValueType::String:
@@ -35,7 +35,7 @@ FName FLuaValue::ToName() const
 	return FName(*ToString());
 }
 
-int32 FLuaValue::ToInteger() const
+int64 FLuaValue::ToInteger() const
 {
 	switch (Type)
 	{
@@ -226,13 +226,17 @@ FLuaValue FLuaValue::GetField(const FString& Key)
 	return ReturnValue;
 }
 
-FLuaValue FLuaValue::GetFieldByIndex(int32 Index)
+FLuaValue FLuaValue::GetFieldByIndex(const int32 Index)
 {
 	if (Type != ELuaValueType::Table)
+	{
 		return FLuaValue();
+	}
 
 	if (!LuaState.IsValid())
+	{
 		return FLuaValue();
+	}
 
 	LuaState->FromLuaValue(*this);
 	LuaState->RawGetI(-1, Index);
@@ -241,13 +245,17 @@ FLuaValue FLuaValue::GetFieldByIndex(int32 Index)
 	return ReturnValue;
 }
 
-FLuaValue FLuaValue::SetFieldByIndex(int32 Index, FLuaValue Value)
+FLuaValue FLuaValue::SetFieldByIndex(const int32 Index, FLuaValue Value)
 {
 	if (Type != ELuaValueType::Table)
+	{
 		return *this;
+	}
 
 	if (!LuaState.IsValid())
+	{
 		return *this;
+	}
 
 	LuaState->FromLuaValue(*this);
 	LuaState->FromLuaValue(Value);
@@ -274,7 +282,7 @@ FLuaValue FLuaValue::FromJsonValue(ULuaState* L, FJsonValue& JsonValue)
 	}
 	else if (JsonValue.Type == EJson::Number)
 	{
-		return FLuaValue((float)JsonValue.AsNumber());
+		return FLuaValue(JsonValue.AsNumber());
 	}
 	else if (JsonValue.Type == EJson::Boolean)
 	{
@@ -390,7 +398,7 @@ TArray<uint8> FLuaValue::ToBytes() const
 	if (Type != ELuaValueType::String)
 		return Bytes;
 
-	int32 StringLength = String.Len();
+	const int32 StringLength = String.Len();
 	Bytes.AddUninitialized(StringLength);
 	for (int32 i = 0; i < StringLength; i++)
 	{

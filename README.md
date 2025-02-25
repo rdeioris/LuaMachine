@@ -9,6 +9,8 @@ If you want modders to customize your game/project, or you need to allow game de
 
 Note: The master branch is focused on Unreal Engine 5, if you need Unreal Engine 4 support use the ue4 branch.
 
+Experimental LuaU (https://luau.org/) support is available (for Windows) in the "luau" branch.
+
 ## How it works
 
 Contrary to the other Unreal Engine Lua plugins, this one does not try to automatically expose the Unreal Engine api, but completely hides it giving to the user/scripter only the features the developer decided to include (via Blueprints or C++).
@@ -40,7 +42,7 @@ https://github.com/rdeioris/LuaMachine/releases/
 
 https://www.unrealengine.com/marketplace/luamachine
 
-To compile from sources, uncompress the zip file in the Plugins/ directory of your project (create it if it does not exist) and restart the Unreal Editor. (if you want to manually compile it, ensure C++ is enabled in your project and regenerate the solution/xcode file)
+To compile from sources, decompress the zip file in the Plugins/ directory of your project (create it if it does not exist) and restart the Unreal Editor. (if you want to manually compile it, ensure C++ is enabled in your project and regenerate the solution/xcode file)
 
 Open your favourite editor for lua scripting and create a file into the project Content/ directory (call it hello.lua) with the following code:
 
@@ -49,7 +51,7 @@ current_time = os.date()
 return "Hello, i am a lua script, current time is: " .. current_time
 ```
 
-Now you need to create a new LuaState, it is a special Blueprint representing a Lua Virtual Machine (you can have multple Lua virtual machines in the same project). Just add a new blueprint inheriting from LuaState and name as you want (QuickLuaState is a good candidate).
+Now you need to create a new LuaState, it is a special Blueprint representing a Lua Virtual Machine (you can have multiple Lua virtual machines in the same project). Just add a new blueprint inheriting from LuaState and name as you want (QuickLuaState is a good candidate).
 
 Finally open your Level Blueprint and add the following nodes:
 
@@ -151,7 +153,7 @@ LuaState's can load and execute scripts automatically if you specify the fields 
   
 ### LuaState Events
 
-The "LuaError" event i exposed by ULuaState.
+The "LuaError" event is exposed by ULuaState.
 
 If defined, it will be triggered whenever the Lua VM generates an error. The Error message is passed as an argument. This is really useful for adding in-game consoles, or to catch specific errors.
 
@@ -324,7 +326,7 @@ This is for allowing easy customization of your scripts after the packaging. Bas
 
 ## Android deployment
 
-The plugin supports Android systems starting from api 24. Before deployng ensure you have force the right minimal api version:
+The plugin supports Android systems starting from api 24. Before deploying ensure you have force the right minimal api version:
 
 ![Android24](Docs/Screenshots/Android24.PNG?raw=true "Android24")
 
@@ -356,7 +358,7 @@ https://github.com/rdeioris/LuaMachine/blob/master/Docs/ReflectionAPI.md
 
 ## Commercial Support
 
-Commercial support is offered by Unbit (based in Rome, Italy), just contact info at unbit dot it or follow/direct message @unbit on twitter
+Commercial support is offered by Blitter (based in Rome, Italy), just contact info at blitter.studio or send a private message to rdeioris on the LuaMachine Discord server.
 
 ## Sponsors
 

@@ -1,10 +1,11 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Components/TextWidgetTypes.h"
 #include "Components/MultiLineEditableTextBox.h"
+#include "Runtime/Launch/Resources/Version.h"
 #include "LuaMultiLineEditableTextBox.generated.h"
 
 USTRUCT(BlueprintType)
@@ -121,4 +122,8 @@ protected:
 	TSharedPtr<SMultiLineEditableTextBox> EditableTextBoxPtr;
 
 	FTextLocation CursorLocation;
+
+#if ENGINE_MAJOR_VERSION >=5 && ENGINE_MINOR_VERSION >= 1
+	FEditableTextBoxStyle EditableTextBoxStyle;
+#endif
 };

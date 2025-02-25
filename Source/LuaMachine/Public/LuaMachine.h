@@ -1,4 +1,4 @@
-// Copyright 2018-2020 - Roberto De Ioris
+// Copyright 2018-2023 - Roberto De Ioris
 
 #pragma once
 
@@ -11,7 +11,7 @@
 DECLARE_MULTICAST_DELEGATE(FOnRegisteredLuaStatesChanged);
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnNewLuaState, ULuaState*);
 
-class LUAMACHINE_API FLuaMachineModule : public IModuleInterface, public FGCObject
+class LUAMACHINE_API FLuaMachineModule : public IModuleInterface, public FGCObject, public FSelfRegisteringExec
 {
 public:
 
@@ -48,7 +48,13 @@ public:
 	}
 #endif
 
+	virtual bool Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar);
+
 private:
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 4
+	TMap<TSubclassOf<ULuaState>, TObjectPtr<ULuaState>> LuaStates;
+#else
 	TMap<TSubclassOf<ULuaState>, ULuaState*> LuaStates;
+#endif
 	TSet<FString> LuaConsoleCommands;
 };

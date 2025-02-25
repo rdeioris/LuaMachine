@@ -97,3 +97,92 @@ FLuaValue ULuaVector::BuildVector(FVector Vector)
 	return NewTable;
 }
 ```
+
+## Mapping BlueprintFunctionLibrary to UserData
+
+The Goal:
+
+```lua
+kismet_math = bpfl.require('KismetMathLibrary')
+
+print(kismet_math.Abs(-17.3))
+
+print(kismet_math.Add_DoubleDouble(17, 0.3))
+
+print(kismet_math.Add_VectorFloat({1,2,3}, 0.3).X)
+```
+
+'bpfl' (shortcut for 'Blueprint Function Library') will be the package to get a userdata from a BlueprintFunctionLibrary ('KismetMathLibrary' on the example, but can be anything)
+
+```cpp
+UCLASS()
+class UBPFLLuaBlueprintPackage : public ULuaBlueprintPackage
+{
+	GENERATED_BODY()
+public:
+	UBPFLLuaBlueprintPackage();
+
+	UFUNCTION()
+	FLuaValue RequireBlueprintFunctionLibrary(FLuaValue LibraryName);
+};
+```
+
+```cpp
+UBPFLLuaBlueprintPackage::UBPFLLuaBlueprintPackage()
+{
+	Table.Add("require", FLuaValue::Function(GET_FUNCTION_NAME_CHECKED(UBPFLLuaBlueprintPackage, RequireBlueprintFunctionLibrary)));
+}
+
+FLuaValue UBPFLLuaBlueprintPackage::RequireBlueprintFunctionLibrary(FLuaValue LibraryName)
+{
+	UClass* FoundClass = Cast<UClass>(StaticFindObject(UClass::StaticClass(), ANY_PACKAGE, *LibraryName.ToString()));
+	if (FoundClass)
+	{
+		ULuaUserDataBPFL* UserDataBPFL = NewObject<ULuaUserDataBPFL>(GetLuaStateInstance());
+		UserDataBPFL->InitializeWithClass(FoundClass);
+		return FLuaValue(UserDataBPFL);
+	}
+	return FLuaValue();
+}
+```
+
+The RequireBlueprintFunctionLibrary lua exposed UFunction will search for the specified library name using the reflection system, and will create a ULuaUserDataBPFL (check below) that will keep a reference to the blueprint library
+
+```cpp
+UCLASS()
+class ULuaUserDataBPFL : public ULuaUserDataObject
+{
+	GENERATED_BODY()
+	
+public:
+	void InitializeWithClass(UClass* InClass);
+
+	virtual FLuaValue ReceiveLuaMetaIndex_Implementation(FLuaValue Key) override;
+
+protected:
+	UPROPERTY()
+	UClass* BPFLClass;
+};
+```
+
+```cpp
+void ULuaUserDataBPFL::InitializeWithClass(UClass* InClass)
+{
+	BPFLClass = InClass;
+}
+
+FLuaValue ULuaUserDataBPFL::ReceiveLuaMetaIndex_Implementation(FLuaValue Key)
+{
+	UFunction* Function = BPFLClass->FindFunctionByName(*Key.ToString());
+	if (Function)
+	{
+		return FLuaValue::FunctionOfObject(BPFLClass->GetDefaultObject(), Function->GetFName());
+	}
+
+	return FLuaValue();
+}
+```
+
+The key here is the ReceiveLuaMetaIndex_Implementation override, that will return the UFunction ptr of the supplied function name (if it exists).
+
+You can now map the UBPFLLuaBlueprintPackage to the bpfl package in your LuaState configuration and (this is required) you need to enable the bRawLuaFunctionCall too: this will allow the state to automatically convert UFunction arguments to lua values.
