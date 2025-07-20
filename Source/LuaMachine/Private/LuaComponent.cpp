@@ -112,8 +112,11 @@ FLuaValue ULuaComponent::LuaCallFunction(const FString& Name, TArray<FLuaValue> 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
 	// first argument (self/actor)
-	L->PushValue(-(ItemsToPop + 1));
-	int NArgs = 1;
+  if (bImplicitSelf)
+  {
+    L->PushValue(-(ItemsToPop + 1));
+  }
+	int NArgs = bImplicitSelf ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -152,8 +155,11 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 	int32 StackTop = L->GetTop();
 
 	// first argument (self/actor)
-	L->PushValue(-(ItemsToPop + 1));
-	int NArgs = 1;
+  if (bImplicitSelf)
+  {
+    L->PushValue(-(ItemsToPop + 1));
+  }
+	int NArgs = bImplicitSelf ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -200,10 +206,13 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 	// push function
 	L->FromLuaValue(Value);
 	// push component pointer as userdata
-	L->NewUObject(this, nullptr);
+  if (bImplicitSelf)
+  {
+    L->NewUObject(this, nullptr);
+  }
 	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
-	int NArgs = 1;
+	int NArgs = bImplicitSelf ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -283,10 +292,13 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 	int32 StackTop = L->GetTop();
 
 	// push component pointer as userdata
-	L->NewUObject(this, nullptr);
+  if (bImplicitSelf)
+  {
+    L->NewUObject(this, nullptr);
+  }
 	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
-	int NArgs = 1;
+	int NArgs = bImplicitSelf ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
