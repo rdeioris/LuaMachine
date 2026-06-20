@@ -160,6 +160,12 @@ FLuaValue::FLuaValue(const FLuaValue& SourceValue)
 
 FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 {
+	if (this == &SourceValue)
+		return *this;
+
+	// Release the old Lua registry ref before overwriting, otherwise it leaks
+	Unref();
+
 	Type = SourceValue.Type;
 	Object = SourceValue.Object;
 	LuaRef = SourceValue.LuaRef;
@@ -178,6 +184,52 @@ FLuaValue& FLuaValue::operator = (const FLuaValue& SourceValue)
 		LuaState->GetRef(LuaRef);
 		LuaRef = LuaState->NewRef();
 	}
+
+	return *this;
+}
+
+FLuaValue::FLuaValue(FLuaValue&& SourceValue)
+{
+	Type = SourceValue.Type;
+	Object = SourceValue.Object;
+	LuaRef = SourceValue.LuaRef;
+	LuaState = SourceValue.LuaState;
+	Bool = SourceValue.Bool;
+	Integer = SourceValue.Integer;
+	Number = SourceValue.Number;
+	String = MoveTemp(SourceValue.String);
+	FunctionName = SourceValue.FunctionName;
+	MulticastScriptDelegate = SourceValue.MulticastScriptDelegate;
+	Lambda = MoveTemp(SourceValue.Lambda);
+
+	// Steal the registry ref — null out the source so its destructor doesn't Unref it
+	SourceValue.LuaRef = LUA_NOREF;
+	SourceValue.Type = ELuaValueType::Nil;
+}
+
+FLuaValue& FLuaValue::operator = (FLuaValue&& SourceValue)
+{
+	if (this == &SourceValue)
+		return *this;
+
+	// Release the old Lua registry ref before overwriting, otherwise it leaks
+	Unref();
+
+	Type = SourceValue.Type;
+	Object = SourceValue.Object;
+	LuaRef = SourceValue.LuaRef;
+	LuaState = SourceValue.LuaState;
+	Bool = SourceValue.Bool;
+	Integer = SourceValue.Integer;
+	Number = SourceValue.Number;
+	String = MoveTemp(SourceValue.String);
+	FunctionName = SourceValue.FunctionName;
+	MulticastScriptDelegate = SourceValue.MulticastScriptDelegate;
+	Lambda = MoveTemp(SourceValue.Lambda);
+
+	// Steal the registry ref — null out the source so its destructor doesn't Unref it
+	SourceValue.LuaRef = LUA_NOREF;
+	SourceValue.Type = ELuaValueType::Nil;
 
 	return *this;
 }

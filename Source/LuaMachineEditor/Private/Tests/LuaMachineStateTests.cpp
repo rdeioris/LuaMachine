@@ -152,6 +152,54 @@ bool FLuaMachineStateTest_FunctionsArrayCall::RunTest(const FString& Parameters)
 	return true;
 }
 
+// Regression test: FLuaValue::operator= was not calling Unref() on the existing value before
+// overwriting LuaRef. When a C++ FLuaValue holding a Lua Table is reassigned, the old registry
+// ref was silently abandoned and the table could never be collected by Lua's GC.
+//
+// We use a Lua weak table to track the returned tables. After releasing all C++ refs and
+// forcing GC, any entry that is still alive (non-nil) has an orphaned strong ref keeping it alive.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_UFunctionReturningTable_NoLuaRefLeak,
+	"LuaMachine.UnitTests.State.UFunctionReturningTable.NoLuaRefLeak",
+	EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_UFunctionReturningTable_NoLuaRefLeak::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	// Weak table: values are held weakly, so a table stored here won't prevent GC.
+	// If an entry survives GC it means a strong ref (leaked LuaRef) is keeping it alive.
+	FLuaValue WeakTable = UnitTestState->RunString(
+		"return setmetatable({}, {__mode = 'v'})", "");
+
+	FLuaValue ReturnTableFunc = UnitTestState->GetLuaValueFromGlobalName("return_table");
+
+	// Reuse the same C++ variable -- each iteration calls FLuaValue::operator= on an
+	// FLuaValue that already holds a Table ref. Without the Unref() fix the old ref leaks.
+	FLuaValue Result;
+	const int32 NumCalls = 10;
+	for (int32 i = 1; i <= NumCalls; i++)
+	{
+		Result = UnitTestState->LuaValueCall(ReturnTableFunc, {});
+		WeakTable.SetFieldByIndex(i, Result);  // store weakly
+	}
+	Result.Unref();  // release the last strong ref
+
+	// After a full GC cycle, every table must have been collected.
+	// Any surviving entry means its LuaRef was never released (operator= bug).
+	UnitTestState->GC(LUA_GCCOLLECT);
+
+	for (int32 i = 1; i <= NumCalls; i++)
+	{
+		TestTrue(
+			FString::Printf(TEXT("Weak table entry [%d] is nil after GC (no leaked LuaRef)"), i),
+			WeakTable.GetFieldByIndex(i).IsNil());
+	}
+
+	return true;
+}
+
 #if LUAMACHINE_LUAU
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_CallTyped, "LuaMachine.UnitTests.State.CallTyped", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 

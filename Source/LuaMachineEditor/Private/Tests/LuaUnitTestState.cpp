@@ -6,3 +6,8 @@ FLuaValue ULuaUnitTestState::DummyFunction()
 {
 	return "Hello Test";
 }
+
+FLuaValue ULuaUnitTestState::ReturnTableFunction()
+{
+	return CreateLuaTable();
+}

@@ -58,6 +58,12 @@ struct LUAMACHINE_API FLuaValue
 	FLuaValue(const FLuaValue& SourceValue);
 	FLuaValue& operator = (const FLuaValue& SourceValue);
 
+	// Move operations: steal the source's LuaRef rather than creating a new registry entry.
+	// Both must Unref() *this first — same reason as copy assignment — to avoid leaking an
+	// existing registry ref when overwriting a non-nil FLuaValue.
+	FLuaValue(FLuaValue&& SourceValue);
+	FLuaValue& operator = (FLuaValue&& SourceValue);
+
 	FLuaValue(const FString& InString) : FLuaValue()
 	{
 		Type = ELuaValueType::String;
