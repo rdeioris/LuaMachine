@@ -1342,7 +1342,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		else
 		{
 			FLuaValue LambdaReturnValue = LuaReturnvalueOrError.GetLuaValue();
-			LuaState->FromLuaValue(LambdaReturnValue);
+			LuaState->FromLuaValue(LambdaReturnValue, nullptr, L);
 			return 1;
 		}
 	}
