@@ -63,7 +63,9 @@ FLuaValue ULuaComponent::LuaGetField(const FString& Name)
 	FLuaValue ReturnValue;
 	ULuaState* L = LuaComponentGetState();
 	if (!L)
+	{
 		return ReturnValue;
+	}
 
 	// push component pointer as userdata
 	L->NewUObject(this, nullptr);

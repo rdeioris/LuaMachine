@@ -1,10 +1,10 @@
-// Copyright 2018-2023 - Roberto De Ioris
+// Copyright 2018-2024 - Roberto De Ioris
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "ThirdParty/lua/lua.hpp"
+#include "LuaVMIncludes.h"
 #include "Serialization/JsonSerializer.h"
 #include "LuaValue.generated.h"
 
@@ -31,9 +31,11 @@ enum class ELuaValueType : uint8
 	UObject,
 	Thread,
 	MulticastDelegate,
+	Lambda,
 };
 
 class ULuaState;
+struct FLuaValueOrError;
 
 USTRUCT(BlueprintType)
 struct LUAMACHINE_API FLuaValue
@@ -50,10 +52,17 @@ struct LUAMACHINE_API FLuaValue
 		Integer = 0;
 		Number = 0;
 		MulticastScriptDelegate = nullptr;
+		Lambda = nullptr;
 	}
 
 	FLuaValue(const FLuaValue& SourceValue);
-	FLuaValue& operator = (const FLuaValue &SourceValue);
+	FLuaValue& operator = (const FLuaValue& SourceValue);
+
+	// Move operations: steal the source's LuaRef rather than creating a new registry entry.
+	// Both must Unref() *this first — same reason as copy assignment — to avoid leaking an
+	// existing registry ref when overwriting a non-nil FLuaValue.
+	FLuaValue(FLuaValue&& SourceValue);
+	FLuaValue& operator = (FLuaValue&& SourceValue);
 
 	FLuaValue(const FString& InString) : FLuaValue()
 	{
@@ -129,6 +138,8 @@ struct LUAMACHINE_API FLuaValue
 		}
 	}
 
+	FLuaValue(TFunction<FLuaValueOrError(TArray<FLuaValue>)> InLambda);
+
 	~FLuaValue();
 
 	static FLuaValue Function(FName FunctionName)
@@ -148,6 +159,8 @@ struct LUAMACHINE_API FLuaValue
 		return LuaValue;
 	}
 
+	static FLuaValue NewLambda(TFunction<FLuaValueOrError(TArray<FLuaValue>)> InLambda);
+
 	FString ToString() const;
 	FName ToName() const;
 	int64 ToInteger() const;
@@ -156,25 +169,25 @@ struct LUAMACHINE_API FLuaValue
 
 	TArray<uint8> ToBytes() const;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	ELuaValueType Type;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	bool Bool;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	int64 Integer;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	double Number;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	FString String;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	UObject* Object;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Lua")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lua")
 	FName FunctionName;
 
 	int LuaRef;
@@ -204,4 +217,43 @@ struct LUAMACHINE_API FLuaValue
 	void Unref();
 
 	FMulticastScriptDelegate* MulticastScriptDelegate = nullptr;
+	TSharedPtr<TFunction<FLuaValueOrError(TArray<FLuaValue>)>> Lambda = nullptr;
+};
+
+struct FLuaValueOrError
+{
+public:
+	FLuaValueOrError()
+	{
+		// default to nil
+		LuaValueOrError.Set<FLuaValue>(FLuaValue());
+	}
+
+	FLuaValueOrError(FLuaValue LuaValue)
+	{
+		LuaValueOrError.Set<FLuaValue>(LuaValue);
+	}
+
+	FLuaValueOrError(const FString& Error)
+	{
+		LuaValueOrError.Set<FString>(Error);
+	}
+
+	bool IsError() const
+	{
+		return LuaValueOrError.IsType<FString>();
+	}
+
+	FString GetError() const
+	{
+		return LuaValueOrError.Get<FString>();
+	}
+
+	FLuaValue GetLuaValue() const
+	{
+		return LuaValueOrError.Get<FLuaValue>();
+	}
+
+protected:
+	TVariant<struct FLuaValue, FString> LuaValueOrError;
 };

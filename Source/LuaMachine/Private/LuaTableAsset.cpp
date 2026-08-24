@@ -1,4 +1,4 @@
-// Copyright 2018-2023 - Roberto De Ioris
+// Copyright 2018-2025 - Roberto De Ioris
 
 #include "LuaTableAsset.h"
 

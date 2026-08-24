@@ -170,7 +170,7 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 			}
 			OutChildren.Append(Item->Children);
 		}
-		else if (Item->LuaTableValue.Type == ELuaValueType::UObject && Item->LuaTableValue.Object)
+		else if (Item->LuaTableValue.Type == ELuaValueType::UObject && IsValid(Item->LuaTableValue.Object))
 		{
 			if (Item->LuaTableValue.Object->IsA<ULuaUserDataObject>())
 			{

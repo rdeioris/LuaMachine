@@ -74,7 +74,6 @@ public:
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif
 
-
 	UPROPERTY(VisibleAnywhere, Instanced, Category = Reimport)
 	class UAssetImportData* AssetImportData;
 #endif
