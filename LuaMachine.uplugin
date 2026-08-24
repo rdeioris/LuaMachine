@@ -36,6 +36,16 @@
         "Mac",
         "Win64"
       ]
+    },
+    {
+      "Name": "LuaMachineBlueprintNodes",
+      "Type": "UncookedOnly",
+      "LoadingPhase": "Default",
+      "WhitelistPlatforms": [
+        "Linux",
+        "Mac",
+        "Win64"
+      ]
     }
   ]
 }
