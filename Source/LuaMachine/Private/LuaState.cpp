@@ -1796,26 +1796,40 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
-		if (LuaState->bAddProjectContentDirToPackagePath && LuaState->RunFile(Key + ".lua", true, 1))
+		// Search the content root first, then each additional sub directory in order.
+		// NOTE: existence is tested here rather than relying on RunFile(), which
+		// reports success for a file that does not exist when bIgnoreNonExistent is
+		// set. Without this the content root always "succeeded", returning a value
+		// that was never pushed and leaving the additional paths unreachable.
+		const FString ScriptContentDirectory = LuaState->GetScriptContentDirectory();
+
+		TArray<FString> CandidateFilenames;
+		if (LuaState->bAddProjectContentDirToPackagePath)
 		{
-			return 1;
+			CandidateFilenames.Add(Key + ".lua");
+		}
+		for (const FString& AdditionalPath : LuaState->AppendProjectContentDirSubDir)
+		{
+			CandidateFilenames.Add(AdditionalPath / Key + ".lua");
 		}
 
-		// now search in additional paths.
-		// NOTE: RunFile() reports success when the file simply does not exist
-		// (bIgnoreNonExistent), so only the first entry is ever consulted -- every
-		// branch below returns. Written as a single lookup rather than a loop
-		// because clang rejects the loop form under -Wunreachable-code-loop-increment.
-		// Behaviour is unchanged from the loop it replaces.
-		if (!LuaState->AppendProjectContentDirSubDir.IsEmpty())
+		for (const FString& CandidateFilename : CandidateFilenames)
 		{
-			const FString& AdditionalPath = LuaState->AppendProjectContentDirSubDir[0];
-			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, 1))
+			if (!FPaths::FileExists(FPaths::Combine(ScriptContentDirectory, CandidateFilename)))
+			{
+				continue;
+			}
+
+			if (LuaState->RunFile(CandidateFilename, false, 1))
 			{
 				return 1;
 			}
+
+			// the file is there but failed to load or run: surface that instead of
+			// silently moving on to the next candidate
 			LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 		}
+
 		LUAMACHINE_RETURN_ERROR(L, "unable to find package %s", TCHAR_TO_ANSI(*Key));
 	}
 

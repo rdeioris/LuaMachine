@@ -3,6 +3,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Tests/LuaUnitTestState.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_Integer, "LuaMachine.UnitTests.State.Integer", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -314,6 +317,56 @@ bool FLuaMachineStateTest_LambdaGC::RunTest(const FString& Parameters)
 	UnitTestState->GC(LUA_GCCOLLECT);
 
 	TestTrue(TEXT("sentinel released once the lambda userdata is collected"), Sentinel.GetSharedReferenceCount() == 1);
+
+	return true;
+}
+
+// package.preload used to consult only the content root: RunFile() reports success
+// for a file that does not exist, so the root always "matched" and the entries of
+// AppendProjectContentDirSubDir were never reached.
+//
+// Reaching that code needs a key that is in RequireTable when the state is built (so
+// the preload entry gets installed) but gone by the time require runs -- otherwise
+// the lookup resolves to the LuaCode asset and never touches the file search.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_PreloadAdditionalPaths, "LuaMachine.UnitTests.State.PreloadAdditionalPaths", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_PreloadAdditionalPaths::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	// lay out <root>/first/ (empty) and <root>/second/packageundertest.lua
+	const FString ScriptRoot = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("LuaMachineTests"), TEXT("PreloadAdditionalPaths"));
+	IFileManager::Get().DeleteDirectory(*ScriptRoot, false, true);
+	IFileManager::Get().MakeDirectory(*FPaths::Combine(ScriptRoot, TEXT("first")), true);
+	IFileManager::Get().MakeDirectory(*FPaths::Combine(ScriptRoot, TEXT("second")), true);
+
+	const FString PackageFilename = FPaths::Combine(ScriptRoot, TEXT("second"), TEXT("packageundertest.lua"));
+	if (!TestTrue(TEXT("fixture written"), FFileHelper::SaveStringToFile(TEXT("return \"found in second\""), *PackageFilename)))
+	{
+		return false;
+	}
+
+	ULuaUnitTestState* UnitTestState = NewObject<ULuaUnitTestState>(GetTransientPackage());
+	UnitTestState->ScriptContentDirectory = ScriptRoot;
+	UnitTestState->AppendProjectContentDirSubDir = { TEXT("first"), TEXT("second") };
+	// installs package.preload["packageundertest"]
+	UnitTestState->RequireTable.Add(TEXT("packageundertest"), nullptr);
+	UnitTestState = Cast<ULuaUnitTestState>(UnitTestState->GetLuaState(TestWorld));
+
+	if (!TestNotNull(TEXT("lua state created"), UnitTestState))
+	{
+		return false;
+	}
+
+	// drop the asset mapping so the preload handler falls through to the file search
+	UnitTestState->RequireTable.Empty();
+
+	FLuaValue LuaValue = UnitTestState->RunString("return require(\"packageundertest\")", "");
+
+	// the root and "first" hold nothing, so this only resolves if every candidate is tried
+	TestEqual(TEXT("package resolved from the second additional path"), LuaValue.ToString(), TEXT("found in second"));
+
+	IFileManager::Get().DeleteDirectory(*ScriptRoot, false, true);
 
 	return true;
 }
