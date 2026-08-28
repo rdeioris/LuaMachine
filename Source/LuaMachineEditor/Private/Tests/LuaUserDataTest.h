@@ -10,8 +10,9 @@
 /**
  * Very Dummy UserData implementation using a Map of C++ Functions
  */
-UCLASS()
-class LUAMACHINEEDITOR_API ULuaUserDataTest : public UObject, public ILuaUserDataInterface
+// test-only helper, see the note in LuaUnitTestState.h
+UCLASS(Transient, Hidden, NotBlueprintable, NotBlueprintType)
+class ULuaUserDataTest : public UObject, public ILuaUserDataInterface
 {
 	GENERATED_BODY()
 

@@ -9,7 +9,10 @@
 /**
  *
  */
-UCLASS()
+// test-only helper: Hidden keeps it out of the editor class pickers.
+// NOTE: the UCLASS cannot be wrapped in #if WITH_DEV_AUTOMATION_TESTS -- UHT does
+// not evaluate that macro. Living under Private/ keeps it off the public API.
+UCLASS(Transient, Hidden, NotBlueprintable, NotBlueprintType)
 class ULuaUnitTestState : public ULuaState
 {
 	GENERATED_BODY()
