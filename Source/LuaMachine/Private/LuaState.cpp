@@ -676,7 +676,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			lua_setmetatable(State, -2);
 			return;
 		}
-		break;
 	case ELuaValueType::Lambda:
 		// if no context is assigned to the function, own it !
 		if (!LuaValue.LuaState.IsValid())
@@ -702,7 +701,6 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			lua_setmetatable(State, -2);
 			return;
 		}
-		break;
 	default:
 		lua_pushnil(State);
 	}
@@ -1803,9 +1801,15 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 			return 1;
 		}
 
-		// now search in additional paths
-		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
+		// now search in additional paths.
+		// NOTE: RunFile() reports success when the file simply does not exist
+		// (bIgnoreNonExistent), so only the first entry is ever consulted -- every
+		// branch below returns. Written as a single lookup rather than a loop
+		// because clang rejects the loop form under -Wunreachable-code-loop-increment.
+		// Behaviour is unchanged from the loop it replaces.
+		if (!LuaState->AppendProjectContentDirSubDir.IsEmpty())
 		{
+			const FString& AdditionalPath = LuaState->AppendProjectContentDirSubDir[0];
 			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, 1))
 			{
 				return 1;
