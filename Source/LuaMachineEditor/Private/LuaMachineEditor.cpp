@@ -29,7 +29,11 @@ FLuaMachineEditorModule::FLuaMachineEditorModule()
 
 void FLuaMachineEditorModule::StartupModule()
 {
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 8)
+	FCoreDelegates::GetOnPostEngineInit().AddRaw(this, &FLuaMachineEditorModule::OnPostEngineInit);
+#else
 	FCoreDelegates::OnPostEngineInit.AddRaw(this, &FLuaMachineEditorModule::OnPostEngineInit);
+#endif
 
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 
@@ -363,7 +367,12 @@ class SLuaMachineDebugger : public SCompoundWidget, public FGCObject
 		case ELuaValueType::Thread:
 			if (SelectedLuaState == Item->LuaTableValue.LuaState)
 			{
-				Value = "status: " + FindObject<UEnum>(nullptr, TEXT("/Script/LuaMachine.ELuaThreadStatus"), true)->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 7)
+				UEnum* ThreadStatusEnum = FindObject<UEnum>(nullptr, TEXT("/Script/LuaMachine.ELuaThreadStatus"), EFindObjectFlags::ExactClass);
+#else
+				UEnum* ThreadStatusEnum = FindObject<UEnum>(nullptr, TEXT("/Script/LuaMachine.ELuaThreadStatus"), true);
+#endif
+				Value = "status: " + ThreadStatusEnum->GetNameStringByIndex((int32)SelectedLuaState->GetLuaThreadStatus(Item->LuaTableValue)) + ", stack top: " + FString::FromInt(SelectedLuaState->GetLuaThreadStackTop(Item->LuaTableValue));
 			}
 			break;
 		default:
@@ -523,7 +532,11 @@ TSharedRef<SDockTab> FLuaMachineEditorModule::CreateLuaMachineDebugger(const FSp
 
 void FLuaMachineEditorModule::ShutdownModule()
 {
+#if ENGINE_MAJOR_VERSION > 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 8)
+	FCoreDelegates::GetOnPostEngineInit().RemoveAll(this);
+#else
 	FCoreDelegates::OnPostEngineInit.RemoveAll(this);
+#endif
 
 	// Unregister all the asset types that we registered
 	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
