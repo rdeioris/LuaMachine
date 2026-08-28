@@ -9,7 +9,7 @@ If you want modders to customize your game/project, or you need to allow game de
 
 Note: The master branch is focused on Unreal Engine 5, if you need Unreal Engine 4 support use the ue4 branch.
 
-Experimental LuaU (https://luau.org/) support (as well as Lua 5.4 and LuaJIT) is available in the "dev" branch.
+Experimental LuaU (https://luau.org/) support (as well as Lua 5.4, Lua 5.5 and LuaJIT) is available in the "dev" branch.
 
 ## How it works
 
