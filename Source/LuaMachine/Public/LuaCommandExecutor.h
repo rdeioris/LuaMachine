@@ -22,7 +22,9 @@ public:
 	FText GetDisplayName() const override;
 	FText GetDescription() const override;
 	FText GetHintText() const override;
+#if ENGINE_MAJOR_VERSION < 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8)
 	void GetAutoCompleteSuggestions(const TCHAR* Input, TArray<FString>& Out) override;
+#endif
 	void GetExecHistory(TArray<FString>& Out) override;
 	bool Exec(const TCHAR* Input) override;
 	bool AllowHotKeyClose() const override;

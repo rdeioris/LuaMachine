@@ -21,16 +21,20 @@ LUAMACHINE_API DECLARE_LOG_CATEGORY_EXTERN(LogLuaMachine, Log, All);
 
 class ULuaBlueprintPackage;
 
+// NOTE: this struct holds non-trivial members (TSharedPtr), so every instance
+// living in lua-owned memory MUST be created with placement new and destroyed
+// with an explicit destructor call from a __gc metamethod. Assigning the fields
+// of a raw lua_newuserdata() block leaves the non-trivial members uninitialized.
 struct FLuaUserData
 {
-	ELuaValueType Type;
+	ELuaValueType Type = ELuaValueType::Nil;
 	// we use weak pointers as both fields can eventually be garbage collected
 	// while the lua VM hold a reference to the userdata
 	TWeakObjectPtr<UObject> Context;
 	TWeakObjectPtr<UFunction> Function;
 
 	// meaningful only for multicast delegates broadcasting
-	FMulticastScriptDelegate* MulticastScriptDelegate;
+	FMulticastScriptDelegate* MulticastScriptDelegate = nullptr;
 
 	TSharedPtr<TFunction<FLuaValueOrError(TArray<FLuaValue>)>> Lambda;
 
@@ -38,8 +42,6 @@ struct FLuaUserData
 	{
 		Type = ELuaValueType::UObject;
 		Context = InObject;
-		MulticastScriptDelegate = nullptr;
-		Lambda = nullptr;
 	}
 
 	FLuaUserData(UObject* InObject, UFunction* InFunction)
@@ -47,15 +49,18 @@ struct FLuaUserData
 		Type = ELuaValueType::UFunction;
 		Context = InObject;
 		Function = InFunction;
-		MulticastScriptDelegate = nullptr;
-		Lambda = nullptr;
+	}
+
+	FLuaUserData(UFunction* InFunction, FMulticastScriptDelegate* InMulticastScriptDelegate)
+	{
+		Type = ELuaValueType::MulticastDelegate;
+		Function = InFunction;
+		MulticastScriptDelegate = InMulticastScriptDelegate;
 	}
 
 	FLuaUserData(TSharedPtr<TFunction<FLuaValueOrError(TArray<FLuaValue>)>> InLambda)
 	{
 		Type = ELuaValueType::Lambda;
-		Context = nullptr;
-		MulticastScriptDelegate = nullptr;
 		Lambda = InLambda;
 	}
 };
@@ -477,6 +482,8 @@ public:
 
 	static int MetaTableFunctionUserData__eq(lua_State* L);
 	static int MetaTableFunctionUserData__gc(lua_State* L);
+
+	static int MetaTableFunctionLambda__gc(lua_State* L);
 
 	static int ToByteCode_Writer(lua_State* L, const void* Ptr, size_t Size, void* UserData);
 

@@ -3,6 +3,9 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Tests/LuaUnitTestState.h"
 #include "Misc/AutomationTest.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_Integer, "LuaMachine.UnitTests.State.Integer", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
 
@@ -305,5 +308,173 @@ bool FLuaMachineStateTest_SingleStep::RunTest(const FString& Parameters)
 }
 
 #endif
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_RunStringMultiStackBalance, "LuaMachine.UnitTests.State.RunStringMultiStackBalance", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_RunStringMultiStackBalance::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	const int32 StackTop = UnitTestState->GetTop();
+
+	// a chunk returning nothing pushes nothing: popping unconditionally here
+	// would eat a slot belonging to the caller
+	TArray<FLuaValue> NoResults = UnitTestState->RunStringMulti("local unused = 1", "");
+	TestTrue(TEXT("no return values"), NoResults.Num() == 0);
+	TestTrue(TEXT("stack balanced after a chunk returning nothing"), UnitTestState->GetTop() == StackTop);
+
+	TArray<FLuaValue> Results = UnitTestState->RunStringMulti("return 1, \"two\", true", "");
+	TestTrue(TEXT("three return values in source order"), Results.Num() == 3 &&
+		Results[0].ToInteger() == 1 && Results[1].String == "two" && Results[2].Bool);
+	TestTrue(TEXT("stack balanced after a chunk returning three values"), UnitTestState->GetTop() == StackTop);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_LuaValueCallMultiStackBalance, "LuaMachine.UnitTests.State.LuaValueCallMultiStackBalance", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_LuaValueCallMultiStackBalance::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	UnitTestState->RunString("function noret() end\nfunction multiret() return \"a\", \"b\" end", "");
+
+	const int32 StackTop = UnitTestState->GetTop();
+
+	FLuaValue NoRet = UnitTestState->GetLuaValueFromGlobalName("noret");
+	TArray<FLuaValue> NoResults = UnitTestState->LuaValueCallMulti(NoRet, {});
+	TestTrue(TEXT("no return values"), NoResults.Num() == 0);
+	TestTrue(TEXT("stack balanced after a call returning nothing"), UnitTestState->GetTop() == StackTop);
+
+	FLuaValue MultiRet = UnitTestState->GetLuaValueFromGlobalName("multiret");
+	TArray<FLuaValue> Results = UnitTestState->LuaValueCallMulti(MultiRet, {});
+	TestTrue(TEXT("two return values in order"), Results.Num() == 2 &&
+		Results[0].String == "a" && Results[1].String == "b");
+	TestTrue(TEXT("stack balanced after a call returning two values"), UnitTestState->GetTop() == StackTop);
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_LambdaRoundTrip, "LuaMachine.UnitTests.State.LambdaRoundTrip", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_LambdaRoundTrip::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	// a lambda pushed into lua must come back out as a Lambda, not as nil
+	FLuaValue Back = UnitTestState->GetLuaValueFromGlobalName("lambda001");
+	TestTrue(TEXT("lambda read back from lua keeps its type"), Back.Type == ELuaValueType::Lambda);
+
+	FLuaValue Result = UnitTestState->LuaValueCall(Back, {});
+	TestTrue(TEXT("round-tripped lambda is still callable"), Result.String == "Hello Test");
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_LambdaInCoroutine, "LuaMachine.UnitTests.State.LambdaInCoroutine", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_LambdaInCoroutine::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	// inside a coroutine the calling lua_State is not the main one, so the
+	// lambda's return value has to be pushed onto the coroutine's stack
+	FLuaValue LuaValue = UnitTestState->RunString(
+		"local co = coroutine.create(function() return lambda001() end)\n"
+		"local ok, value = coroutine.resume(co)\n"
+		"return value", "");
+
+	TestTrue(TEXT("lambda called from a coroutine returns on the right stack"), LuaValue.String == "Hello Test");
+
+	return true;
+}
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_LambdaGC, "LuaMachine.UnitTests.State.LambdaNoLeakOnGC", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_LambdaGC::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	ULuaUnitTestState* UnitTestState = ULuaState::CreateDynamicLuaState<ULuaUnitTestState>(TestWorld);
+
+	// the sentinel is captured by the lambda, so its reference count tells us
+	// whether the TFunction behind the lua userdata was ever destroyed
+	TSharedPtr<int32> Sentinel = MakeShared<int32>(1234);
+	TestTrue(TEXT("sentinel starts with a single owner"), Sentinel.GetSharedReferenceCount() == 1);
+
+	{
+		FLuaValue Lambda = FLuaValue::NewLambda([Sentinel](TArray<FLuaValue> Args) { return FLuaValue(*Sentinel); });
+		UnitTestState->SetLuaValueFromGlobalName("gc_lambda", Lambda);
+	}
+
+	TestTrue(TEXT("lua owns the captured sentinel"), Sentinel.GetSharedReferenceCount() > 1);
+
+	// drop the only reference from lua and let the collector run the finalizer
+	UnitTestState->SetLuaValueFromGlobalName("gc_lambda", FLuaValue());
+	UnitTestState->GC(LUA_GCCOLLECT);
+	UnitTestState->GC(LUA_GCCOLLECT);
+
+	TestTrue(TEXT("sentinel released once the lambda userdata is collected"), Sentinel.GetSharedReferenceCount() == 1);
+
+	return true;
+}
+
+// package.preload used to consult only the content root: RunFile() reports success
+// for a file that does not exist, so the root always "matched" and the entries of
+// AppendProjectContentDirSubDir were never reached.
+//
+// Reaching that code needs a key that is in RequireTable when the state is built (so
+// the preload entry gets installed) but gone by the time require runs -- otherwise
+// the lookup resolves to the LuaCode asset and never touches the file search.
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FLuaMachineStateTest_PreloadAdditionalPaths, "LuaMachine.UnitTests.State.PreloadAdditionalPaths", EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FLuaMachineStateTest_PreloadAdditionalPaths::RunTest(const FString& Parameters)
+{
+	UWorld* TestWorld = UWorld::CreateWorld(EWorldType::Inactive, false);
+
+	// lay out <root>/first/ (empty) and <root>/second/packageundertest.lua
+	const FString ScriptRoot = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("LuaMachineTests"), TEXT("PreloadAdditionalPaths"));
+	IFileManager::Get().DeleteDirectory(*ScriptRoot, false, true);
+	IFileManager::Get().MakeDirectory(*FPaths::Combine(ScriptRoot, TEXT("first")), true);
+	IFileManager::Get().MakeDirectory(*FPaths::Combine(ScriptRoot, TEXT("second")), true);
+
+	const FString PackageFilename = FPaths::Combine(ScriptRoot, TEXT("second"), TEXT("packageundertest.lua"));
+	if (!TestTrue(TEXT("fixture written"), FFileHelper::SaveStringToFile(TEXT("return \"found in second\""), *PackageFilename)))
+	{
+		return false;
+	}
+
+	ULuaUnitTestState* UnitTestState = NewObject<ULuaUnitTestState>(GetTransientPackage());
+	UnitTestState->ScriptContentDirectory = ScriptRoot;
+	UnitTestState->AppendProjectContentDirSubDir = { TEXT("first"), TEXT("second") };
+	// installs package.preload["packageundertest"]
+	UnitTestState->RequireTable.Add(TEXT("packageundertest"), nullptr);
+	UnitTestState = Cast<ULuaUnitTestState>(UnitTestState->GetLuaState(TestWorld));
+
+	if (!TestNotNull(TEXT("lua state created"), UnitTestState))
+	{
+		return false;
+	}
+
+	// drop the asset mapping so the preload handler falls through to the file search
+	UnitTestState->RequireTable.Empty();
+
+	FLuaValue LuaValue = UnitTestState->RunString("return require(\"packageundertest\")", "");
+
+	// the root and "first" hold nothing, so this only resolves if every candidate is tried
+	TestEqual(TEXT("package resolved from the second additional path"), LuaValue.ToString(), TEXT("found in second"));
+
+	IFileManager::Get().DeleteDirectory(*ScriptRoot, false, true);
+
+	return true;
+}
 
 #endif

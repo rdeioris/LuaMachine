@@ -33,9 +33,11 @@ FText FLuaCommandExecutor::GetHintText() const
 	return FText::GetEmpty();
 }
 
+#if ENGINE_MAJOR_VERSION < 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8)
 void FLuaCommandExecutor::GetAutoCompleteSuggestions(const TCHAR* Input, TArray<FString>& Out)
 {
 }
+#endif
 
 void FLuaCommandExecutor::GetExecHistory(TArray<FString>& Out)
 {

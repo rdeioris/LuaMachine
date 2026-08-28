@@ -56,10 +56,10 @@ const FString& ULuaMachineK2Node_MakeLuaCodeString::GetLuaCodeString() const
 
 TSharedPtr<SGraphNode> ULuaMachineK2Node_MakeLuaCodeString::CreateVisualWidget()
 {
-	class SCompushadyShaderNodeWidget : public SGraphNodeK2Base
+	class SLuaMachineMakeLuaCodeStringNode : public SGraphNodeK2Base
 	{
 	public:
-		SLATE_BEGIN_ARGS(SCompushadyShaderNodeWidget)
+		SLATE_BEGIN_ARGS(SLuaMachineMakeLuaCodeStringNode)
 			{
 			}
 
@@ -92,7 +92,7 @@ TSharedPtr<SGraphNode> ULuaMachineK2Node_MakeLuaCodeString::CreateVisualWidget()
 		}
 	};
 
-	return SNew(SCompushadyShaderNodeWidget, this);
+	return SNew(SLuaMachineMakeLuaCodeStringNode, this);
 }
 
 void ULuaMachineK2Node_MakeLuaCodeString::UpdateLuaCodeString(const FText& NewText)

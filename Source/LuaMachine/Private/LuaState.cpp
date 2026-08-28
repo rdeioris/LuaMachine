@@ -774,10 +774,7 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 				{
 					// cache it for context-less calls
 					LuaValue.Object = CallContext;
-					FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
-					LuaCallContext->Type = ELuaValueType::UFunction;
-					LuaCallContext->Context = CallContext;
-					LuaCallContext->Function = Function;
+					FLuaUserData* LuaCallContext = new(lua_newuserdata(State, sizeof(FLuaUserData))) FLuaUserData(CallContext, Function);
 					lua_newtable(State);
 					lua_pushcfunction(State, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawcall : ULuaState::MetaTableFunction__call);
 					lua_setfield(State, -2, "__call");
@@ -802,17 +799,13 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			break;
 		}
 		{
-			FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
-			LuaCallContext->Type = ELuaValueType::MulticastDelegate;
-			LuaCallContext->Function = reinterpret_cast<UFunction*>(LuaValue.Object);
-			LuaCallContext->MulticastScriptDelegate = LuaValue.MulticastScriptDelegate;
+			FLuaUserData* LuaCallContext = new(lua_newuserdata(State, sizeof(FLuaUserData))) FLuaUserData(reinterpret_cast<UFunction*>(LuaValue.Object), LuaValue.MulticastScriptDelegate);
 			lua_newtable(State);
 			lua_pushcfunction(State, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawbroadcast : ULuaState::MetaTableFunction__rawbroadcast);
 			lua_setfield(State, -2, "__call");
 			lua_setmetatable(State, -2);
 			return;
 		}
-		break;
 	case ELuaValueType::Lambda:
 		// if no context is assigned to the function, own it !
 		if (!LuaValue.LuaState.IsValid())
@@ -831,10 +824,13 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			lua_newtable(State);
 			lua_pushcfunction(State, ULuaState::MetaTableFunction__call);
 			lua_setfield(State, -2, "__call");
+			// the lambda userdata owns a TSharedPtr, so it must be destroyed explicitly
+			// when lua collects it, otherwise the TFunction (and whatever it captures) leaks
+			lua_pushcfunction(State, ULuaState::MetaTableFunctionLambda__gc);
+			lua_setfield(State, -2, "__gc");
 			lua_setmetatable(State, -2);
 			return;
 		}
-		break;
 	default:
 		lua_pushnil(State);
 	}
@@ -917,7 +913,8 @@ FLuaValue ULuaState::ToLuaValue(int Index, lua_State* State)
 			}
 			break;
 		case(ELuaValueType::Lambda):
-			if (UserData->Context.IsValid() && UserData->Lambda.IsValid())
+			// NOTE: no Context check here, a lambda userdata never has one
+			if (UserData->Lambda.IsValid())
 			{
 				LuaValue.Type = UserData->Type;
 				LuaValue.Lambda = UserData->Lambda;
@@ -1293,6 +1290,18 @@ int ULuaState::MetaTableFunctionUserData__eq(lua_State* L)
 	return 1;
 }
 
+int ULuaState::MetaTableFunctionLambda__gc(lua_State* L)
+{
+	FLuaUserData* UserData = (FLuaUserData*)lua_touserdata(L, 1);
+	if (UserData)
+	{
+		// release the TSharedPtr held by the lambda userdata
+		UserData->~FLuaUserData();
+	}
+
+	return 0;
+}
+
 int ULuaState::MetaTableFunctionUserData__gc(lua_State* L)
 {
 	ULuaState* LuaState = ULuaState::GetFromExtraSpace(L);
@@ -1342,7 +1351,9 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 		else
 		{
 			FLuaValue LambdaReturnValue = LuaReturnvalueOrError.GetLuaValue();
-			LuaState->FromLuaValue(LambdaReturnValue);
+			// push onto the calling stack, which is not the main one when the
+			// lambda is invoked from inside a coroutine
+			LuaState->FromLuaValue(LambdaReturnValue, nullptr, L);
 			return 1;
 		}
 	}
@@ -1774,7 +1785,11 @@ int ULuaState::MetaTableFunction__rawbroadcast(lua_State * L)
 	}
 
 	LuaState->InceptionLevel++;
+#if ENGINE_MAJOR_VERSION < 5 || (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION < 8)
 	LuaCallContext->MulticastScriptDelegate->ProcessMulticastDelegate<UObject>(Parameters);
+#else
+	LuaCallContext->MulticastScriptDelegate->ProcessDelegate<UObject>(Parameters);
+#endif
 	check(LuaState->InceptionLevel > 0);
 	LuaState->InceptionLevel--;
 
@@ -1943,20 +1958,40 @@ int ULuaState::TableFunction_package_preload(lua_State * L)
 	ULuaCode** LuaCodePtr = LuaState->RequireTable.Find(Key);
 	if (!LuaCodePtr)
 	{
-		if (LuaState->bAddProjectContentDirToPackagePath && LuaState->RunFile(Key + ".lua", true, 1))
+		// Search the content root first, then each additional sub directory in order.
+		// NOTE: existence is tested here rather than relying on RunFile(), which
+		// reports success for a file that does not exist when bIgnoreNonExistent is
+		// set. Without this the content root always "succeeded", returning a value
+		// that was never pushed and leaving the additional paths unreachable.
+		const FString ScriptContentDirectory = LuaState->GetScriptContentDirectory();
+
+		TArray<FString> CandidateFilenames;
+		if (LuaState->bAddProjectContentDirToPackagePath)
 		{
-			return 1;
+			CandidateFilenames.Add(Key + ".lua");
+		}
+		for (const FString& AdditionalPath : LuaState->AppendProjectContentDirSubDir)
+		{
+			CandidateFilenames.Add(AdditionalPath / Key + ".lua");
 		}
 
-		// now search in additional paths
-		for (FString AdditionalPath : LuaState->AppendProjectContentDirSubDir)
+		for (const FString& CandidateFilename : CandidateFilenames)
 		{
-			if (LuaState->RunFile(AdditionalPath / Key + ".lua", true, 1))
+			if (!FPaths::FileExists(FPaths::Combine(ScriptContentDirectory, CandidateFilename)))
+			{
+				continue;
+			}
+
+			if (LuaState->RunFile(CandidateFilename, false, 1))
 			{
 				return 1;
 			}
+
+			// the file is there but failed to load or run: surface that instead of
+			// silently moving on to the next candidate
 			LUAMACHINE_RETURN_ERROR(L, "%s", lua_tostring(L, -1));
 		}
+
 		LUAMACHINE_RETURN_ERROR(L, "unable to find package %s", TCHAR_TO_ANSI(*Key));
 	}
 
@@ -2127,10 +2162,7 @@ void ULuaState::NewUObject(UObject * Object, lua_State * State)
 	{
 		State = this->L;
 	}
-	FLuaUserData* UserData = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
-	UserData->Type = ELuaValueType::UObject;
-	UserData->Context = Object;
-	UserData->Function = nullptr;
+	new(lua_newuserdata(State, sizeof(FLuaUserData))) FLuaUserData(Object);
 }
 
 void ULuaState::GetGlobal(const char* Name)
@@ -3027,10 +3059,7 @@ void ULuaState::SetupAndAssignUserDataMetatable(UObject * Context, TMap<FString,
 				UFunction* Function = FunctionOwner->FindFunction(Pair.Value.FunctionName);
 				if (Function)
 				{
-					FLuaUserData* LuaCallContext = (FLuaUserData*)lua_newuserdata(State, sizeof(FLuaUserData));
-					LuaCallContext->Type = ELuaValueType::UFunction;
-					LuaCallContext->Context = Context;
-					LuaCallContext->Function = Function;
+					FLuaUserData* LuaCallContext = new(lua_newuserdata(State, sizeof(FLuaUserData))) FLuaUserData(Context, Function);
 
 					lua_newtable(State);
 					lua_pushcfunction(State, bRawLuaFunctionCall ? ULuaState::MetaTableFunction__rawcall : ULuaState::MetaTableFunction__call);
@@ -3290,7 +3319,7 @@ TArray<FLuaValue> ULuaState::RunStringMulti(const FString & CodeString, FString 
 		CodePath = CodeString;
 	}
 
-	int32 StackTop = GetTop();
+	const int32 StackTop = GetTop();
 
 	if (!RunCode(CodeString, CodePath, LUA_MULTRET))
 	{
@@ -3299,21 +3328,20 @@ TArray<FLuaValue> ULuaState::RunStringMulti(const FString & CodeString, FString 
 			LogError(LastError);
 		}
 		ReceiveLuaError(LastError);
-	}
-	else
-	{
-		int32 NumOfReturnValues = GetTop() - StackTop;
-		if (NumOfReturnValues > 0)
-		{
-			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
-			{
-				ReturnValue.Insert(ToLuaValue(i), 0);
-			}
-			Pop(NumOfReturnValues - 1);
-		}
+		// on failure the error message is the only thing left on the stack
+		Pop();
+		return ReturnValue;
 	}
 
-	Pop();
+	// NOTE: a chunk returning nothing leaves the stack untouched, so the amount to
+	// pop has to be derived and can legitimately be zero
+	const int32 NumOfReturnValues = GetTop() - StackTop;
+	for (int32 i = -NumOfReturnValues; i <= -1; i++)
+	{
+		ReturnValue.Add(ToLuaValue(i));
+	}
+	Pop(NumOfReturnValues);
+
 	return ReturnValue;
 }
 
@@ -3368,17 +3396,19 @@ TArray<FLuaValue> ULuaState::LuaValueCallMulti(FLuaValue LuaValue, TArray<FLuaVa
 	FLuaValue LastReturnValue;
 	if (PCall(NArgs, LastReturnValue, LUA_MULTRET))
 	{
-		int32 NumOfReturnValues = (GetTop() - StackTop) + 1;
-		if (NumOfReturnValues > 0)
+		// NOTE: pcall pops the function and its arguments, so a function returning
+		// nothing lands one slot below StackTop and the count is legitimately zero
+		const int32 NumOfReturnValues = (GetTop() - StackTop) + 1;
+		for (int32 i = -NumOfReturnValues; i <= -1; i++)
 		{
-			for (int32 i = -1; i >= -(NumOfReturnValues); i--)
-			{
-				ReturnValue.Insert(ToLuaValue(i), 0);
-			}
-			Pop(NumOfReturnValues - 1);
+			ReturnValue.Add(ToLuaValue(i));
 		}
+		Pop(NumOfReturnValues);
+
+		return ReturnValue;
 	}
 
+	// on failure the error message replaces the function and its arguments
 	Pop();
 
 	return ReturnValue;

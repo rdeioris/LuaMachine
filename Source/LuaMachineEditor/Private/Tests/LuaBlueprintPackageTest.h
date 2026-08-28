@@ -9,8 +9,9 @@
 /**
  * 
  */
-UCLASS()
-class LUAMACHINEEDITOR_API ULuaBlueprintPackageTest : public ULuaBlueprintPackage
+// test-only helper, see the note in LuaUnitTestState.h
+UCLASS(Transient, Hidden, NotBlueprintable, NotBlueprintType)
+class ULuaBlueprintPackageTest : public ULuaBlueprintPackage
 {
 	GENERATED_BODY()
 
