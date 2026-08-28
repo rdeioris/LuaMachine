@@ -427,6 +427,9 @@ bool FLuaMachineStateTest_LambdaGC::RunTest(const FString& Parameters)
 	return true;
 }
 
+// NOTE: Luau does not get the package library at all (see GetLuaState), so
+// require() does not exist there and this test only applies to the other VMs.
+#if !LUAMACHINE_LUAU
 // package.preload used to consult only the content root: RunFile() reports success
 // for a file that does not exist, so the root always "matched" and the entries of
 // AppendProjectContentDirSubDir were never reached.
@@ -476,5 +479,6 @@ bool FLuaMachineStateTest_PreloadAdditionalPaths::RunTest(const FString& Paramet
 
 	return true;
 }
+#endif
 
 #endif

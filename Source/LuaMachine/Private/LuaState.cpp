@@ -819,15 +819,25 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 			break;
 		}
 		{
+			// the lambda userdata owns a TSharedPtr, so it has to be destroyed when the
+			// collector reclaims it, otherwise the TFunction and everything it captured
+			// leak. Luau has no __gc metamethod: destructors are attached at creation.
+#if LUAMACHINE_LUAU
+			void* NewUserData = lua_newuserdatadtor(State, sizeof(FLuaUserData), [](void* UserData)
+				{
+					static_cast<FLuaUserData*>(UserData)->~FLuaUserData();
+				});
+#else
 			void* NewUserData = lua_newuserdata(State, sizeof(FLuaUserData));
+#endif
 			FLuaUserData* LuaCallContext = new(NewUserData) FLuaUserData(LuaValue.Lambda);
 			lua_newtable(State);
 			lua_pushcfunction(State, ULuaState::MetaTableFunction__call);
 			lua_setfield(State, -2, "__call");
-			// the lambda userdata owns a TSharedPtr, so it must be destroyed explicitly
-			// when lua collects it, otherwise the TFunction (and whatever it captures) leaks
+#if !LUAMACHINE_LUAU
 			lua_pushcfunction(State, ULuaState::MetaTableFunctionLambda__gc);
 			lua_setfield(State, -2, "__gc");
+#endif
 			lua_setmetatable(State, -2);
 			return;
 		}
