@@ -73,7 +73,9 @@ public class LuaMachine : ModuleRules
 
         else if (Target.Platform == UnrealTargetPlatform.Mac)
         {
-            PublicAdditionalLibraries.Add(System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_mac.a"));
+	    PublicAdditionalLibraries.Add(Target.Architecture == UnrealArch.X64
+                ? System.IO.Path.Combine(ThirdPartyDirectory, "x64", "liblua53_mac.a")
+                : System.IO.Path.Combine(ThirdPartyDirectory, "ARM64", "liblua53_mac.a"));
         }
 
         else if (Target.Platform == UnrealTargetPlatform.Linux)
