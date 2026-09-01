@@ -23,7 +23,9 @@ void ULuaDelegate::ProcessEvent(UFunction* Function, void* Parms)
 	}
 
 	TArray<FLuaValue> LuaArgs;
-#if  ENGINE_MAJOR_VERSION > 4 ||ENGINE_MINOR_VERSION >= 25
+
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+	// Collect input parameters (exclude return parm)
 	for (TFieldIterator<FProperty> It(LuaDelegateSignature); (It && (It->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++It)
 	{
 		FProperty* Prop = *It;
@@ -36,5 +38,31 @@ void ULuaDelegate::ProcessEvent(UFunction* Function, void* Parms)
 		LuaArgs.Add(LuaState->FromProperty(Parms, Prop, bPropSuccess, 0));
 	}
 
-	ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(LuaState->GetWorld(), LuaState->GetClass(), LuaValue, LuaArgs);
+	// Call the Lua function and capture the return value
+	const FLuaValue LuaReturnValue = ULuaBlueprintFunctionLibrary::LuaGlobalCallValue(
+		LuaState->GetWorld(),
+		LuaState->GetClass(),
+		LuaValue,
+		LuaArgs
+	);
+
+	// Find the return property and set its value
+#if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
+	for (TFieldIterator<FProperty> It(LuaDelegateSignature); It; ++It)
+	{
+		FProperty* Prop = *It;
+#else
+	for (TFieldIterator<UProperty> It(LuaDelegateSignature); It; ++It)
+	{
+		UProperty* Prop = *It;
+#endif
+		if (Prop->HasAnyPropertyFlags(CPF_ReturnParm))
+		{
+			bool bReturnSuccess = false;
+			LuaState->ToProperty(Parms, Prop, LuaReturnValue, bReturnSuccess, 0);
+			// Only one return value is supported
+			break;
+		}
+	}
 }
+
