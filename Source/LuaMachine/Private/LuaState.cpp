@@ -761,10 +761,18 @@ void ULuaState::FromLuaValue(FLuaValue& LuaValue, UObject* CallContext, lua_Stat
 		}
 		if (CallContext)
 		{
-			UObject* FunctionOwner = CallContext;
-			if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(CallContext))
+			const UObject* FunctionOwner;
+			if (LuaValue.Object != nullptr)
+			{
+				FunctionOwner = LuaValue.Object;
+			}
+			else if (const ULuaComponent* LuaComponent = Cast<ULuaComponent>(CallContext))
 			{
 				FunctionOwner = LuaComponent->GetOwner();
+			}
+			else
+			{
+				FunctionOwner = CallContext;
 			}
 
 			if (FunctionOwner)
@@ -1379,9 +1387,11 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	bool bImplicitSelf = false;
 	int StackPointer = 2;
 
+	UFunction* Function = LuaCallContext->Function.Get();
 	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(CallScope))
 	{
-		CallScope = LuaComponent->GetOwner();
+		UClass* DeclaringClass = Cast<UClass>(Function->GetOuter());
+		CallScope = DeclaringClass->IsChildOf(ULuaComponent::StaticClass()) ? LuaCallContext->Context.Get() : LuaComponent->GetOwner();
 		if (NArgs > 0)
 		{
 			FLuaValue LuaFirstArgument = LuaState->ToLuaValue(StackPointer, L);
@@ -1404,13 +1414,13 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	}
 
 	FScopeCycleCounterUObject ObjectScope(CallScope);
-	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function.Get());
+	FScopeCycleCounterUObject FunctionScope(Function);
 
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	for (TFieldIterator<FProperty> It(Function); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
 #else
@@ -1432,7 +1442,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	// arguments
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	for (TFieldIterator<FProperty> FArgs(Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
 		FStructProperty* LuaProp = CastField<FStructProperty>(Prop);
@@ -1489,7 +1499,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	}
 
 	LuaState->InceptionLevel++;
-	CallScope->ProcessEvent(LuaCallContext->Function.Get(), Parameters);
+	CallScope->ProcessEvent(Function, Parameters);
 	check(LuaState->InceptionLevel > 0);
 	LuaState->InceptionLevel--;
 
@@ -1522,7 +1532,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 
 	// get return value
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
+	for (TFieldIterator<FProperty> FArgs(Function); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
 #else
@@ -1585,7 +1595,7 @@ int ULuaState::MetaTableFunction__call(lua_State* L)
 	}
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	for (TFieldIterator<FProperty> It(Function); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #endif
@@ -1617,9 +1627,11 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	bool bImplicitSelf = false;
 	int StackPointer = 2;
 
+	UFunction* Function = LuaCallContext->Function.Get();
 	if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(CallScope))
 	{
-		CallScope = LuaComponent->GetOwner();
+		UClass* DeclaringClass = Cast<UClass>(Function->GetOuter());
+		CallScope = DeclaringClass->IsChildOf(ULuaComponent::StaticClass()) ? LuaCallContext->Context.Get() : LuaComponent->GetOwner();
 		if (NArgs > 0)
 		{
 			FLuaValue LuaFirstArgument = LuaState->ToLuaValue(StackPointer, L);
@@ -1642,13 +1654,13 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	}
 
 	FScopeCycleCounterUObject ObjectScope(CallScope);
-	FScopeCycleCounterUObject FunctionScope(LuaCallContext->Function.Get());
+	FScopeCycleCounterUObject FunctionScope(Function);
 
 	void* Parameters = FMemory_Alloca(LuaCallContext->Function->ParmsSize);
 	FMemory::Memzero(Parameters, LuaCallContext->Function->ParmsSize);
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	for (TFieldIterator<FProperty> It(Function); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 	{
 		FProperty* Prop = *It;
 #else
@@ -1670,7 +1682,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 
 	// arguments
 #if ENGINE_MAJOR_VERSION > 4 ||  ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
+	for (TFieldIterator<FProperty> FArgs(Function); FArgs && ((FArgs->PropertyFlags & (CPF_Parm | CPF_ReturnParm)) == CPF_Parm); ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
 #else
@@ -1683,7 +1695,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	}
 
 	LuaState->InceptionLevel++;
-	CallScope->ProcessEvent(LuaCallContext->Function.Get(), Parameters);
+	CallScope->ProcessEvent(Function, Parameters);
 	check(LuaState->InceptionLevel > 0);
 	LuaState->InceptionLevel--;
 
@@ -1716,7 +1728,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 
 	// get return value
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> FArgs(LuaCallContext->Function.Get()); FArgs; ++FArgs)
+	for (TFieldIterator<FProperty> FArgs(Function); FArgs; ++FArgs)
 	{
 		FProperty* Prop = *FArgs;
 #else
@@ -1742,7 +1754,7 @@ int ULuaState::MetaTableFunction__rawcall(lua_State * L)
 	}
 
 #if ENGINE_MAJOR_VERSION > 4 || ENGINE_MINOR_VERSION >= 25
-	for (TFieldIterator<FProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
+	for (TFieldIterator<FProperty> It(Function); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #else
 	for (TFieldIterator<UProperty> It(LuaCallContext->Function.Get()); (It && It->HasAnyPropertyFlags(CPF_Parm)); ++It)
 #endif
@@ -3058,10 +3070,18 @@ void ULuaState::SetupAndAssignUserDataMetatable(UObject * Context, TMap<FString,
 		// first check for UFunction
 		if (Pair.Value.Type == ELuaValueType::UFunction)
 		{
-			UObject* FunctionOwner = Context;
-			if (ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
+			const UObject* FunctionOwner;
+			if (Pair.Value.Object != nullptr)
+			{
+				FunctionOwner = Pair.Value.Object;
+			}
+			else if (const ULuaComponent* LuaComponent = Cast<ULuaComponent>(Context))
 			{
 				FunctionOwner = LuaComponent->GetOwner();
+			}
+			else
+			{
+				FunctionOwner = Context;
 			}
 
 			if (FunctionOwner)
