@@ -111,9 +111,13 @@ FLuaValue ULuaComponent::LuaCallFunction(const FString& Name, TArray<FLuaValue> 
 
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 
+  bool bAddSelfArg = bImplicitSelfForLuaCalls && bImplicitSelf;
 	// first argument (self/actor)
-	L->PushValue(-(ItemsToPop + 1));
-	int NArgs = 1;
+  if (bAddSelfArg)
+  {
+    L->PushValue(-(ItemsToPop + 1));
+  }
+	int NArgs = bAddSelfArg ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -151,9 +155,13 @@ TArray<FLuaValue> ULuaComponent::LuaCallFunctionMulti(FString Name, TArray<FLuaV
 	int32 ItemsToPop = L->GetFieldFromTree(Name, bGlobal);
 	int32 StackTop = L->GetTop();
 
+  bool bAddSelfArg = bImplicitSelfForLuaCalls && bImplicitSelf;
 	// first argument (self/actor)
-	L->PushValue(-(ItemsToPop + 1));
-	int NArgs = 1;
+  if (bAddSelfArg)
+  {
+    L->PushValue(-(ItemsToPop + 1));
+  }
+	int NArgs = bAddSelfArg ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -199,11 +207,15 @@ FLuaValue ULuaComponent::LuaCallValue(FLuaValue Value, TArray<FLuaValue> Args)
 
 	// push function
 	L->FromLuaValue(Value);
+  bool bAddSelfArg = bImplicitSelfForLuaCalls && bImplicitSelf;
 	// push component pointer as userdata
-	L->NewUObject(this, nullptr);
+  if (bAddSelfArg)
+  {
+    L->NewUObject(this, nullptr);
+  }
 	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
-	int NArgs = 1;
+	int NArgs = bAddSelfArg ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);
@@ -282,11 +294,15 @@ TArray<FLuaValue> ULuaComponent::LuaCallValueMulti(FLuaValue Value, TArray<FLuaV
 	L->FromLuaValue(Value);
 	int32 StackTop = L->GetTop();
 
-	// push component pointer as userdata
-	L->NewUObject(this, nullptr);
+  bool bAddSelfArg = bImplicitSelfForLuaCalls && bImplicitSelf;
+  if (bAddSelfArg)
+  {
+	  // push component pointer as userdata
+    L->NewUObject(this, nullptr);
+  }
 	L->SetupAndAssignUserDataMetatable(this, Metatable, nullptr);
 
-	int NArgs = 1;
+	int NArgs = bAddSelfArg ? 1 : 0;
 	for (FLuaValue& Arg : Args)
 	{
 		L->FromLuaValue(Arg);

@@ -43,8 +43,24 @@ public:
 	UPROPERTY(EditAnywhere, Category="Lua")
 	bool bLogError;
 
-	UPROPERTY(EditAnywhere, Category = "Lua")
+  /**
+   * Whether to implicitly pass this component as the first argument (usually <code>self</code> when calling a Lua
+   * function.
+   *
+   * Currently, this is only respected by <code>ULuaState::MetaTableFunction__call</code> and
+   * <code>ULuaState::MetaTableFunction__rawcall</code>. If you want this to work for <code>LuaCall...</code> functions
+   * as well, you need to enable <code>bImplicitSelfForFunctionCalls</code>, too.
+   */
+  UPROPERTY(EditAnywhere, Category = "Lua")
 	bool bImplicitSelf;
+
+  /**
+   * When enabled, <code>bImplicitSelf</code> will be respected by all <code>LuaCall...</code> functions.
+   *
+   * See <a href="https://github.com/rdeioris/LuaMachine/pull/77">this PR</a>.
+   */
+	UPROPERTY(EditAnywhere, Category = "Lua")
+	bool bImplicitSelfForLuaCalls;
 
 	UPROPERTY(EditAnywhere, Category = "Lua")
 	TArray<FString> GlobalNames;
