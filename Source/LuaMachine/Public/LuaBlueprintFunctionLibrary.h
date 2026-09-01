@@ -433,6 +433,11 @@ public:
 	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
 	static ULuaState* CreateDynamicLuaState(UObject* WorldContextObject, TSubclassOf<ULuaState> LuaStateClass);
 
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject", AutoCreateRefTerm = "Args"), Category = "Lua")
+	static FLuaValue LuaStateGlobalCall(UObject* WorldContextObject, ULuaState* State, const FString& Name, TArray<FLuaValue> Args);
+	
+	UFUNCTION(BlueprintCallable, meta = (WorldContext = "WorldContextObject"), Category = "Lua")
+	static FLuaValue LuaStateRunFile(UObject* WorldContextObject, ULuaState* State, const FString& Filename, const bool bIgnoreNonExistent);
 private:
 	static void HttpRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TSubclassOf<ULuaState> LuaState, TWeakObjectPtr<UWorld> World, const FString SecurityHeader, const FString SignaturePublicExponent, const FString SignatureModulus, FLuaHttpSuccess Completed);
 	static void HttpGenericRequestDone(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful, TWeakPtr<FLuaSmartReference> Context, FLuaHttpResponseReceived ResponseReceived, FLuaHttpError Error);

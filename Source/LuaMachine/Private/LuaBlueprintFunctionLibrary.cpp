@@ -1978,3 +1978,40 @@ ULuaState* ULuaBlueprintFunctionLibrary::CreateDynamicLuaState(UObject* WorldCon
 
 	return NewLuaState->GetLuaState(WorldContextObject->GetWorld());
 }
+FLuaValue ULuaBlueprintFunctionLibrary::LuaStateRunFile(UObject* WorldContextObject, ULuaState* State, const FString& Filename, const bool bIgnoreNonExistent)
+{
+	FLuaValue ReturnValue;
+
+	if (!State->RunFile(Filename, bIgnoreNonExistent, 1))
+	{
+		if (State->bLogError)
+			State->LogError(State->LastError);
+		State->ReceiveLuaError(State->LastError);
+	}
+	else
+	{
+		ReturnValue = State->ToLuaValue(-1);
+	}
+
+	State->Pop();
+	return ReturnValue;
+}
+FLuaValue ULuaBlueprintFunctionLibrary::LuaStateGlobalCall(UObject* WorldContextObject, ULuaState* State, const FString& Name, TArray<FLuaValue> Args)
+{
+	FLuaValue ReturnValue;
+	int32 ItemsToPop = State->GetFieldFromTree(Name);
+
+	int NArgs = 0;
+	for (FLuaValue& Arg : Args)
+	{
+		State->FromLuaValue(Arg);
+		NArgs++;
+	}
+
+	State->PCall(NArgs, ReturnValue);
+
+	// we have the return value and the function has been removed, so we do not need to change ItemsToPop
+	State->Pop(ItemsToPop);
+
+	return ReturnValue;
+}
